@@ -131,9 +131,24 @@ forms.setupForm.addEventListener('submit', async (e) => {
 });
 
 // 2. LOGIN
+const loginInput = document.getElementById('login-pin');
+
+function resolveAuthErrorMessage(code) {
+    switch (code) {
+        case 'INVALID_PIN':
+            return "Incorrect PIN or recovery key.";
+        case 'VAULT_METADATA_MISSING':
+            return "Vault metadata is missing. Cannot unlock the vault.";
+        case 'VAULT_CORRUPT':
+            return "Vault data appears corrupted. Restore from a backup.";
+        default:
+            return `Login Error: ${code}`;
+    }
+}
+
 forms.loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const pin = document.getElementById('login-pin').value;
+    const pin = loginInput.value;
     try {
         let success = false;
         if (pin.length > 30) {
@@ -145,11 +160,11 @@ forms.loginForm.addEventListener('submit', async (e) => {
         }
 
         if (!success) {
-            alert("Incorrect PIN");
-            document.getElementById('login-pin').value = '';
+            throw new Error('INVALID_PIN');
         }
     } catch (err) {
-        alert("Login Error: " + err.message);
+        alert(resolveAuthErrorMessage(err?.message || err));
+        loginInput.value = '';
     }
 });
 
@@ -162,9 +177,14 @@ bus.on('auth:unlock', async () => {
 // --- VAULT UI LOGIC ---
 
 async function loadVault() {
-    const notes = await vaultService.loadAll();
-    searchService.buildIndex(notes);
-    renderCurrentView(notes);
+    try {
+        const notes = await vaultService.loadAll();
+        searchService.buildIndex(notes);
+        renderCurrentView(notes);
+    } catch (err) {
+        console.error("Vault load failed", err);
+        alert(`Vault load failed: ${err?.message || 'unknown error'}. Please re-enter your PIN or restore a backup.`);
+    }
 }
 
 // Sidebar Navigation
@@ -269,6 +289,7 @@ function selectNote(note) {
     // We already handled 'active' class in renderNoteList based on activeNoteId.
     // So just refreshing the list view is easiest:
     renderCurrentView(vaultService.notes);
+    refreshSaveButtonState();
 }
 
 // 4. EDITOR ACTIONS
@@ -278,9 +299,11 @@ const noteTitle = document.getElementById('note-title');
 const noteBody = document.getElementById('note-content');
 const btnDelete = document.getElementById('btn-delete');
 const btnLock = document.getElementById('btn-lock');
+const btnToggleCompact = document.getElementById('btn-toggle-compact');
 const btnSaveNote = document.getElementById('btn-save-note');
 const btnToggleAutoSave = document.getElementById('btn-toggle-autosave');
 let autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') !== 'false';
+let compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
 
 btnLock.onclick = () => {
     logActivity("Vault Locked");
@@ -305,6 +328,35 @@ btnSaveNote.onclick = () => persistNote(true);
 
 updateAutoSaveUI();
 
+function isEditorContentEmpty() {
+    const title = noteTitle?.value.trim() || '';
+    const body = noteBody?.value.trim() || '';
+    return !title && !body;
+}
+
+function refreshSaveButtonState() {
+    if (!btnSaveNote) return;
+    const shouldDisable = isEditorContentEmpty();
+    btnSaveNote.disabled = shouldDisable;
+    btnSaveNote.dataset.empty = shouldDisable ? 'true' : 'false';
+    btnSaveNote.title = shouldDisable ? 'Add text to enable saving' : 'Save current note';
+}
+
+function updateCompactViewUI() {
+    document.body.classList.toggle('compact-notes', compactViewEnabled);
+    if (!btnToggleCompact) return;
+    btnToggleCompact.innerText = `Compact: ${compactViewEnabled ? 'On' : 'Off'}`;
+    btnToggleCompact.dataset.state = compactViewEnabled ? 'on' : 'off';
+}
+
+btnToggleCompact?.addEventListener('click', () => {
+    compactViewEnabled = !compactViewEnabled;
+    localStorage.setItem('pinbridge.compact_notes', compactViewEnabled ? 'true' : 'false');
+    updateCompactViewUI();
+});
+
+updateCompactViewUI();
+
 // NEW NOTE
 btnNew.onclick = async () => {
     // If in trash, force switch to All
@@ -312,7 +364,7 @@ btnNew.onclick = async () => {
         currentView = 'all';
         document.querySelector('[data-view="all"]').click();
     }
-    const id = await vaultService.createNote("", "");
+    const id = await vaultService.createNote("", "", "", [], { persist: false });
     logActivity("Created Note", id);
     selectNote({ id, title: "", body: "", trash: false });
     document.getElementById('note-title').focus();
@@ -351,6 +403,7 @@ async function persistNote(force = false) {
 
     if (!trimmedTitle && !trimmedBody) {
         document.getElementById('editor-status').innerText = "No content to save";
+        refreshSaveButtonState();
         return;
     }
 
@@ -367,12 +420,25 @@ async function persistNote(force = false) {
     } else {
         renderCurrentView();
     }
+    refreshSaveButtonState();
 }
 
-document.getElementById('note-title').addEventListener('input', scheduleAutoSave);
-document.getElementById('note-content').addEventListener('input', scheduleAutoSave);
-document.getElementById('note-folder').addEventListener('input', scheduleAutoSave);
-document.getElementById('note-tags').addEventListener('input', scheduleAutoSave);
+noteTitle.addEventListener('input', () => {
+    scheduleAutoSave();
+    refreshSaveButtonState();
+});
+noteBody.addEventListener('input', () => {
+    scheduleAutoSave();
+    refreshSaveButtonState();
+});
+document.getElementById('note-folder').addEventListener('input', () => {
+    scheduleAutoSave();
+});
+document.getElementById('note-tags').addEventListener('input', () => {
+    scheduleAutoSave();
+});
+
+refreshSaveButtonState();
 
 // DELETE / RESTORE
 btnDelete.onclick = async () => {
@@ -400,6 +466,7 @@ function clearEditor() {
     document.getElementById('note-content').value = "";
     document.getElementById('note-folder').value = "";
     document.getElementById('note-tags').value = "";
+    refreshSaveButtonState();
 }
 // ...
 

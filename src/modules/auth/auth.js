@@ -41,6 +41,8 @@ class AuthService {
             const recoveryWrappedHex = Utils.bufferToHex(recoveryWrappedBuffer);
 
             await storageService.saveAuthData(saltHex, wrappedHex, recoveryWrappedHex);
+            const fingerprint = await cryptoService.getMasterKeyFingerprint();
+            await storageService.setMeta('auth_master_hash', fingerprint);
 
             return recoveryKey; // Return to show user
         } catch (e) {
@@ -56,22 +58,25 @@ class AuthService {
      * 3. If success, Master Key is now in memory
      */
     async login(pin) {
+        const authData = await storageService.getAuthData();
+        if (!authData || !authData.salt || !authData.wrappedKey) {
+            throw new Error('VAULT_METADATA_MISSING');
+        }
+
+        const saltBuf = new Uint8Array(Utils.hexToBuffer(authData.salt));
+        const wrappedBuf = Utils.hexToBuffer(authData.wrappedKey);
+
         try {
-            const authData = await storageService.getAuthData();
-            if (!authData) return false;
-
-            // 1. Re-derive Key from PIN
-            const saltBuf = new Uint8Array(Utils.hexToBuffer(authData.salt));
-            const wrappedBuf = Utils.hexToBuffer(authData.wrappedKey);
-            const keyBuffer = await cryptoService.importMasterKey(pin, saltBuf, wrappedBuf);
-
-            // Success! Store/Emit
-            // Note: cryptoService.masterKey is set internally by importMasterKey
+            await cryptoService.importMasterKey(pin, saltBuf, wrappedBuf);
+            await this.ensureMasterKeyFingerprintMatches();
             bus.emit('auth:unlock');
             return true;
-        } catch (e) {
-            console.warn("Login failed", e);
-            return false;
+        } catch (err) {
+            if (err?.message === 'Invalid Credentials') {
+                throw new Error('INVALID_PIN');
+            }
+            console.error('Login failed', err);
+            throw new Error('VAULT_CORRUPT');
         }
     }
 
@@ -91,6 +96,7 @@ class AuthService {
             if (authData.recoveryWrappedKey) {
                 const wrapped = Utils.hexToBuffer(authData.recoveryWrappedKey);
                 await cryptoService.importMasterKey(secretString, salt, wrapped);
+                await this.ensureMasterKeyFingerprintMatches();
                 bus.emit('auth:unlock');
                 return true;
             }
@@ -103,6 +109,7 @@ class AuthService {
                 try {
                     const wrappedBuf = Utils.hexToBuffer(wrapped);
                     await cryptoService.importMasterKey(secretString, salt, wrappedBuf);
+                    await this.ensureMasterKeyFingerprintMatches();
                     bus.emit('auth:unlock');
                     return true;
                 } catch (e) { }
@@ -115,12 +122,25 @@ class AuthService {
             try {
                 const qaBuf = Utils.hexToBuffer(qaWrapped);
                 await cryptoService.importMasterKey(secretString, salt, qaBuf);
+                await this.ensureMasterKeyFingerprintMatches();
                 bus.emit('auth:unlock');
                 return true;
             } catch (e) { }
         }
 
         return false;
+    }
+
+    async ensureMasterKeyFingerprintMatches() {
+        const stored = await storageService.getMeta('auth_master_hash');
+        const current = await cryptoService.getMasterKeyFingerprint();
+        if (stored && stored !== current) {
+            console.error('Master key fingerprint mismatch', { stored, current });
+            throw new Error('VAULT_CORRUPT');
+        }
+        if (!stored) {
+            await storageService.setMeta('auth_master_hash', current);
+        }
     }
 
     // --- EXTENDED RECOVERY METHODS ---

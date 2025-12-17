@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinbridge-v1';
+const CACHE_NAME = 'pinbridge-v2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -14,14 +14,15 @@ const ASSETS_TO_CACHE = [
 ];
 
 const ICONS_CACHE = [
-    '/public/icons/favicon.ico',
-    '/public/icons/android/icon-192.png',
-    '/public/icons/android/icon-512.png',
-    '/public/icons/web/icon-32.png',
-    '/public/icons/web/icon-16.png'
+    'public/icons/favicon.ico',
+    'public/icons/android/icon-192.png',
+    'public/icons/android/icon-512.png',
+    'public/icons/web/icon-32.png',
+    'public/icons/web/icon-16.png'
 ];
 
 self.addEventListener('install', (event) => {
+    self.skipWaiting();
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             return cache.addAll([...ASSETS_TO_CACHE, ...ICONS_CACHE]);
@@ -43,6 +44,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
+    self.clients.claim();
     const cacheWhitelist = [CACHE_NAME];
     event.waitUntil(
         caches.keys().then((cacheNames) => {

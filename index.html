@@ -7,10 +7,10 @@
     <title>PINBRIDGE | Secure Vault</title>
     <meta name="theme-color" content="#0f1115">
     <link rel="manifest" href="manifest.json">
-    <link rel="icon" href="/public/icons/favicon.ico">
-    <link rel="icon" type="image/png" sizes="32x32" href="/public/icons/web/icon-32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/public/icons/web/icon-16.png">
-    <link rel="apple-touch-icon" href="/public/icons/ios/icon-180.png">
+    <link rel="icon" href="public/icons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="public/icons/web/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="public/icons/web/icon-16.png">
+    <link rel="apple-touch-icon" href="public/icons/ios/icon-180.png">
     <link rel="stylesheet" href="src/styles.css">
 
     <!-- Fonts -->
@@ -33,7 +33,7 @@
     <div id="auth-screen" class="screen hidden">
         <div class="auth-card glass-panel">
             <div class="logo-badge">
-                <img src="/public/icons/android/icon-192.png" alt="PINBRIDGE logo" class="app-logo">
+                <img src="public/icons/android/icon-192.png" alt="PINBRIDGE logo" class="app-logo">
             </div>
             <h1 class="brand-title">PINBRIDGE</h1>
             <p class="subtitle">Secure. Offline. Private.</p>
@@ -78,7 +78,7 @@
         <nav class="sidebar glass-panel">
             <div class="sidebar-top">
                 <div class="logo-small">
-                    <img src="/public/icons/android/icon-192.png" alt="PINBRIDGE mark">
+                    <img src="public/icons/android/icon-192.png" alt="PINBRIDGE mark">
                 </div>
             </div>
 
@@ -134,7 +134,10 @@
         <!-- LIST PANEL -->
         <section class="list-panel">
             <div class="list-header">
-                <h2>My Notes</h2>
+                <div class="list-header-main">
+                    <h2>My Notes</h2>
+                    <button id="btn-toggle-compact" class="btn btn-text compact-toggle">Compact: Off</button>
+                </div>
                 <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)">+</button>
             </div>
 

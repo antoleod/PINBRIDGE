@@ -172,6 +172,15 @@ class CryptoService {
 
         return Utils.bufferToStr(decryptedBuffer);
     }
+
+    /**
+     * Returns a SHA-256 fingerprint of the master key for integrity checks.
+     */
+    async getMasterKeyFingerprint() {
+        if (!this.masterKey) throw new Error("Vault locked");
+        const rawKey = await window.crypto.subtle.exportKey('raw', this.masterKey);
+        return await Utils.sha256Hex(new Uint8Array(rawKey));
+    }
 }
 
 export const cryptoService = new CryptoService();

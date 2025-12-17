@@ -18,6 +18,9 @@ class VaultService {
      */
     async loadAll() {
         this.notes = [];
+        if (!cryptoService.masterKey) {
+            throw new Error("Vault locked");
+        }
         const encryptedNotes = await storageService.getNotes();
 
         for (const encNote of encryptedNotes) {
@@ -59,7 +62,7 @@ class VaultService {
     /**
      * Create a new note.
      */
-    async createNote(title, body, folder = "", tags = []) {
+    async createNote(title, body, folder = "", tags = [], options = {}) {
         const id = Utils.generateId();
         const timestamp = Date.now();
         const note = {
@@ -74,7 +77,11 @@ class VaultService {
             pinned: false
         };
 
-        await this.persistNote(note);
+        const { persist = true } = options;
+        const contentPresent = (note.title || '').trim() || (note.body || '').trim();
+        if (persist && contentPresent) {
+            await this.persistNote(note);
+        }
         this.notes.push(note);
         this.sortNotes();
         bus.emit('vault:updated', this.notes);
@@ -176,6 +183,12 @@ class VaultService {
      * @param {boolean} options.bumpUpdated - whether to bump the updated timestamp (default true)
      */
     async persistNote(note, { bumpUpdated = true } = {}) {
+        const trimmedTitle = (note.title || '').trim();
+        const trimmedBody = (note.body || '').trim();
+        if (!trimmedTitle && !trimmedBody) {
+            console.warn(`Skipping empty note persistence for ${note.id}`);
+            return;
+        }
         const payload = {
             title: note.title,
             body: note.body,
@@ -213,4 +226,3 @@ class VaultService {
 }
 
 export const vaultService = new VaultService();
-

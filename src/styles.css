@@ -418,7 +418,21 @@ button.btn:active {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
     border-bottom: 1px solid var(--border-subtle);
+}
+
+.list-header-main {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.compact-toggle {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .list-header h2 {
@@ -481,7 +495,7 @@ button.btn:active {
 
 .note-item {
     background: rgba(255, 255, 255, 0.03);
-    padding: 1.25rem;
+    padding: 0.85rem;
     border-radius: var(--radius-md);
     margin-bottom: 0.8rem;
     border: 1px solid transparent;
@@ -508,11 +522,26 @@ button.btn:active {
 
 .note-item p {
     margin: 0;
-    font-size: 0.85rem;
+    font-size: 0.82rem;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+body.compact-notes .note-item {
+    padding: 0.55rem;
+    margin-bottom: 0.4rem;
+}
+
+body.compact-notes .note-item h4 {
+    font-size: 0.92rem;
+    margin-bottom: 0.25rem;
+}
+
+body.compact-notes .note-item p {
+    font-size: 0.72rem;
+    white-space: normal;
 }
 
 /* Editor Panel */
