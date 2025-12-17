@@ -613,10 +613,21 @@ body.safe-view-mode {
     pointer-events: none;
 }
 
+.logo-badge {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(0, 255, 156, 0.3), rgba(59, 130, 246, 0.15));
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
 .app-logo {
-    width: 64px;
-    height: 64px;
-    margin: 16px auto;
+    width: 72px;
+    height: 72px;
     display: block;
-    filter: drop-shadow(0 0 12px rgba(0, 255, 156, 0.6));
+    filter: drop-shadow(0 0 14px rgba(0, 255, 156, 0.65));
 }
