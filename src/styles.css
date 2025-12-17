@@ -1,0 +1,366 @@
+:root {
+    /* Color Palette - Minimal & Corporate Friendly */
+    --bg-app: #0f1115;
+    --bg-panel: #161b22;
+    --bg-input: #0d1117;
+
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --text-muted: #484f58;
+
+    --accent-primary: #2f81f7;
+    --accent-hover: #58a6ff;
+    --accent-danger: #f85149;
+    --accent-success: #238636;
+
+    --border: #30363d;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+
+    --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    -webkit-font-smoothing: antialiased;
+}
+
+body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    overflow: hidden;
+    /* App feel */
+    height: 100vh;
+}
+
+/* Utilities */
+.hidden {
+    display: none !important;
+}
+
+.screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    background: var(--bg-app);
+    display: flex;
+}
+
+.screen.active {
+    z-index: 20;
+}
+
+/* Loading */
+#loading-screen {
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+.logo-mark {
+    font-size: 3rem;
+    font-weight: 800;
+    letter-spacing: -2px;
+    margin-bottom: 1rem;
+    color: var(--accent-primary);
+}
+
+/* Auth */
+#auth-screen {
+    justify-content: center;
+    align-items: center;
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.brand-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.warning-text {
+    color: var(--accent-danger);
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    background: rgba(248, 81, 73, 0.1);
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+}
+
+/* Forms */
+.input-group {
+    margin-bottom: 1rem;
+}
+
+input {
+    width: 100%;
+    padding: 0.75rem;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+input:focus {
+    border-color: var(--accent-primary);
+}
+
+button.btn {
+    width: 100%;
+    padding: 0.75rem;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    color: #fff;
+}
+
+.btn-primary:hover {
+    opacity: 0.9;
+}
+
+.btn-danger {
+    background: var(--accent-danger);
+    color: #fff;
+}
+
+.btn-text {
+    background: transparent;
+    color: var(--text-secondary);
+    margin-top: 1rem;
+}
+
+.btn-text:hover {
+    color: var(--text-primary);
+}
+
+/* Vault Layout */
+#vault-screen {
+    display: flex;
+    flex-direction: row;
+}
+
+.sidebar {
+    width: 60px;
+    /* Collapsed by default for privacy/minimalism? Or just small icons */
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+}
+
+.sidebar-header {
+    margin-bottom: 2rem;
+}
+
+.btn-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    cursor: pointer;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-icon:hover,
+.btn-icon.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.content-area {
+    width: 300px;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+}
+
+.search-bar {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.notes-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.note-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+}
+
+.note-item:hover,
+.note-item.active {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.note-item h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.3rem;
+}
+
+.note-item p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.editor-pane {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-app);
+}
+
+.editor-toolbar {
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.status-indicator {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-right: auto;
+}
+
+.editor-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    padding: 1.5rem 2rem 0.5rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.editor-content {
+    flex: 1;
+    padding: 1rem 2rem;
+    background: transparent;
+    border: none;
+    resize: none;
+    font-family: var(--font-mono);
+    /* Better for code snippets */
+    font-size: 1rem;
+    color: var(--text-primary);
+    line-height: 1.6;
+    outline: none;
+}
+
+/* SAFE VIEW (BLUR) */
+body.safe-view-mode {
+    filter: blur(10px);
+    pointer-events: none;
+    /* Block interaction */
+    user-select: none;
+}
+
+/* Except command palette if we want, but usually secure view blocks everything until unlock? 
+   Requirements say "Safe view" to check. It often means "Hide sensitive text" or "Blur on blur".
+   Let's assume "Toggle Blur" for screen sharing safety. 
+*/
+
+/* COMMAND PALETTE */
+#command-palette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    padding-top: 10vh;
+}
+
+.palette-container {
+    width: 600px;
+    max-height: 400px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+}
+
+.palette-input {
+    width: 100%;
+    padding: 1rem;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--border);
+    font-size: 1.2rem;
+    color: var(--text-primary);
+    outline: none;
+}
+
+.palette-results {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.palette-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+}
+
+.palette-item:hover,
+.palette-item.selected {
+    background: var(--accent-primary);
+    color: white;
+}
+
+.palette-shortcut {
+    font-size: 0.8rem;
+    opacity: 0.7;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 2px 5px;
+    border-radius: 3px;
+}

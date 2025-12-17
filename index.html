@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PINBRIDGE | Secure Core</title>
+    <meta name="description" content="Offline-first, secure bridge for your data.">
+    <link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Initial Loading State -->
+        <div id="loading-screen" class="screen active">
+            <div class="loader">
+                <div class="logo-mark">PB</div>
+                <p>Initializing Secure Core...</p>
+            </div>
+        </div>
+
+        <!-- Auth / Welcome Screen -->
+        <div id="auth-screen" class="screen hidden">
+            <div class="auth-container">
+                <h1 class="brand-title">PINBRIDGE</h1>
+                <p class="subtitle">Secure. Offline. Private.</p>
+                
+                <div id="auth-setup" class="hidden">
+                    <h2>Create New Vault</h2>
+                    <p class="warning-text">⚠️ If you lose your PIN and Recovery Key, your data is gone forever.</p>
+                    <form id="setup-form">
+                        <div class="input-group">
+                            <input type="password" id="setup-pin" placeholder="Create robust PIN" required minlength="4" autocomplete="new-password">
+                        </div>
+                        <div class="input-group">
+                            <input type="password" id="setup-pin-confirm" placeholder="Confirm PIN" required minlength="4" autocomplete="new-password">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Initialize Vault</button>
+                    </form>
+                </div>
+
+                <div id="auth-login" class="hidden">
+                    <h2>Unlock Vault</h2>
+                    <form id="login-form">
+                        <div class="input-group">
+                            <input type="password" id="login-pin" placeholder="Enter PIN" required autocomplete="current-password" autofocus>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Unlock</button>
+                        <button type="button" id="btn-forgot" class="btn btn-text">Recovery Options</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Vault Interface -->
+        <div id="vault-screen" class="screen hidden">
+            <nav class="sidebar">
+                <div class="sidebar-header">
+                    <div class="logo">PB</div>
+                    <button id="btn-new-note" class="btn-icon" title="New Note">+</button>
+                </div>
+                <div class="nav-list">
+                    <button class="nav-item active" data-view="all">🔒 All Notes</button>
+                    <button class="nav-item" data-view="favorites">⭐ Favorites</button>
+                    <button class="nav-item" data-view="trash">🗑️ Trash</button>
+                </div>
+                <div class="sidebar-footer">
+                    <button id="btn-lock" class="btn-icon">🔒</button>
+                    <button id="btn-settings" class="btn-icon">⚙️</button>
+                </div>
+            </nav>
+            
+            <main class="content-area">
+                <div class="search-bar">
+                    <input type="text" id="search-input" placeholder="Search decrypted notes...">
+                </div>
+                
+                <div id="notes-list" class="notes-list">
+                    <!-- Note items inserted here -->
+                </div>
+            </main>
+
+            <section class="editor-pane">
+                <div class="editor-toolbar">
+                    <span id="editor-status" class="status-indicator saved">Saved</span>
+                    <button id="btn-copy" class="btn-text">Copy</button>
+                    <button id="btn-delete" class="btn-danger">Delete</button>
+                </div>
+                <input type="text" id="note-title" placeholder="Note Title" class="editor-title">
+                <textarea id="note-content" placeholder="Type securely..." class="editor-content"></textarea>
+            </section>
+        </div>
+    </div>
+
+    <script type="module" src="src/app.js"></script>
+</body>
+</html>
