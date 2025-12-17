@@ -105,6 +105,11 @@
                 </button>
             </div>
 
+            <div class="sidebar-divider"></div>
+            <div id="folder-list" class="nav-folders">
+                <!-- Dynamic Folders -->
+            </div>
+
             <div class="sidebar-bottom">
                 <button class="nav-item" id="btn-lock" title="Lock Vault">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
@@ -141,6 +146,12 @@
         <!-- EDITOR PANEL -->
         <section class="editor-panel">
             <div class="editor-toolbar glass-header">
+                <div class="meta-inputs">
+                    <input type="text" id="note-folder" placeholder="Folder..." list="folder-suggestions"
+                        class="meta-input">
+                    <input type="text" id="note-tags" placeholder="#tags..." class="meta-input">
+                    <datalist id="folder-suggestions"></datalist>
+                </div>
                 <span id="editor-status" class="status-badge">Ready</span>
 
                 <div class="editor-actions">

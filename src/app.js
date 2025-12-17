@@ -110,8 +110,10 @@ forms.loginForm.addEventListener('submit', async (e) => {
         let success = false;
         if (pin.length > 30) {
             success = await authService.recover(pin);
+            if (success) logActivity("Vault Recovered");
         } else {
             success = await authService.login(pin);
+            if (success) logActivity("Login Success");
         }
 
         if (!success) {
@@ -155,9 +157,15 @@ function renderCurrentView(notesOverride) {
 
     if (currentView === 'trash') {
         filtered = notes.filter(n => n.trash);
-    } else {
+    } else if (currentView === 'all') {
         filtered = notes.filter(n => !n.trash);
+    } else if (currentView.startsWith('folder:')) {
+        const folderName = currentView.split(':')[1];
+        filtered = notes.filter(n => !n.trash && n.folder === folderName);
     }
+
+    // Always refresh folders list (to show counts or active state efficiently)
+    renderFolders();
 
     // Update Button Context
     const delBtn = document.getElementById('btn-delete');
@@ -214,6 +222,8 @@ function selectNote(note) {
     activeNoteId = note.id;
     document.getElementById('note-title').value = note.title;
     document.getElementById('note-content').value = note.body;
+    document.getElementById('note-folder').value = note.folder || "";
+    document.getElementById('note-tags').value = note.tags ? note.tags.join(', ') : "";
 
     // Update active class manually to avoid re-render
     document.querySelectorAll('.note-item').forEach(el => el.classList.remove('active'));
@@ -248,6 +258,7 @@ btnNew.onclick = async () => {
         document.querySelector('[data-view="all"]').click();
     }
     const id = await vaultService.createNote("", "");
+    logActivity("Created Note", id);
     selectNote({ id, title: "", body: "", trash: false });
     document.getElementById('note-title').focus();
 };
@@ -256,22 +267,33 @@ btnNew.onclick = async () => {
 let saveTimeout;
 function triggerSave() {
     if (!activeNoteId) return;
-    // Don't save if in trash? Or allow editing in trash?
-    // Usually trash is read-only.
     const note = vaultService.notes.find(n => n.id === activeNoteId);
-    if (note && note.trash) return; // Prevent editing in trash
+    if (note && note.trash) return;
 
     clearTimeout(saveTimeout);
     document.getElementById('editor-status').innerText = "Saving...";
 
     saveTimeout = setTimeout(async () => {
-        await vaultService.updateNote(activeNoteId, noteTitle.value, noteBody.value);
+        const title = document.getElementById('note-title').value;
+        const body = document.getElementById('note-content').value;
+        const folder = document.getElementById('note-folder').value.trim();
+        const tags = document.getElementById('note-tags').value.split(',').map(t => t.trim()).filter(t => t);
+
+        await vaultService.updateNote(activeNoteId, title, body, folder, tags);
         document.getElementById('editor-status').innerText = "Saved";
+
+        // Refresh folders list if folder changed
+        renderFolders();
+        // We might need to refresh list if we were filtered by folder and just moved it out
+        if (currentView.startsWith('folder:')) renderCurrentView();
+
     }, 1000);
 }
 
-noteTitle.addEventListener('input', triggerSave);
-noteBody.addEventListener('input', triggerSave);
+document.getElementById('note-title').addEventListener('input', triggerSave);
+document.getElementById('note-content').addEventListener('input', triggerSave);
+document.getElementById('note-folder').addEventListener('input', triggerSave);
+document.getElementById('note-tags').addEventListener('input', triggerSave);
 
 // DELETE / RESTORE
 btnDelete.onclick = async () => {
@@ -280,12 +302,14 @@ btnDelete.onclick = async () => {
     if (currentView === 'trash') {
         if (confirm("Permanently delete?")) {
             await vaultService.deleteNote(activeNoteId);
+            logActivity("Deleted Note (Permanent)", activeNoteId);
             activeNoteId = null;
             clearEditor();
             renderCurrentView();
         }
     } else {
         await vaultService.moveToTrash(activeNoteId);
+        logActivity("Moved to Trash", activeNoteId);
         activeNoteId = null;
         clearEditor();
         renderCurrentView();
@@ -293,9 +317,48 @@ btnDelete.onclick = async () => {
 };
 
 function clearEditor() {
-    noteTitle.value = "";
-    noteBody.value = "";
+    document.getElementById('note-title').value = "";
+    document.getElementById('note-content').value = "";
+    document.getElementById('note-folder').value = "";
+    document.getElementById('note-tags').value = "";
 }
+// ...
+
+function renderFolders() {
+    const listEl = document.getElementById('folder-list');
+    listEl.innerHTML = '';
+    const suggestionEl = document.getElementById('folder-suggestions');
+    suggestionEl.innerHTML = '';
+
+    const folders = new Set();
+    vaultService.notes.forEach(n => {
+        if (n.folder && !n.trash) folders.add(n.folder);
+    });
+
+    folders.forEach(f => {
+        // Sidebar Item
+        const btn = document.createElement('div');
+        btn.className = 'folder-item';
+        btn.innerText = f.substring(0, 2); // Initials
+        btn.title = f;
+        if (currentView === `folder:${f}`) btn.classList.add('active');
+
+        btn.onclick = () => {
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.folder-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentView = `folder:${f}`;
+            renderCurrentView();
+        };
+        listEl.appendChild(btn);
+
+        // Datalist
+        const opt = document.createElement('option');
+        opt.value = f;
+        suggestionEl.appendChild(opt);
+    });
+}
+
 
 // ... imports
 
@@ -313,6 +376,7 @@ quickDropInput.addEventListener('keydown', async (e) => {
         await vaultService.createNote(title, text);
 
         quickDropInput.value = '';
+        showToast("Stashed to Inbox", "success");
         // Visual feedback
         quickDropInput.placeholder = "Stashed!";
         setTimeout(() => quickDropInput.placeholder = "Quick Drop... (Enter to stash)", 1500);
@@ -373,11 +437,46 @@ function copyToClipboard(text, btnElement) {
             btnElement.innerText = original;
             btnElement.style.color = "";
         }, 1500);
+
+        // FEATURE: CLIPBOARD CLEAN MODE (Phase 7)
+        // Auto-clear after 45 seconds for security
+        setTimeout(() => {
+            navigator.clipboard.writeText(" ").then(() => {
+                showToast("Clipboard cleared for security", "info");
+            });
+        }, 45000);
+
     }).catch(err => {
         console.error('Copy failed', err);
-        alert('Copy failed');
+        showToast('Copy failed', 'error');
     });
 }
+
+// FEATURE: ACTIVITY TIMELINE (Phase 7)
+// Simple in-memory log for session audit (could be persisted to DB/Meta)
+let activityLog = [];
+
+function logActivity(action, details = "") {
+    const entry = {
+        timestamp: new Date().toLocaleTimeString(),
+        action,
+        details
+    };
+    activityLog.unshift(entry);
+    if (activityLog.length > 50) activityLog.pop(); // Keep last 50
+    // Persist? storageService.saveMeta('activity_log', activityLog);
+}
+
+function showActivityTimeline() {
+    // Render a simple modal or list via Alert for now, or Toast
+    const logStr = activityLog.map(e => `[${e.timestamp}] ${e.action} ${e.details}`).join('\n');
+    alert("Session Activity Log:\n\n" + (logStr || "No activity yet."));
+}
+
+// Add to Command Palette
+// ... we need to push to 'commands' array in createCommandPalette logic ...
+// Since we can't easily reach into that function scope, we rely on a separate button or 
+// modify createCommandPalette in next tool call to include it.
 
 function updatePinButtonState(isPinned) {
     if (isPinned) {
@@ -419,6 +518,7 @@ function createCommandPalette() {
         { id: 'view_all', label: 'Go to All Notes', action: () => document.querySelector('[data-view="all"]').click() },
         { id: 'view_trash', label: 'Go to Trash', action: () => document.querySelector('[data-view="trash"]').click() },
         { id: 'template', label: 'Insert Template', action: () => showTemplates() },
+        { id: 'timeline', label: 'View Activity Timeline', action: () => showActivityTimeline() },
         { id: 'health', label: 'Run Vault Health Check', action: () => runHealthCheck() },
         { id: 'switch_vault', label: 'Switch Vault / Profile', action: () => switchVault() },
         { id: 'toggle_safe', label: 'Toggle Safe View', action: () => document.body.classList.toggle('safe-view-mode') },

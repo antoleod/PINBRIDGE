@@ -407,6 +407,70 @@ button.btn:active {
     margin: 0 0.5rem;
 }
 
+.meta-inputs {
+    display: flex;
+    gap: 0.5rem;
+    margin-right: 1rem;
+}
+
+.meta-input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    width: 100px;
+}
+
+.meta-input:focus {
+    border-color: var(--brand-primary);
+    color: white;
+    width: 140px;
+}
+
+.sidebar-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    width: 40px;
+    margin: 1rem 0;
+}
+
+.nav-folders {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    align-items: center;
+    overflow-y: auto;
+    max-height: 300px;
+}
+
+.folder-item {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.folder-item:hover {
+    background: var(--bg-glass-high);
+    color: white;
+}
+
+.folder-item.active {
+    background: var(--brand-primary);
+    color: white;
+}
+
 .editor-canvas {
     flex: 1;
     display: flex;
