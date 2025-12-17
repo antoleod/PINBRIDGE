@@ -1,29 +1,26 @@
 /**
- * Settings Module
- * Handles UI for Settings Modal, Export/Import, and Recovery Setup.
+ * Minimal Settings Module for PINBRIDGE
+ * Focused on portability and explicit reset controls.
  */
 
-import { vaultService } from '../vault/vault.js';
+import { notesService } from '../notes/notes.js';
+import { storageService } from '../../storage/db.js';
 import { authService } from '../auth/auth.js';
-import { Utils } from '../../utils/helpers.js';
-import { syncService } from '../sync/index.js';
 
 export const settingsService = {
-
-    // --- EXPORT ---
-
     async exportJSON() {
-        const notes = await vaultService.loadAll();
+        const notes = await notesService.loadAll();
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes, null, 2));
         this.downloadFile(dataStr, `pinbridge_backup_${new Date().toISOString().slice(0, 10)}.json`);
     },
 
     async exportCSV() {
-        const notes = await vaultService.loadAll();
-        let csvContent = "data:text/csv;charset=utf-8,ID,Title,Body,Created,Updated\n";
+        const notes = await notesService.loadAll();
+        let csvContent = "data:text/csv;charset=utf-8,ID,Title,Body,Folder,Tags,Created,Updated\n";
         notes.forEach(n => {
-            const body = n.body.replace(/"/g, '""'); // Escape quotes
-            const row = `"${n.id}","${n.title}","${body}","${n.created || ''}","${n.updated}"`;
+            const title = (n.title || '').replace(/"/g, '""');
+            const body = (n.body || '').replace(/"/g, '""');
+            const row = `"${n.id}","${title}","${body}","${n.folder || ''}","${(n.tags || []).join(' ')}","${n.created || ''}","${n.updated || ''}"`;
             csvContent += row + "\n";
         });
         this.downloadFile(csvContent, `pinbridge_notes.csv`);
@@ -33,98 +30,89 @@ export const settingsService = {
         const downloadAnchorNode = document.createElement('a');
         downloadAnchorNode.setAttribute("href", dataUrl);
         downloadAnchorNode.setAttribute("download", filename);
-        document.body.appendChild(downloadAnchorNode); // required for firefox
+        document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
     },
 
-    // --- RECOVERY UI ---
-
-    async setupBackupCodes() {
-        if (!confirm("Generate new backup codes? Old ones will be invalid.")) return;
+    async importJSON() {
+        const input = prompt("Pega aquí el JSON exportado de PINBRIDGE:");
+        if (!input) return;
         try {
-            const codes = await authService.generateBackupCodes();
-            let msg = "⚠️ SAVE THESE CODES SECURELY:\n\n";
-            codes.forEach(c => msg += `• ${c}\n`);
-            alert(msg);
+            const parsed = JSON.parse(input);
+            if (!Array.isArray(parsed)) throw new Error("Formato inválido");
+            await storageService.resetAll();
+            for (const note of parsed) {
+                const record = {
+                    id: note.id,
+                    data: JSON.stringify({
+                        title: note.title || '',
+                        body: note.body || '',
+                        folder: note.folder || '',
+                        tags: note.tags || []
+                    }),
+                    created: note.created || Date.now(),
+                    updated: note.updated || Date.now(),
+                    trash: !!note.trash,
+                    pinned: !!note.pinned
+                };
+                await storageService.saveNote(record);
+            }
+            alert("Importación completada. Reinicia sesión.");
+            location.reload();
         } catch (e) {
-            alert("Error: " + e.message);
+            alert("Importación fallida: " + e.message);
         }
     },
 
-    async setupHint() {
-        const current = await authService.getHint();
-        const hint = prompt("Set a public password hint:", current || "");
-        if (hint !== null) {
-            await authService.saveHint(hint);
-            alert("Hint saved.");
-        }
+    async copyBackup() {
+        const notes = await notesService.loadAll();
+        const payload = JSON.stringify(notes);
+        await navigator.clipboard.writeText(payload);
+        alert("Backup copiado al portapapeles. Pégalo en tu otro dispositivo e importa.");
     },
 
-    async setupQA() {
-        const ans = prompt("Enter a secret answer (e.g. Pet's name) to unlock your vault:\nNote: The Question itself is NOT stored, only the Answer unlocks it.");
-        if (ans) {
-            await authService.setupQA(ans);
-            alert("Secret Answer saved. You can use it as a password to login.");
-        }
+    async resetVault() {
+        const confirmed = confirm("Reset Vault?\nEsto borra tus notas, PIN y sesión local. No se puede deshacer.");
+        if (!confirmed) return;
+        await storageService.resetAll();
+        authService.logout();
+        location.reload();
     },
-
-    // --- RENDER UI ---
 
     renderSettingsModal() {
-        // Simple Overlay
         const overlay = document.createElement('div');
         overlay.id = 'settings-modal';
-        overlay.style.cssText = `
-            position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 200;
-            display: flex; justify-content: center; align-items: center;
-        `;
-
+        overlay.className = 'modal-overlay';
         overlay.innerHTML = `
-            <div class="glass-panel" style="width: 500px; padding: 2rem; border-radius: 12px; max-height: 80vh; overflow-y: auto;">
-                <h2 style="margin-top:0">Settings & Tools</h2>
-                
-                <h3 style="margin-top:1.5rem; color:var(--brand-primary)">Portability</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
-                    <button id="btn-export-json" class="btn btn-primary" style="background:var(--bg-surface); border:1px solid var(--border-subtle)">Export JSON</button>
-                    <button id="btn-export-csv" class="btn btn-primary" style="background:var(--bg-surface); border:1px solid var(--border-subtle)">Export CSV</button>
+            <div class="modal-content glass-panel" style="max-width:520px">
+                <h2 style="margin-top:0">Portabilidad y control</h2>
+                <p class="hint">Exporta, importa o resetea. Todo ocurre en tu dispositivo.</p>
+                <div class="settings-grid">
+                    <button id="btn-export-json" class="btn btn-secondary">Exportar JSON</button>
+                    <button id="btn-export-csv" class="btn btn-secondary">Exportar CSV</button>
                 </div>
-                <button id="btn-export-pbak" class="btn btn-primary" style="width:100%; margin-top:0.5rem">Export Encrypted (.pbak)</button>
-
-                <h3 style="margin-top:1.5rem; color:var(--text-danger)">Security & Recovery</h3>
-                <div style="display:flex; flex-direction:column; gap:0.5rem">
-                    <button id="btn-rec-codes" class="btn btn-primary">Generate Backup Codes</button>
-                    <button id="btn-rec-qa" class="btn btn-primary">Set Secret Answer</button>
-                    <button id="btn-rec-hint" class="btn btn-primary">Set Public Hint</button>
+                <div class="settings-grid" style="margin-top:0.5rem">
+                    <button id="btn-import-json" class="btn btn-secondary">Importar JSON</button>
+                    <button id="btn-copy-backup" class="btn btn-secondary">Copiar backup al portapapeles</button>
                 </div>
-                
-                <h3 style="margin-top:1.5rem; color:var(--brand-primary)">Sync</h3>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
-                    <button id="btn-sync-send" class="btn btn-primary">Pair with QR (Send)</button>
-                    <button id="btn-sync-receive" class="btn btn-primary">Scan QR (Receive)</button>
+                <p class="hint">Usa estos botones para sincronizar manualmente con otro dispositivo: exporta, comparte el archivo/texto, e importa allí.</p>
+                <div class="divider"></div>
+                <div class="danger-zone">
+                    <p class="warning-text">Reset borra todo el contenido local y requerirá crear un Vault nuevo.</p>
+                    <button id="btn-reset-vault" class="btn btn-primary btn-block">Reset Vault</button>
                 </div>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-top:0.5rem">
-                    <button id="btn-sync-export" class="btn btn-primary">Export encrypted</button>
-                    <button id="btn-sync-import" class="btn btn-primary">Import encrypted</button>
-                </div>
-                <button id="btn-close-settings" class="btn btn-text" style="margin-top:2rem">Close</button>
+                <button id="btn-close-settings" class="btn btn-text" style="margin-top:1rem">Cerrar</button>
             </div>
         `;
 
         document.body.appendChild(overlay);
 
-        // Bindings
         document.getElementById('btn-export-json').onclick = () => this.exportJSON();
         document.getElementById('btn-export-csv').onclick = () => this.exportCSV();
-        document.getElementById('btn-export-pbak').onclick = () => syncService.exportOfflinePackage();
-
-        document.getElementById('btn-rec-codes').onclick = () => this.setupBackupCodes();
-        document.getElementById('btn-rec-qa').onclick = () => this.setupQA();
-        document.getElementById('btn-rec-hint').onclick = () => this.setupHint();
-        document.getElementById('btn-sync-send').onclick = () => syncService.openOfferFlow();
-        document.getElementById('btn-sync-receive').onclick = () => syncService.openAnswerFlow();
-        document.getElementById('btn-sync-export').onclick = () => syncService.exportOfflinePackage();
-        document.getElementById('btn-sync-import').onclick = () => syncService.importOfflinePackage();
+        document.getElementById('btn-import-json').onclick = () => this.importJSON();
+        document.getElementById('btn-copy-backup').onclick = () => this.copyBackup();
+        document.getElementById('btn-reset-vault').onclick = () => this.resetVault();
 
         overlay.onclick = (e) => {
             if (e.target === overlay || e.target.id === 'btn-close-settings') overlay.remove();
@@ -132,5 +120,4 @@ export const settingsService = {
     }
 };
 
-// Keep the original name available for any legacy imports
 export const SettingsService = settingsService;

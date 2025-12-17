@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinbridge-v2';
+const CACHE_NAME = 'pinbridge-v3';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -10,15 +10,17 @@ const ASSETS_TO_CACHE = [
     './src/storage/db.js',
     './src/utils/helpers.js',
     './src/modules/auth/auth.js',
-    './src/modules/vault/vault.js'
+    './src/modules/notes/notes.js',
+    './src/modules/search/search.js',
+    './src/modules/settings/settings.js',
+    './src/ui/ui.js'
 ];
 
 const ICONS_CACHE = [
-    'public/icons/favicon.ico',
-    'public/icons/android/icon-192.png',
-    'public/icons/android/icon-512.png',
-    'public/icons/web/icon-32.png',
-    'public/icons/web/icon-16.png'
+    'src/public/icons/web/pinbridge_32x32.png',
+    'src/public/icons/android/pinbridge_192x192.png',
+    'src/public/icons/android/pinbridge_512x512.png',
+    'src/public/icons/web/pinbridge_64x64.png'
 ];
 
 self.addEventListener('install', (event) => {

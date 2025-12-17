@@ -7,6 +7,7 @@ const DB_VERSION = 2; // Bump version for schema upgrade
 const STORE_META = 'meta';
 const STORE_VAULT = 'vault';
 const STORE_VERSIONS = 'versions';
+const STORES = [STORE_META, STORE_VAULT, STORE_VERSIONS];
 
 class StorageService {
     constructor() {
@@ -116,30 +117,15 @@ class StorageService {
     /**
      * Save Auth Data (Wrapped Key, Salt, Recovery Data)
      */
-    async saveAuthData(saltHex, wrappedKeyHex, recoveryWrappedKeyHex) {
-        // We use a fixed key 'auth_blob' for the single user (Phase 1)
-        await this.put(STORE_META, { key: 'auth_salt', value: saltHex });
-        await this.put(STORE_META, { key: 'auth_wrapped_key', value: wrappedKeyHex });
-
-        if (recoveryWrappedKeyHex) {
-            await this.put(STORE_META, { key: 'auth_recovery_wrapped_key', value: recoveryWrappedKeyHex });
-        }
-
+    async saveAuthData(authObject) {
+        // We use a fixed key 'auth_data' to store the entire auth object.
+        await this.put(STORE_META, { key: 'auth_data', value: authObject });
         await this.put(STORE_META, { key: 'app_initialized', value: true });
     }
 
     async getAuthData() {
-        const saltRec = await this.get(STORE_META, 'auth_salt');
-        const keyRec = await this.get(STORE_META, 'auth_wrapped_key');
-        const recoveryRec = await this.get(STORE_META, 'auth_recovery_wrapped_key');
-
-        if (!saltRec || !keyRec) return null;
-
-        return {
-            salt: saltRec.value,
-            wrappedKey: keyRec.value,
-            recoveryWrappedKey: recoveryRec ? recoveryRec.value : null
-        };
+        const result = await this.get(STORE_META, 'auth_data');
+        return result ? result.value : null;
     }
 
     async isInitialized() {
@@ -161,7 +147,7 @@ class StorageService {
     }
 
     /**
-     * Vault Operations (Encrypted Notes)
+     * Vault Operations (Plain text notes)
      */
     async saveNote(noteObj) {
         // noteObj should have { id, iv, content, created, updated, trash, etc }
@@ -174,13 +160,7 @@ class StorageService {
     }
 
     async clearVault() {
-        return new Promise((resolve, reject) => {
-            const tx = this.db.transaction([STORE_VAULT], 'readwrite');
-            const store = tx.objectStore(STORE_VAULT);
-            const req = store.clear();
-            req.onsuccess = () => resolve();
-            req.onerror = () => reject(req.error);
-        });
+        return this.clearStore(STORE_VAULT);
     }
 
     async deleteNote(id) {
@@ -196,6 +176,29 @@ class StorageService {
 
     async getNoteVersions(noteId) {
         return await this.getByIndex(STORE_VERSIONS, 'noteId', noteId);
+    }
+
+    /**
+     * Clear a single object store.
+     */
+    async clearStore(storeName) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([storeName], 'readwrite');
+            const store = tx.objectStore(storeName);
+            const req = store.clear();
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    /**
+     * Reset all persisted data (auth + vault + versions).
+     * Used when the user explicitly wipes the vault.
+     */
+    async resetAll() {
+        for (const storeName of STORES) {
+            await this.clearStore(storeName);
+        }
     }
 }
 

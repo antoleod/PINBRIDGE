@@ -1,6 +1,6 @@
 /**
  * Auth Module
- * Orchestrates the secure setup and unlocking of the vault.
+ * Orchestrates vault setup and unlocking using a salted PIN hash.
  */
 
 import { cryptoService } from '../../crypto/crypto.js';
@@ -9,181 +9,121 @@ import { Utils } from '../../utils/helpers.js';
 import { bus } from '../../core/bus.js';
 
 class AuthService {
+    constructor() {
+        this.isAuthenticated = false;
+    }
 
     /**
-     * initializeNewVault (Registration)
-     * 1. Generate new Master Key
-     * 2. Generate random Salt
-     * 3. Wrap Master Key with PIN+Salt
-     * 4. Wrap Master Key with Recovery Key
-     * 5. Save Salt & Wrapped Keys to Storage
+     * Flag that the one-time Recovery Key modal has been displayed.
+     */
+    async markRecoveryKeyShown() {
+        await storageService.setMeta('recoveryKeyShown', true);
+    }
+
+    async recoveryKeyAlreadyShown() {
+        return await storageService.getMeta('recoveryKeyShown');
+    }
+
+    /**
+     * Initializes a new vault.
+     * 1. Generates a salt for the PIN.
+     * 2. Hashes the PIN.
+     * 3. Generates a new recovery key and a salt for it.
+     * 4. Hashes the recovery key.
+     * 5. Saves the PIN salt, PIN hash, recovery salt, and recovery hash.
      */
     async initializeNewVault(pin) {
         try {
-            // 1. Generate MK
-            await cryptoService.generateMasterKey();
+            // 1. Handle PIN
+            const pinSalt = cryptoService.generateSalt();
+            const pinHash = await cryptoService.hashPin(pin, pinSalt);
 
-            // 2. Generate Salt
-            const salt = cryptoService.generateSalt();
-
-            // 3. Wrap with PIN
-            const wrappedKeyBuffer = await cryptoService.exportMasterKey(pin, salt);
-
-            // 4. Generate Recovery Key (Random Hex, e.g. 64 chars)
+            // 2. Handle Recovery Key
             const recoveryKey = Utils.bufferToHex(window.crypto.getRandomValues(new Uint8Array(32)));
+            const recoverySalt = cryptoService.generateSalt();
+            const recoveryHash = await cryptoService.hashPin(recoveryKey, recoverySalt);
 
-            // Wrap MK with Recovery Key (using same salt for simplicity in MVP)
-            const recoveryWrappedBuffer = await cryptoService.exportMasterKey(recoveryKey, salt);
+            // 3. Save all auth materials
+            await storageService.saveAuthData({
+                pinSalt: Utils.bufferToHex(pinSalt),
+                pinHash: pinHash,
+                recoverySalt: Utils.bufferToHex(recoverySalt),
+                recoveryHash: recoveryHash
+            });
 
-            // 5. Save
-            const saltHex = Utils.bufferToHex(salt);
-            const wrappedHex = Utils.bufferToHex(wrappedKeyBuffer);
-            const recoveryWrappedHex = Utils.bufferToHex(recoveryWrappedBuffer);
+            // Mark that the recovery key has not been shown yet.
+            await storageService.setMeta('recoveryKeyShown', false);
 
-            await storageService.saveAuthData(saltHex, wrappedHex, recoveryWrappedHex);
-            const fingerprint = await cryptoService.getMasterKeyFingerprint();
-            await storageService.setMeta('auth_master_hash', fingerprint);
-
-            return recoveryKey; // Return to show user
+            return recoveryKey; // Return the raw key to show the user ONCE.
         } catch (e) {
-            console.error("Setup failed", e);
+            console.error("Vault setup failed", e);
             throw e;
         }
     }
 
     /**
-     * login (Unlock)
-     * 1. Get Salt & Wrapped Key from Storage
-     * 2. Try to Unwrap with PIN
-     * 3. If success, Master Key is now in memory
+     * Logs in by verifying the PIN hash.
      */
     async login(pin) {
         const authData = await storageService.getAuthData();
-        if (!authData || !authData.salt || !authData.wrappedKey) {
+        if (!authData || !authData.pinSalt || !authData.pinHash) {
             throw new Error('VAULT_METADATA_MISSING');
         }
 
-        const saltBuf = new Uint8Array(Utils.hexToBuffer(authData.salt));
-        const wrappedBuf = Utils.hexToBuffer(authData.wrappedKey);
+        const saltBuf = Utils.hexToBuffer(authData.pinSalt);
+        const computedHash = await cryptoService.hashPin(pin, saltBuf);
 
-        try {
-            await cryptoService.importMasterKey(pin, saltBuf, wrappedBuf);
-            await this.ensureMasterKeyFingerprintMatches();
+        if (computedHash === authData.pinHash) {
+            this.isAuthenticated = true;
             bus.emit('auth:unlock');
             return true;
-        } catch (err) {
-            if (err?.message === 'Invalid Credentials') {
-                throw new Error('INVALID_PIN');
-            }
-            console.error('Login failed', err);
-            throw new Error('VAULT_CORRUPT');
+        } else {
+            throw new Error('INVALID_PIN');
         }
     }
 
-    async recover(secretString) {
-        // Try as Recovery Key (Hex)
-        // OR Backup Code (Short string?)
-        // OR Answer (String)
-
+    /**
+     * Recovers the vault by verifying the recovery key hash.
+     */
+    async recover(recoveryKey) {
         const authData = await storageService.getAuthData();
-        if (!authData) return false;
-        const salt = new Uint8Array(Utils.hexToBuffer(authData.salt));
-
-        // Strategy: We have multiple wrapped keys stored in meta.
-        // We need to try to unwrap EACH of them with the provided secret.
-        // 1. Primary Recovery Key
-        try {
-            if (authData.recoveryWrappedKey) {
-                const wrapped = Utils.hexToBuffer(authData.recoveryWrappedKey);
-                await cryptoService.importMasterKey(secretString, salt, wrapped);
-                await this.ensureMasterKeyFingerprintMatches();
-                bus.emit('auth:unlock');
-                return true;
-            }
-        } catch (e) { }
-
-        // 2. Try Backup Codes
-        const backupCodesBlob = await storageService.getMeta('auth_backup_codes_blob'); // Array of wrapped keys?
-        if (backupCodesBlob) {
-            for (const wrapped of backupCodesBlob) {
-                try {
-                    const wrappedBuf = Utils.hexToBuffer(wrapped);
-                    await cryptoService.importMasterKey(secretString, salt, wrappedBuf);
-                    await this.ensureMasterKeyFingerprintMatches();
-                    bus.emit('auth:unlock');
-                    return true;
-                } catch (e) { }
-            }
+        if (!authData || !authData.recoverySalt || !authData.recoveryHash) {
+            // If the vault is old and doesn't have recovery keys, this will fail.
+            return false;
         }
+        
+        try {
+            const saltBuf = Utils.hexToBuffer(authData.recoverySalt);
+            const computedHash = await cryptoService.hashPin(recoveryKey, saltBuf);
 
-        // 3. Try Q&A
-        const qaWrapped = await storageService.getMeta('auth_qa_wrapped');
-        if (qaWrapped) {
-            try {
-                const qaBuf = Utils.hexToBuffer(qaWrapped);
-                await cryptoService.importMasterKey(secretString, salt, qaBuf);
-                await this.ensureMasterKeyFingerprintMatches();
+            if (computedHash === authData.recoveryHash) {
+                this.isAuthenticated = true;
                 bus.emit('auth:unlock');
                 return true;
-            } catch (e) { }
+            }
+        } catch (e) {
+            console.error("Recovery failed", e);
         }
 
         return false;
     }
 
-    async ensureMasterKeyFingerprintMatches() {
-        const stored = await storageService.getMeta('auth_master_hash');
-        const current = await cryptoService.getMasterKeyFingerprint();
-        if (stored && stored !== current) {
-            console.error('Master key fingerprint mismatch', { stored, current });
-            throw new Error('VAULT_CORRUPT');
-        }
-        if (!stored) {
-            await storageService.setMeta('auth_master_hash', current);
-        }
-    }
-
-    // --- EXTENDED RECOVERY METHODS ---
-
-    async saveHint(hintText) {
-        await storageService.setMeta('auth_hint', hintText);
-    }
-
-    async getHint() {
-        return await storageService.getMeta('auth_hint');
-    }
-
-    async setupQA(answer) {
-        if (!cryptoService.masterKey) throw new Error("Vault locked");
-        const authData = await storageService.getAuthData();
-        const salt = new Uint8Array(Utils.hexToBuffer(authData.salt));
-
-        const wrapped = await cryptoService.exportMasterKey(answer, salt);
-        await storageService.setMeta('auth_qa_wrapped', Utils.bufferToHex(wrapped));
-    }
-
-    async generateBackupCodes() {
-        if (!cryptoService.masterKey) throw new Error("Vault locked");
-        const authData = await storageService.getAuthData();
-        const salt = new Uint8Array(Utils.hexToBuffer(authData.salt));
-
-        const codes = [];
-        const wrappedBlobs = [];
-
-        for (let i = 0; i < 5; i++) {
-            const code = Utils.uuidv4().substring(0, 8).toUpperCase(); // Short code
-            codes.push(code);
-            const wrapped = await cryptoService.exportMasterKey(code, salt);
-            wrappedBlobs.push(Utils.bufferToHex(wrapped));
-        }
-
-        await storageService.setMeta('auth_backup_codes_blob', wrappedBlobs);
-        return codes;
-    }
-
+    /**
+     * Checks if the database has been initialized with auth data.
+     */
     async hasVault() {
         return await storageService.isInitialized();
+    }
+
+    /**
+     * Logs the user out by resetting the authentication flag.
+     */
+    logout() {
+        this.isAuthenticated = false;
+        localStorage.removeItem('pinbridge_session');
+        console.log("Session locked and cleared.");
     }
 }
 
 export const authService = new AuthService();
+
