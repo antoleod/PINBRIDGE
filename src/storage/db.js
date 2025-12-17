@@ -147,6 +147,15 @@ class StorageService {
         return !!rec;
     }
 
+    async setMeta(key, value) {
+        await this.put(STORE_META, { key, value });
+    }
+
+    async getMeta(key) {
+        const result = await this.get(STORE_META, key);
+        return result ? result.value : null;
+    }
+
     /**
      * Vault Operations (Encrypted Notes)
      */

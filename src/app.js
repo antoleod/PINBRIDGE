@@ -2,11 +2,11 @@
  * Main Application Entry Point
  */
 
+import { ProductivityService } from './modules/productivity/productivity.js';
 import { storageService } from './storage/db.js';
 import { authService } from './modules/auth/auth.js';
 import { vaultService } from './modules/vault/vault.js';
 import { searchService } from './modules/search/search.js';
-import { ProductivityService } from './modules/productivity/productivity.js';
 import { bus } from './core/bus.js';
 
 // --- UI REFS ---
@@ -44,8 +44,17 @@ async function init() {
     // Command Palette Elements creation (dynamic)
     createCommandPalette();
 
+    const params = new URLSearchParams(window.location.search);
+    const vaultName = params.get('vault') || 'pinbridge_db';
+
+    if (vaultName !== 'pinbridge_db') {
+        document.title = `PINBRIDGE | ${vaultName}`;
+        // Maybe change Logo text too?
+        document.querySelector('.brand-title').innerText = `PINBRIDGE (${vaultName})`;
+    }
+
     try {
-        await storageService.init();
+        await storageService.init(vaultName);
         const hasVault = await authService.hasVault();
 
         setTimeout(() => {
@@ -288,16 +297,101 @@ function clearEditor() {
     noteBody.value = "";
 }
 
-// LOCK
-btnLock.onclick = () => {
-    location.reload();
+// ... imports
+
+// FEATURE: QUICK DROP
+const quickDropInput = document.getElementById('quick-drop-input');
+const quickDropZone = document.getElementById('quick-drop-zone');
+
+quickDropInput.addEventListener('keydown', async (e) => {
+    if (e.key === 'Enter') {
+        const text = quickDropInput.value.trim();
+        if (!text) return;
+
+        // Create a new note automatically with a timestamp title or generic
+        const title = `Quick Drop: ${new Date().toLocaleTimeString()}`;
+        await vaultService.createNote(title, text);
+
+        quickDropInput.value = '';
+        // Visual feedback
+        quickDropInput.placeholder = "Stashed!";
+        setTimeout(() => quickDropInput.placeholder = "Quick Drop... (Enter to stash)", 1500);
+
+        // Refresh list if 'all' view
+        if (currentView === 'all') renderCurrentView();
+    }
+});
+
+quickDropInput.addEventListener('focus', () => quickDropZone.classList.remove('collapsed'));
+quickDropInput.addEventListener('blur', () => {
+    if (!quickDropInput.value) quickDropZone.classList.add('collapsed');
+});
+
+
+// FEATURE: EDITOR TOOLBAR ACTIONS (Copy, Pin)
+const btnCopyTitle = document.getElementById('btn-copy-title');
+const btnCopyBody = document.getElementById('btn-copy-body');
+const btnPinNote = document.getElementById('btn-pin-note');
+
+btnCopyTitle.onclick = () => {
+    const text = document.getElementById('note-title').value;
+    copyToClipboard(text, btnCopyTitle);
 };
 
-// 5. EVENT BUS
-bus.on('vault:updated', (notes) => {
-    // We already mostly handle local UI updates, but this syncs if changed elsewhere
-    // renderCurrentView(notes); // Don't loop endlessly if we trigger own events
-});
+btnCopyBody.onclick = () => {
+    const text = document.getElementById('note-content').value;
+    copyToClipboard(text, btnCopyBody);
+};
+
+btnPinNote.onclick = async () => {
+    if (!activeNoteId) return;
+    const note = vaultService.notes.find(n => n.id === activeNoteId);
+    if (!note) return;
+
+    // Toggle Pin Logic
+    // Needs support in VaultService or just use a hacky 'pinned' property on note object 
+    // which needs to be persisted?
+    // VaultService.updateNote doesn't expose metadata like 'pinned' yet.
+    // We should add `togglePin(id)` to VaultService.
+
+    // For now, let's assume we implement togglePin in VaultService or mock it.
+    // Let's add the method to VaultService in next tool call.
+    // For UI, we toggle class 'active' on button
+
+    await vaultService.togglePin(activeNoteId);
+    updatePinButtonState(note.pinned); // Optimistic or wait for event?
+    renderCurrentView(); // Re-sort list
+};
+
+function copyToClipboard(text, btnElement) {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+        const original = btnElement.innerText;
+        btnElement.innerText = "✓";
+        btnElement.style.color = "var(--text-success)";
+        setTimeout(() => {
+            btnElement.innerText = original;
+            btnElement.style.color = "";
+        }, 1500);
+    }).catch(err => {
+        console.error('Copy failed', err);
+        alert('Copy failed');
+    });
+}
+
+function updatePinButtonState(isPinned) {
+    if (isPinned) {
+        btnPinNote.style.color = "var(--brand-primary)";
+        btnPinNote.innerHTML = "★"; // Filled star
+    } else {
+        btnPinNote.style.color = "";
+        btnPinNote.innerHTML = "★"; // Outline if font supports, or just change color
+    }
+}
+
+
+// ... existing init and other code ...
+
 
 
 // 6. COMMAND PALETTE (Phase 4) & SHORTCUTS
@@ -318,22 +412,34 @@ function createCommandPalette() {
     const input = el.querySelector('input');
     const results = el.querySelector('#palette-results');
 
-    import { ProductivityService } from './modules/productivity/productivity.js';
-
-    // ... imports
-
     // ... in createCommandPalette commands array ...
     const commands = [
+        { id: 'settings', label: 'Open Settings (Export/Recovery)', action: () => SettingsService.renderSettingsModal() },
         { id: 'new', label: 'Create New Note', action: () => btnNew.click() },
         { id: 'view_all', label: 'Go to All Notes', action: () => document.querySelector('[data-view="all"]').click() },
         { id: 'view_trash', label: 'Go to Trash', action: () => document.querySelector('[data-view="trash"]').click() },
         { id: 'template', label: 'Insert Template', action: () => showTemplates() },
         { id: 'health', label: 'Run Vault Health Check', action: () => runHealthCheck() },
+        { id: 'switch_vault', label: 'Switch Vault / Profile', action: () => switchVault() },
         { id: 'toggle_safe', label: 'Toggle Safe View', action: () => document.body.classList.toggle('safe-view-mode') },
         { id: 'lock', label: 'Lock Vault', action: () => location.reload() }
     ];
 
     // ...
+
+    // FEATURE: MULTI-VAULT
+    async function switchVault() {
+        const newName = prompt("Enter Vault Name (e.g. 'work', 'personal'):", "pinbridge_db");
+        if (!newName) return;
+
+        // Simple reload with query param? Or re-init?
+        // Re-init is cleaner for SPA but requires clearing all state.
+        // Easiest: Reload page with ?vault=name using URLParams
+
+        const url = new URL(window.location);
+        url.searchParams.set('vault', newName); // e.g. ?vault=work
+        window.location.href = url.toString();
+    }
 
     // FEATURE: TEMPLATES
     function showTemplates() {
@@ -450,6 +556,58 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
+
+// FEATURE: SHARE PREVIEW (Phase 4)
+function openSharePreview() {
+    if (!activeNoteId) return;
+    const title = document.getElementById('note-title').value;
+    const body = document.getElementById('note-content').value;
+
+    const win = window.open('', '_blank');
+    if (win) {
+        win.document.write(`
+            <html>
+            <head>
+                <title>${Utils.escapeHtml(title)} - Read Only</title>
+                <style>
+                    body { background: #18181b; color: #f4f4f5; font-family: system-ui, sans-serif; padding: 2rem; max-width: 800px; margin: 0 auto; }
+                    h1 { border-bottom: 1px solid #3f3f46; padding-bottom: 1rem; }
+                    pre { white-space: pre-wrap; font-family: 'Consolas', monospace; font-size: 1.1rem; line-height: 1.6; }
+                    .meta { color: #52525b; font-size: 0.8rem; margin-top: 2rem; border-top: 1px solid #27272a; padding-top: 1rem; }
+                </style>
+            </head>
+            <body>
+                <h1>${Utils.escapeHtml(title)}</h1>
+                <pre>${Utils.escapeHtml(body)}</pre>
+                <div class="meta">Generated by PINBRIDGE • Local Secure View</div>
+            </body>
+            </html>
+        `);
+        win.document.close();
+    }
+}
+
+// Add to Command Palette
+// ... in createCommandPalette commands array ...
+// We need to inject this into the existing commands list or push it.
+// Since we can't easily edit the const array inside the function scope without re-writing the whole function,
+// we will expose it globally or re-declare. 
+// For now, let's simply append to the 'commands' array if we can reach it, 
+// OR just rely on a new button in the UI if we add one.
+// Let's add a button to the Editor Toolbar first.
+
+// Add UI Button for Share
+const btnShare = document.createElement('button');
+btnShare.className = 'btn-tool';
+btnShare.innerHTML = '👁️'; // Eye icon
+btnShare.title = 'Read-Only Preview';
+btnShare.onclick = openSharePreview;
+
+// Insert before Delete button
+const actionsDiv = document.querySelector('.editor-actions');
+if (actionsDiv) {
+    actionsDiv.insertBefore(btnShare, document.getElementById('btn-delete'));
+}
 
 // Start
 init();
