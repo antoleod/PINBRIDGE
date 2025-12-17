@@ -76,9 +76,10 @@ body {
 #auth-screen.auth-hero {
     justify-content: center;
     align-items: center;
-    background: radial-gradient(circle at 30% 20%, rgba(0, 255, 156, 0.12), transparent 45%),
-        radial-gradient(circle at 80% 10%, rgba(59, 130, 246, 0.18), transparent 50%),
-        linear-gradient(135deg, #0b1220, #0c1118 50%, #0a0f14 100%);
+    background: radial-gradient(circle at 30% 20%, rgba(0, 255, 156, 0.16), transparent 45%),
+        radial-gradient(circle at 80% 10%, rgba(59, 130, 246, 0.22), transparent 50%),
+        linear-gradient(135deg, #111827, #0f172a 55%, #0b1220 100%);
+    padding: 1rem;
 }
 
 .auth-stack {
@@ -86,9 +87,9 @@ body {
     text-align: center;
     padding: 2.5rem 2.75rem;
     border-radius: 22px;
-    background: linear-gradient(145deg, rgba(24, 24, 27, 0.9), rgba(18, 22, 26, 0.9));
-    border: 1px solid rgba(255, 255, 255, 0.04);
-    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+    background: linear-gradient(160deg, rgba(31, 41, 55, 0.92), rgba(21, 30, 42, 0.92));
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -210,7 +211,7 @@ input {
     width: 100%;
     padding: 1rem;
     background: rgba(0, 0, 0, 0.35);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 10px;
     color: white;
     font-size: 1rem;
@@ -514,6 +515,51 @@ button.btn:active {
     box-shadow: 0 4px 12px var(--brand-glow);
 }
 
+.mobile-topbar {
+    width: 100%;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.mobile-topbar img {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+}
+
+.topbar-actions {
+    display: flex;
+    gap: 0.35rem;
+    flex: 1;
+    justify-content: center;
+}
+
+.nav-pill {
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.nav-pill.active {
+    background: var(--brand-primary);
+    color: #fff;
+    border-color: transparent;
+}
+
+.topbar-utilities {
+    display: flex;
+    gap: 0.35rem;
+    align-items: center;
+}
+
 .icon {
     width: 24px;
     height: 24px;
@@ -526,6 +572,7 @@ button.btn:active {
     border-right: 1px solid var(--border-subtle);
     display: flex;
     flex-direction: column;
+    min-height: 40vh;
 }
 
 .list-header {
@@ -551,7 +598,7 @@ button.btn:active {
 }
 
 .list-header h2 {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 600;
 }
 
@@ -584,6 +631,7 @@ button.btn:active {
     background: rgba(255, 255, 255, 0.05);
     border: 1px dashed var(--border-subtle);
     font-size: 0.9rem;
+    border-radius: 12px;
 }
 
 #quick-drop-input:focus {
@@ -675,6 +723,7 @@ body.compact-notes .note-item p {
     position: relative;
     /* subtle gradient mesh */
     background-image: radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.05) 0%, transparent 50%);
+    min-height: 50vh;
 }
 
 .editor-toolbar {
@@ -1028,24 +1077,90 @@ body.safe-view-mode {
 
 /* Responsive tweaks */
 @media (max-width: 900px) {
-    .input-row {
-        grid-template-columns: 1fr;
+    body {
+        height: auto;
+        overflow-y: auto;
     }
-    .auth-card {
-        padding: 1.5rem;
-    }
+    .input-row { grid-template-columns: 1fr; }
+    .auth-card, .auth-stack { padding: 1.5rem; width: 100%; }
+    .auth-stack { border-radius: 16px; }
     #vault-screen {
         flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+    #mobile-topbar {
+        display: flex;
+        position: sticky;
+        top: 0;
+        z-index: 15;
+    }
+    .sidebar {
+        display: none;
     }
     .sidebar {
         flex-direction: row;
         width: 100%;
+        height: 64px;
+        padding: 0.5rem 0.75rem;
         justify-content: space-between;
+        gap: 0.75rem;
     }
+    .nav-items {
+        flex-direction: row;
+        gap: 0.5rem;
+        justify-content: center;
+        width: auto;
+    }
+    .nav-item {
+        width: 44px;
+        height: 44px;
+    }
+    .sidebar-bottom { display: none; }
     .list-panel {
         width: 100%;
+        border-right: none;
+    }
+    .list-header {
+        padding: 1rem;
+    }
+    .list-header h2 {
+        font-size: 1.05rem;
+    }
+    .editor-panel {
+        width: 100%;
+        min-height: 60vh;
+    }
+    .editor-toolbar {
+        padding: 0.85rem 1rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    .meta-inputs {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .meta-input {
+        flex: 1;
+        min-width: 120px;
+    }
+    .status-actions {
+        width: 100%;
+        justify-content: space-between;
+    }
+    .editor-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
     .editor-canvas {
-        padding: 1.25rem;
+        padding: 1rem;
+    }
+    .editor-input-title {
+        font-size: 1.8rem;
+    }
+    .editor-input-body {
+        font-size: 1rem;
+        min-height: 220px;
     }
 }

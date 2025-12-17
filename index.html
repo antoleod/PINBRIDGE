@@ -46,6 +46,10 @@
                 <h2 class="form-title">Crear tu PIN</h2>
                 <form id="setup-form">
                     <div class="input-group">
+                        <label>Nombre para mostrar (opcional)</label>
+                        <input type="text" id="setup-display-name" placeholder="Ej. Ana, Equipo, Personal">
+                    </div>
+                    <div class="input-group">
                         <label>Crea tu PIN</label>
                         <input type="password" id="setup-pin" placeholder="••••" required minlength="4" autocomplete="new-password">
                     </div>
@@ -147,6 +151,22 @@
                 </button>
             </div>
         </nav>
+
+        <!-- MOBILE TOP BAR -->
+        <div id="mobile-topbar" class="mobile-topbar hidden glass-panel">
+            <button class="topbar-logo" title="PINBRIDGE">
+                <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
+            </button>
+            <div class="topbar-actions">
+                <button class="nav-pill" data-view="all" title="Notas">Notas</button>
+                <button class="nav-pill" data-view="favorites" title="Favoritos">Favoritos</button>
+                <button class="nav-pill" data-view="trash" title="Papelera">Papelera</button>
+            </div>
+            <div class="topbar-utilities">
+                <button id="mobile-new-note" class="btn-icon-primary" title="Nueva nota">+</button>
+                <button id="mobile-lock" class="btn-icon ghost" title="Lock">🔒</button>
+            </div>
+        </div>
 
         <!-- LIST PANEL -->
         <section class="list-panel">

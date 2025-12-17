@@ -6,6 +6,7 @@
 import { notesService } from '../notes/notes.js';
 import { storageService } from '../../storage/db.js';
 import { authService } from '../auth/auth.js';
+import { syncService } from '../sync/sync.js';
 
 export const settingsService = {
     async exportJSON() {
@@ -96,7 +97,11 @@ export const settingsService = {
                     <button id="btn-import-json" class="btn btn-secondary">Importar JSON</button>
                     <button id="btn-copy-backup" class="btn btn-secondary">Copiar backup al portapapeles</button>
                 </div>
-                <p class="hint">Usa estos botones para sincronizar manualmente con otro dispositivo: exporta, comparte el archivo/texto, e importa allí.</p>
+                <div class="settings-grid" style="margin-top:0.5rem">
+                    <button id="btn-sync-export" class="btn btn-primary">Guardar backup (.json)</button>
+                    <button id="btn-sync-import" class="btn btn-primary">Importar backup (.json)</button>
+                </div>
+                <p class="hint">Sync manual: exporta y mueve el archivo o copia/pega entre dispositivos. Todo sigue local.</p>
                 <div class="divider"></div>
                 <div class="danger-zone">
                     <p class="warning-text">Reset borra todo el contenido local y requerirá crear un Vault nuevo.</p>
@@ -111,7 +116,9 @@ export const settingsService = {
         document.getElementById('btn-export-json').onclick = () => this.exportJSON();
         document.getElementById('btn-export-csv').onclick = () => this.exportCSV();
         document.getElementById('btn-import-json').onclick = () => this.importJSON();
-        document.getElementById('btn-copy-backup').onclick = () => this.copyBackup();
+        document.getElementById('btn-copy-backup').onclick = () => syncService.copyBackupToClipboard();
+        document.getElementById('btn-sync-export').onclick = () => syncService.exportBackup();
+        document.getElementById('btn-sync-import').onclick = () => syncService.importBackup();
         document.getElementById('btn-reset-vault').onclick = () => this.resetVault();
 
         overlay.onclick = (e) => {

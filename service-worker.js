@@ -13,6 +13,7 @@ const ASSETS_TO_CACHE = [
     './src/modules/notes/notes.js',
     './src/modules/search/search.js',
     './src/modules/settings/settings.js',
+    './src/modules/sync/sync.js',
     './src/ui/ui.js'
 ];
 

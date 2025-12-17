@@ -42,6 +42,14 @@ class UIService {
         this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') !== 'false';
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
         this.saveTimeout = null;
+
+        const topbar = document.getElementById('mobile-topbar');
+        this.mobile = {
+            topbar,
+            navPills: topbar ? Array.from(topbar.querySelectorAll('.nav-pill')) : [],
+            btnNew: document.getElementById('mobile-new-note'),
+            btnLock: document.getElementById('mobile-lock')
+        };
     }
 
     
@@ -206,6 +214,16 @@ class UIService {
 
             });
 
+            // Mobile pills
+            this.mobile.navPills?.forEach(btn => {
+                btn.onclick = () => {
+                    this.mobile.navPills.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.currentView = btn.dataset.view;
+                    this.renderCurrentView();
+                };
+            });
+
     
 
             const searchInput = document.getElementById('search-input');
@@ -215,6 +233,7 @@ class UIService {
     
 
             document.getElementById('btn-new-note').onclick = () => this.handleNewNote();
+            if (this.mobile.btnNew) this.mobile.btnNew.onclick = () => this.handleNewNote();
 
             document.getElementById('btn-lock').onclick = () => {
                 authService.logout();
@@ -229,6 +248,7 @@ class UIService {
                 this.forms.setup.classList.add('hidden');
                 this.showToast("Vault locked. Sesion cerrada.", "info");
             };
+            if (this.mobile.btnLock) this.mobile.btnLock.onclick = () => document.getElementById('btn-lock').click();
 
     
 
@@ -346,9 +366,11 @@ class UIService {
 
             const p1 = document.getElementById('setup-pin').value;
 
-    
+
 
             const p2 = document.getElementById('setup-pin-confirm').value;
+
+            const displayName = document.getElementById('setup-display-name').value.trim();
 
     
 
@@ -385,6 +407,11 @@ class UIService {
 
 
                 const recoveryKey = await authService.initializeNewVault(p1);
+
+                // Persist optional display name for welcome messages
+                if (displayName) {
+                    await storageService.setMeta('vault_username', displayName);
+                }
 
     
 
@@ -451,7 +478,9 @@ class UIService {
 
             if (!success) throw new Error('INVALID_PIN');
 
-            this.showToast(recovery ? "Vault desbloqueado con Recovery Key" : "Bienvenido de nuevo", "success");
+            let welcomeName = await storageService.getMeta('vault_username');
+            const greeting = welcomeName ? `Hola ${welcomeName}, bienvenido de nuevo` : "Bienvenido de nuevo";
+            this.showToast(recovery ? "Vault desbloqueado con Recovery Key" : greeting, "success");
         } catch (err) {
 
             this.showToast(this.resolveAuthErrorMessage(err?.message || err), "error");
