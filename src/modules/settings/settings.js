@@ -6,6 +6,7 @@
 import { vaultService } from '../vault/vault.js';
 import { authService } from '../auth/auth.js';
 import { Utils } from '../../utils/helpers.js';
+import { syncService } from '../sync/index.js';
 
 export const settingsService = {
 
@@ -88,6 +89,7 @@ export const settingsService = {
                     <button id="btn-export-json" class="btn btn-primary" style="background:var(--bg-surface); border:1px solid var(--border-subtle)">Export JSON</button>
                     <button id="btn-export-csv" class="btn btn-primary" style="background:var(--bg-surface); border:1px solid var(--border-subtle)">Export CSV</button>
                 </div>
+                <button id="btn-export-pbak" class="btn btn-primary" style="width:100%; margin-top:0.5rem">Export Encrypted (.pbak)</button>
 
                 <h3 style="margin-top:1.5rem; color:var(--text-danger)">Security & Recovery</h3>
                 <div style="display:flex; flex-direction:column; gap:0.5rem">
@@ -96,6 +98,15 @@ export const settingsService = {
                     <button id="btn-rec-hint" class="btn btn-primary">Set Public Hint</button>
                 </div>
                 
+                <h3 style="margin-top:1.5rem; color:var(--brand-primary)">Sync</h3>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem">
+                    <button id="btn-sync-send" class="btn btn-primary">Pair with QR (Send)</button>
+                    <button id="btn-sync-receive" class="btn btn-primary">Scan QR (Receive)</button>
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:0.5rem; margin-top:0.5rem">
+                    <button id="btn-sync-export" class="btn btn-primary">Export encrypted</button>
+                    <button id="btn-sync-import" class="btn btn-primary">Import encrypted</button>
+                </div>
                 <button id="btn-close-settings" class="btn btn-text" style="margin-top:2rem">Close</button>
             </div>
         `;
@@ -105,10 +116,15 @@ export const settingsService = {
         // Bindings
         document.getElementById('btn-export-json').onclick = () => this.exportJSON();
         document.getElementById('btn-export-csv').onclick = () => this.exportCSV();
+        document.getElementById('btn-export-pbak').onclick = () => syncService.exportOfflinePackage();
 
         document.getElementById('btn-rec-codes').onclick = () => this.setupBackupCodes();
         document.getElementById('btn-rec-qa').onclick = () => this.setupQA();
         document.getElementById('btn-rec-hint').onclick = () => this.setupHint();
+        document.getElementById('btn-sync-send').onclick = () => syncService.openOfferFlow();
+        document.getElementById('btn-sync-receive').onclick = () => syncService.openAnswerFlow();
+        document.getElementById('btn-sync-export').onclick = () => syncService.exportOfflinePackage();
+        document.getElementById('btn-sync-import').onclick = () => syncService.importOfflinePackage();
 
         overlay.onclick = (e) => {
             if (e.target === overlay || e.target.id === 'btn-close-settings') overlay.remove();

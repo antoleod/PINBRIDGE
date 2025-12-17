@@ -61,7 +61,9 @@ class AuthService {
             if (!authData) return false;
 
             // 1. Re-derive Key from PIN
-            const keyBuffer = await cryptoService.importMasterKey(pin, new Uint8Array(Utils.hexToBuffer(authData.salt)), authData.wrappedKey);
+            const saltBuf = new Uint8Array(Utils.hexToBuffer(authData.salt));
+            const wrappedBuf = Utils.hexToBuffer(authData.wrappedKey);
+            const keyBuffer = await cryptoService.importMasterKey(pin, saltBuf, wrappedBuf);
 
             // Success! Store/Emit
             // Note: cryptoService.masterKey is set internally by importMasterKey
@@ -87,7 +89,8 @@ class AuthService {
         // 1. Primary Recovery Key
         try {
             if (authData.recoveryWrappedKey) {
-                await cryptoService.importMasterKey(secretString, salt, authData.recoveryWrappedKey);
+                const wrapped = Utils.hexToBuffer(authData.recoveryWrappedKey);
+                await cryptoService.importMasterKey(secretString, salt, wrapped);
                 bus.emit('auth:unlock');
                 return true;
             }
@@ -98,7 +101,8 @@ class AuthService {
         if (backupCodesBlob) {
             for (const wrapped of backupCodesBlob) {
                 try {
-                    await cryptoService.importMasterKey(secretString, salt, wrapped);
+                    const wrappedBuf = Utils.hexToBuffer(wrapped);
+                    await cryptoService.importMasterKey(secretString, salt, wrappedBuf);
                     bus.emit('auth:unlock');
                     return true;
                 } catch (e) { }
@@ -109,7 +113,8 @@ class AuthService {
         const qaWrapped = await storageService.getMeta('auth_qa_wrapped');
         if (qaWrapped) {
             try {
-                await cryptoService.importMasterKey(secretString, salt, qaWrapped);
+                const qaBuf = Utils.hexToBuffer(qaWrapped);
+                await cryptoService.importMasterKey(secretString, salt, qaBuf);
                 bus.emit('auth:unlock');
                 return true;
             } catch (e) { }

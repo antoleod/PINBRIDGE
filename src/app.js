@@ -274,16 +274,36 @@ function selectNote(note) {
 // 4. EDITOR ACTIONS
 
 const btnNew = document.getElementById('btn-new-note');
-const btnSave = document.getElementById('editor-status');
 const noteTitle = document.getElementById('note-title');
 const noteBody = document.getElementById('note-content');
 const btnDelete = document.getElementById('btn-delete');
 const btnLock = document.getElementById('btn-lock');
+const btnSaveNote = document.getElementById('btn-save-note');
+const btnToggleAutoSave = document.getElementById('btn-toggle-autosave');
+let autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') !== 'false';
 
 btnLock.onclick = () => {
     logActivity("Vault Locked");
     location.reload();
 };
+
+function updateAutoSaveUI() {
+    if (!btnToggleAutoSave) return;
+    btnToggleAutoSave.innerText = `Auto Save: ${autoSaveEnabled ? 'On' : 'Off'}`;
+    btnToggleAutoSave.dataset.state = autoSaveEnabled ? 'on' : 'off';
+}
+
+btnToggleAutoSave.onclick = () => {
+    autoSaveEnabled = !autoSaveEnabled;
+    localStorage.setItem('pinbridge.auto_save', autoSaveEnabled ? 'true' : 'false');
+    updateAutoSaveUI();
+    document.getElementById('editor-status').innerText = autoSaveEnabled ? 'Auto-save enabled' : 'Manual save mode';
+    if (autoSaveEnabled) scheduleAutoSave();
+};
+
+btnSaveNote.onclick = () => persistNote(true);
+
+updateAutoSaveUI();
 
 // NEW NOTE
 btnNew.onclick = async () => {
@@ -300,41 +320,59 @@ btnNew.onclick = async () => {
 
 // AUTO SAVE
 let saveTimeout;
-function triggerSave() {
+function scheduleAutoSave() {
+    if (!activeNoteId) return;
+    if (!autoSaveEnabled) {
+        document.getElementById('editor-status').innerText = "Manual save mode";
+        return;
+    }
+    clearTimeout(saveTimeout);
+    document.getElementById('editor-status').innerText = "Saving...";
+    saveTimeout = setTimeout(() => persistNote(), 1000);
+}
+
+async function persistNote(force = false) {
     if (!activeNoteId) return;
     const note = vaultService.notes.find(n => n.id === activeNoteId);
     if (note && note.trash) return;
-
     clearTimeout(saveTimeout);
+
+    const title = document.getElementById('note-title').value;
+    const body = document.getElementById('note-content').value;
+    const folder = document.getElementById('note-folder').value.trim();
+    const tags = document.getElementById('note-tags').value.split(',').map(t => t.trim()).filter(t => t);
+    const trimmedTitle = title.trim();
+    const trimmedBody = body.trim();
+
+    if (!force && !autoSaveEnabled) {
+        document.getElementById('editor-status').innerText = "Manual save mode";
+        return;
+    }
+
+    if (!trimmedTitle && !trimmedBody) {
+        document.getElementById('editor-status').innerText = "No content to save";
+        return;
+    }
+
     document.getElementById('editor-status').innerText = "Saving...";
+    await vaultService.updateNote(activeNoteId, title, body, folder, tags);
+    document.getElementById('editor-status').innerText = "Saved";
 
-    saveTimeout = setTimeout(async () => {
-        const title = document.getElementById('note-title').value;
-        const body = document.getElementById('note-content').value;
-        const folder = document.getElementById('note-folder').value.trim();
-        const tags = document.getElementById('note-tags').value.split(',').map(t => t.trim()).filter(t => t);
-
-        await vaultService.updateNote(activeNoteId, title, body, folder, tags);
-        document.getElementById('editor-status').innerText = "Saved";
-
-        // Refresh folders list if folder changed
-        renderFolders();
-        const isSearching = searchInput.value.trim().length > 0;
-        if (isSearching) {
-            const results = searchService.search(searchInput.value.trim());
-            const viewResults = currentView === 'trash' ? results.filter(n => n.trash) : results.filter(n => !n.trash);
-            renderNoteList(viewResults);
-        } else {
-            renderCurrentView();
-        }
-
-    }, 1000);
+    renderFolders();
+    const isSearching = searchInput.value.trim().length > 0;
+    if (isSearching) {
+        const results = searchService.search(searchInput.value.trim());
+        const viewResults = currentView === 'trash' ? results.filter(n => n.trash) : results.filter(n => !n.trash);
+        renderNoteList(viewResults);
+    } else {
+        renderCurrentView();
+    }
 }
 
-document.getElementById('note-title').addEventListener('input', triggerSave);
-document.getElementById('note-content').addEventListener('input', triggerSave);
-document.getElementById('note-folder').addEventListener('input', triggerSave);
-document.getElementById('note-tags').addEventListener('input', triggerSave);
+document.getElementById('note-title').addEventListener('input', scheduleAutoSave);
+document.getElementById('note-content').addEventListener('input', scheduleAutoSave);
+document.getElementById('note-folder').addEventListener('input', scheduleAutoSave);
+document.getElementById('note-tags').addEventListener('input', scheduleAutoSave);
 
 // DELETE / RESTORE
 btnDelete.onclick = async () => {
@@ -608,7 +646,7 @@ function createCommandPalette() {
             const newBody = currentBody ? `${currentBody}\n\n${processedBody}` : processedBody;
 
             document.getElementById('note-content').value = newBody;
-            triggerSave();
+            scheduleAutoSave();
             renderCurrentView();
         })();
     }

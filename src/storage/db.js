@@ -156,6 +156,10 @@ class StorageService {
         return result ? result.value : null;
     }
 
+    async getAllMeta() {
+        return await this.getAll(STORE_META);
+    }
+
     /**
      * Vault Operations (Encrypted Notes)
      */
@@ -167,6 +171,16 @@ class StorageService {
 
     async getNotes() {
         return await this.getAll(STORE_VAULT);
+    }
+
+    async clearVault() {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction([STORE_VAULT], 'readwrite');
+            const store = tx.objectStore(STORE_VAULT);
+            const req = store.clear();
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
     }
 
     async deleteNote(id) {

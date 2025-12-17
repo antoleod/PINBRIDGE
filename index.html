@@ -77,7 +77,9 @@
         <!-- SIDEBAR -->
         <nav class="sidebar glass-panel">
             <div class="sidebar-top">
-                <div class="logo-small">PB</div>
+                <div class="logo-small">
+                    <img src="/public/icons/android/icon-192.png" alt="PINBRIDGE mark">
+                </div>
             </div>
 
             <div class="nav-items">
@@ -159,7 +161,11 @@
                     <input type="text" id="note-tags" placeholder="#tags..." class="meta-input">
                     <datalist id="folder-suggestions"></datalist>
                 </div>
-                <span id="editor-status" class="status-badge">Ready</span>
+                <div class="status-actions">
+                    <span id="editor-status" class="status-badge">Ready</span>
+                    <button id="btn-save-note" class="btn btn-text">Save</button>
+                    <button id="btn-toggle-autosave" class="btn btn-text">Auto Save: On</button>
+                </div>
 
                 <div class="editor-actions">
                     <!-- v2.0 ONE TAP COPY -->

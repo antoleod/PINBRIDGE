@@ -55,6 +55,65 @@ export const Utils = {
     },
 
     /**
+     * Encode ArrayBuffer / TypedArray to base64 string
+     */
+    bufferToBase64(buffer) {
+        const bytes = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) {
+            binary += String.fromCharCode(bytes[i]);
+        }
+        return btoa(binary);
+    },
+
+    /**
+     * Decode base64 string to Uint8Array
+     */
+    base64ToBuffer(base64) {
+        const binary = atob(base64);
+        const len = binary.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+    },
+
+    /**
+     * Encode UTF-8 string to base64
+     */
+    strToBase64(str) {
+        const encoded = new TextEncoder().encode(str);
+        return this.bufferToBase64(encoded);
+    },
+
+    /**
+     * Decode base64 string to UTF-8 string
+     */
+    base64ToStr(base64) {
+        const buffer = this.base64ToBuffer(base64);
+        return this.bufferToStr(buffer);
+    },
+
+    /**
+     * Compute SHA-256 hash returning hex string
+     */
+    async sha256Hex(value) {
+        let buffer;
+        if (typeof value === 'string') {
+            buffer = this.strToBuffer(value);
+        } else if (value instanceof ArrayBuffer) {
+            buffer = new Uint8Array(value);
+        } else if (value && value.buffer instanceof ArrayBuffer) {
+            buffer = new Uint8Array(value.buffer);
+        } else {
+            buffer = new Uint8Array(0);
+        }
+        const hash = await crypto.subtle.digest('SHA-256', buffer);
+        return this.bufferToHex(hash);
+    },
+
+    /**
      * Escape HTML entities to prevent injection in previews
      */
     escapeHtml(str) {

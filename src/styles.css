@@ -76,6 +76,7 @@ body {
 #auth-screen {
     justify-content: center;
     align-items: center;
+    background: radial-gradient(circle at 20% 20%, rgba(0, 255, 156, 0.08), transparent 45%), radial-gradient(circle at 80% 30%, rgba(59, 130, 246, 0.1), transparent 55%);
 }
 
 .auth-card {
@@ -84,6 +85,20 @@ body {
     padding: 3rem 2rem;
     border-radius: var(--radius-lg);
     text-align: center;
+    position: relative;
+    overflow: hidden;
+    background: linear-gradient(135deg, rgba(0, 255, 156, 0.08), rgba(59, 130, 246, 0.08));
+    border: 1px solid rgba(0, 255, 156, 0.18);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.65), 0 0 30px rgba(0, 255, 156, 0.12);
+}
+
+.auth-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, rgba(0, 255, 156, 0.18), transparent 40%, rgba(59, 130, 246, 0.25));
+    opacity: 0.4;
+    pointer-events: none;
 }
 
 .brand-title {
@@ -150,9 +165,9 @@ button.btn:active {
 }
 
 .btn-primary {
-    background: var(--brand-primary);
+    background: linear-gradient(120deg, #00ff9c, #3b82f6);
     color: white;
-    box-shadow: 0 4px 12px var(--brand-glow);
+    box-shadow: 0 8px 18px rgba(0, 255, 156, 0.2), 0 0 18px rgba(59, 130, 246, 0.25);
 }
 
 .btn-text {
@@ -193,6 +208,161 @@ button.btn:active {
     font-weight: 800;
     margin-bottom: 2rem;
     color: var(--brand-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo-small img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 12px;
+}
+
+.status-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.status-actions .btn {
+    font-size: 0.85rem;
+    padding: 0.15rem 0.6rem;
+}
+
+.sync-overlay, .import-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5, 7, 10, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+.sync-card, .import-card {
+    width: min(480px, 90vw);
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    background: var(--bg-surface);
+    backdrop-filter: blur(18px);
+}
+
+.sync-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.sync-subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin: 0.2rem 0 0;
+}
+
+.sync-status-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.sync-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.sync-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, var(--brand-primary), #6a5efc);
+    border-radius: 999px;
+    transition: width 0.3s ease;
+}
+
+.sync-qr {
+    width: 100%;
+    min-height: 260px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 12px;
+    padding: 0.75rem;
+}
+
+.sync-qr canvas {
+    width: 220px;
+    height: 220px;
+}
+
+.sync-code {
+    width: 100%;
+    min-height: 80px;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-primary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.75rem;
+    font-family: monospace;
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    resize: vertical;
+}
+
+.sync-actions, .import-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.sync-scanner, .sync-manual {
+    margin-top: 0.75rem;
+}
+
+.sync-scanner.hidden, .sync-manual.hidden {
+    display: none;
+}
+
+.sync-scanner video {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 0.5rem;
+}
+
+.sync-scanner-tip {
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+    font-size: 0.85rem;
+}
+
+.import-card textarea {
+    width: 100%;
+    min-height: 160px;
+    border-radius: 12px;
+    background: rgba(5, 5, 5, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    padding: 0.8rem;
+    resize: vertical;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.import-card h3 {
+    margin-top: 0;
+}
+
+*** End Patch***>Please provide valid JSON next time. The patch tool accepts only JSON-encoded arguments.
 }
 
 .nav-items {
