@@ -7,7 +7,7 @@ import { vaultService } from '../vault/vault.js';
 import { authService } from '../auth/auth.js';
 import { Utils } from '../../utils/helpers.js';
 
-export const SettingsService = {
+export const settingsService = {
 
     // --- EXPORT ---
 
@@ -115,3 +115,6 @@ export const SettingsService = {
         };
     }
 };
+
+// Keep the original name available for any legacy imports
+export const SettingsService = settingsService;

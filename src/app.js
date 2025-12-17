@@ -7,6 +7,8 @@ import { storageService } from './storage/db.js';
 import { authService } from './modules/auth/auth.js';
 import { vaultService } from './modules/vault/vault.js';
 import { searchService } from './modules/search/search.js';
+import { Utils } from './utils/helpers.js'; // Ensure Utils is imported if used directly or use via service
+import { settingsService } from './modules/settings/settings.js';
 import { bus } from './core/bus.js';
 
 // --- UI REFS ---
@@ -26,6 +28,32 @@ const forms = {
 // --- STATE ---
 let activeNoteId = null;
 let currentView = 'all'; // 'all', 'trash'
+
+// --- UI HELPERS ---
+function getToastHost() {
+    let host = document.getElementById('toast-container');
+    if (!host) {
+        host = document.createElement('div');
+        host.id = 'toast-container';
+        document.body.appendChild(host);
+    }
+    return host;
+}
+
+function showToast(message, type = 'info') {
+    const host = getToastHost();
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerText = message;
+    host.appendChild(toast);
+
+    requestAnimationFrame(() => toast.classList.add('visible'));
+
+    setTimeout(() => {
+        toast.classList.remove('visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
 
 // --- INIT ---
 
@@ -95,7 +123,7 @@ forms.setupForm.addEventListener('submit', async (e) => {
 
     try {
         const recoveryKey = await authService.initializeNewVault(p1);
-        alert(`⚠️ SAVE THIS KEY:\n\n${recoveryKey}`);
+        alert(`IMPORTANT: SAVE THIS KEY:\n\n${recoveryKey}`);
         await authService.login(p1);
     } catch (err) {
         alert("Setup failed: " + err.message);
@@ -152,6 +180,9 @@ document.querySelectorAll('.nav-item').forEach(btn => {
 });
 
 function renderCurrentView(notesOverride) {
+    if (!notesOverride) {
+        searchService.buildIndex(vaultService.notes);
+    }
     const notes = notesOverride || vaultService.notes;
     let filtered = [];
 
@@ -207,11 +238,14 @@ function renderNoteList(notes) {
         div.className = 'note-item';
         if (note.id === activeNoteId) div.classList.add('active');
 
-        let trashBadge = note.trash ? ' <span style="color:#f85149; font-size:0.8em">🗑️</span>' : '';
+        const badges = [];
+        if (note.pinned) badges.push('<span style="color:var(--brand-primary); font-size:0.8em">★</span>');
+        if (note.trash) badges.push('<span style="color:#f85149; font-size:0.8em">&#128465;</span>');
+        const badgeStr = badges.length ? ` ${badges.join(' ')}` : '';
 
         div.innerHTML = `
-            <h4>${escapeHtml(note.title) || 'Untitled'}${trashBadge}</h4>
-            <p>${escapeHtml(note.body) || 'No content'}</p>
+            <h4>${Utils.escapeHtml(note.title) || 'Untitled'}${badgeStr}</h4>
+            <p>${Utils.escapeHtml(note.body) || 'No content'}</p>
         `;
         div.onclick = () => selectNote(note);
         listEl.appendChild(div);
@@ -224,6 +258,7 @@ function selectNote(note) {
     document.getElementById('note-content').value = note.body;
     document.getElementById('note-folder').value = note.folder || "";
     document.getElementById('note-tags').value = note.tags ? note.tags.join(', ') : "";
+    updatePinButtonState(note.pinned);
 
     // Update active class manually to avoid re-render
     document.querySelectorAll('.note-item').forEach(el => el.classList.remove('active'));
@@ -236,11 +271,6 @@ function selectNote(note) {
     renderCurrentView(vaultService.notes);
 }
 
-function escapeHtml(text) {
-    if (!text) return "";
-    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-}
-
 // 4. EDITOR ACTIONS
 
 const btnNew = document.getElementById('btn-new-note');
@@ -249,6 +279,11 @@ const noteTitle = document.getElementById('note-title');
 const noteBody = document.getElementById('note-content');
 const btnDelete = document.getElementById('btn-delete');
 const btnLock = document.getElementById('btn-lock');
+
+btnLock.onclick = () => {
+    logActivity("Vault Locked");
+    location.reload();
+};
 
 // NEW NOTE
 btnNew.onclick = async () => {
@@ -284,8 +319,14 @@ function triggerSave() {
 
         // Refresh folders list if folder changed
         renderFolders();
-        // We might need to refresh list if we were filtered by folder and just moved it out
-        if (currentView.startsWith('folder:')) renderCurrentView();
+        const isSearching = searchInput.value.trim().length > 0;
+        if (isSearching) {
+            const results = searchService.search(searchInput.value.trim());
+            const viewResults = currentView === 'trash' ? results.filter(n => n.trash) : results.filter(n => !n.trash);
+            renderNoteList(viewResults);
+        } else {
+            renderCurrentView();
+        }
 
     }, 1000);
 }
@@ -431,8 +472,9 @@ function copyToClipboard(text, btnElement) {
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
         const original = btnElement.innerText;
-        btnElement.innerText = "✓";
+        btnElement.innerText = "Copied";
         btnElement.style.color = "var(--text-success)";
+        showToast("Copied to clipboard", "success");
         setTimeout(() => {
             btnElement.innerText = original;
             btnElement.style.color = "";
@@ -441,7 +483,7 @@ function copyToClipboard(text, btnElement) {
         // FEATURE: CLIPBOARD CLEAN MODE (Phase 7)
         // Auto-clear after 45 seconds for security
         setTimeout(() => {
-            navigator.clipboard.writeText(" ").then(() => {
+            navigator.clipboard.writeText("").then(() => {
                 showToast("Clipboard cleared for security", "info");
             });
         }, 45000);
@@ -481,10 +523,10 @@ function showActivityTimeline() {
 function updatePinButtonState(isPinned) {
     if (isPinned) {
         btnPinNote.style.color = "var(--brand-primary)";
-        btnPinNote.innerHTML = "★"; // Filled star
+        btnPinNote.innerText = "★";
     } else {
         btnPinNote.style.color = "";
-        btnPinNote.innerHTML = "★"; // Outline if font supports, or just change color
+        btnPinNote.innerText = "☆";
     }
 }
 
@@ -513,7 +555,7 @@ function createCommandPalette() {
 
     // ... in createCommandPalette commands array ...
     const commands = [
-        { id: 'settings', label: 'Open Settings (Export/Recovery)', action: () => SettingsService.renderSettingsModal() },
+        { id: 'settings', label: 'Open Settings (Export/Recovery)', action: () => settingsService.renderSettingsModal() },
         { id: 'new', label: 'Create New Note', action: () => btnNew.click() },
         { id: 'view_all', label: 'Go to All Notes', action: () => document.querySelector('[data-view="all"]').click() },
         { id: 'view_trash', label: 'Go to Trash', action: () => document.querySelector('[data-view="trash"]').click() },
@@ -544,43 +586,31 @@ function createCommandPalette() {
     // FEATURE: TEMPLATES
     function showTemplates() {
         const templates = ProductivityService.getStandardTemplates();
-        const list = templates.map(t => ({
-            label: `Template: ${t.title}`,
-            action: async () => {
-                // Insert into active note or create new
-                if (!activeNoteId) {
-                    const id = await vaultService.createNote(t.title, "");
-                    activeNoteId = id;
-                }
-                const processedBody = ProductivityService.processTemplate(t.body);
-                // Append or Replace? Let's Append if not empty
-                const currentBody = document.getElementById('note-content').value;
-                const newBody = currentBody ? currentBody + '\n\n' + processedBody : processedBody;
+        const list = templates.map((t, idx) => `${idx + 1}. ${t.title}`).join('\n');
+        const choice = prompt(`Choose a template to insert:\n\n${list}\n\nType number or title:`);
+        if (!choice) return;
 
-                document.getElementById('note-content').value = newBody;
-                triggerSave();
-                renderCurrentView(); // Content preview update
+        const template = templates.find(t => t.title.toLowerCase() === choice.toLowerCase()) ||
+            templates[parseInt(choice, 10) - 1];
+
+        if (!template) {
+            showToast('Template not found', 'error');
+            return;
+        }
+
+        (async () => {
+            if (!activeNoteId) {
+                const id = await vaultService.createNote(template.title, "");
+                activeNoteId = id;
             }
-        }));
+            const processedBody = ProductivityService.processTemplate(template.body);
+            const currentBody = document.getElementById('note-content').value;
+            const newBody = currentBody ? `${currentBody}\n\n${processedBody}` : processedBody;
 
-        // Reuse command palette UI to show templates? 
-        // Hacky but works: Render specific items into palette container
-        const el = document.getElementById('command-palette');
-        const container = el.querySelector('#palette-results');
-        const input = el.querySelector('input');
-
-        // Temporarily override palette behavior or just show them?
-        // Let's just show them as a sub-menu effectively via alert for MVP or custom render
-
-        // Better: Open palette with pre-filled "Template: " filter? 
-        // No, let's just render them directly into the palette results area 
-        // and force the palette open.
-        togglePalette(true);
-        input.value = "Template: "; // Filter trick
-        // Wait, the input listener will filter 'commands'. We need to add templates TO 'commands' dynamically?
-        // Correct approach: Add dynamic commands or a secondary picker.
-        // For MVP: Alert selection is too ugly.
-        // Let's just use the `commands` array.
+            document.getElementById('note-content').value = newBody;
+            triggerSave();
+            renderCurrentView();
+        })();
     }
 
     // FEATURE: HEALTH CHECK
@@ -679,7 +709,7 @@ function openSharePreview() {
             <body>
                 <h1>${Utils.escapeHtml(title)}</h1>
                 <pre>${Utils.escapeHtml(body)}</pre>
-                <div class="meta">Generated by PINBRIDGE • Local Secure View</div>
+                <div class="meta">Generated by PINBRIDGE - Local Secure View</div>
             </body>
             </html>
         `);
@@ -699,7 +729,7 @@ function openSharePreview() {
 // Add UI Button for Share
 const btnShare = document.createElement('button');
 btnShare.className = 'btn-tool';
-btnShare.innerHTML = '👁️'; // Eye icon
+btnShare.innerText = 'Preview';
 btnShare.title = 'Read-Only Preview';
 btnShare.onclick = openSharePreview;
 

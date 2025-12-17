@@ -1,6 +1,6 @@
 /**
  * Vault Module
- * Manages Note data, handles encryption/decryption transparency.
+ * Manages note data and keeps encrypted storage in sync with the UI cache.
  */
 
 import { cryptoService } from '../../crypto/crypto.js';
@@ -10,11 +10,11 @@ import { bus } from '../../core/bus.js';
 
 class VaultService {
     constructor() {
-        this.notes = []; // In-memory cache of DECRYPTED notes (for UI)
+        this.notes = []; // In-memory cache of decrypted notes for UI/search
     }
 
     /**
-     * Load all notes from DB and decrypt them.
+     * Load all notes from IndexedDB and decrypt them into memory.
      */
     async loadAll() {
         this.notes = [];
@@ -23,17 +23,18 @@ class VaultService {
         for (const encNote of encryptedNotes) {
             try {
                 const decryptedJson = await cryptoService.decryptData(encNote.data);
-                const noteData = JSON.parse(decryptedJson); // { title, body }
+                const noteData = JSON.parse(decryptedJson);
 
                 this.notes.push({
                     id: encNote.id,
-                    title: noteData.title,
-                    body: noteData.body,
+                    title: noteData.title || '',
+                    body: noteData.body || '',
                     folder: noteData.folder || "",
                     tags: noteData.tags || [],
-                    updated: encNote.updated,
+                    created: encNote.created || encNote.updated || Date.now(),
+                    updated: encNote.updated || encNote.created || Date.now(),
                     trash: encNote.trash || false,
-                    pinned: encNote.pinned || false // Load pinned status
+                    pinned: encNote.pinned || false
                 });
             } catch (e) {
                 console.error(`Failed to decrypt note ${encNote.id}`, e);
@@ -41,182 +42,175 @@ class VaultService {
                     id: encNote.id,
                     title: "⚠️ Decryption Failed",
                     body: "Could not decrypt this note.",
+                    created: encNote.created || encNote.updated || Date.now(),
                     updated: encNote.updated || Date.now(),
+                    trash: false,
+                    pinned: false,
                     error: true
                 });
             }
         }
 
-        // Sort by Pinned then updated desc
         this.sortNotes();
-
         bus.emit('vault:notes_loaded', this.notes);
         return this.notes;
     }
 
+    /**
+     * Create a new note.
+     */
     async createNote(title, body, folder = "", tags = []) {
         const id = Utils.generateId();
         const timestamp = Date.now();
-
-        // Encrypt content (including folder/tags)
-        // We include metadata in encrypted blob for max privacy
-        const plainObj = { title, body, folder, tags };
-        const encryptedData = await cryptoService.encryptData(JSON.stringify(plainObj));
-
-        const noteRecord = {
+        const note = {
             id,
-            data: encryptedData,
+            title: title || '',
+            body: body || '',
+            folder,
+            tags,
             created: timestamp,
             updated: timestamp,
             trash: false,
             pinned: false
         };
 
-        await storageService.saveNote(noteRecord);
-
-        // Update local cache
-        this.notes.push({ id, title, body, folder, tags, updated: timestamp, trash: false, pinned: false });
+        await this.persistNote(note);
+        this.notes.push(note);
         this.sortNotes();
         bus.emit('vault:updated', this.notes);
-
         return id;
     }
 
+    /**
+     * Update an existing note (content, folder, tags).
+     */
+    async updateNote(id, title, body, folder = "", tags = []) {
+        const note = this.notes.find(n => n.id === id);
+        if (!note) return;
 
-    // 2. Encrypt New Data
-    const plainObj = { title, body };
-    const plainText = JSON.stringify(plainObj);
-    const encryptedData = await cryptoService.encryptData(plainText);
+        note.title = title || '';
+        note.body = body || '';
+        note.folder = folder;
+        note.tags = tags;
+        note.updated = Date.now();
 
-    // 3. Save
-    const noteRecord = {
-        id: id,
-        data: encryptedData,
-        updated: timestamp,
-        trash: false
-    };
-
-        await storageService.saveNote(noteRecord);
-
-// 4. Update local cache
-const index = this.notes.findIndex(n => n.id === id);
-if (index !== -1) {
-    this.notes[index] = { id, title, body, updated: timestamp, trash: false };
-    // Move to top
-    const item = this.notes.splice(index, 1)[0];
-    this.notes.unshift(item);
-}
-bus.emit('vault:updated', this.notes);
+        await this.persistNote(note);
+        this.sortNotes();
+        bus.emit('vault:updated', this.notes);
     }
 
+    /**
+     * Save a point-in-time version of a note (optional history).
+     */
     async createVersion(note) {
-    try {
-        const plainObj = { title: note.title, body: note.body };
-        const encryptedData = await cryptoService.encryptData(JSON.stringify(plainObj));
+        try {
+            const plainObj = { title: note.title, body: note.body, folder: note.folder, tags: note.tags };
+            const encryptedData = await cryptoService.encryptData(JSON.stringify(plainObj));
 
-        const versionObj = {
-            versionId: Utils.uuidv4(),
-            noteId: note.id,
+            const versionObj = {
+                versionId: Utils.uuidv4(),
+                noteId: note.id,
+                data: encryptedData,
+                savedAt: Date.now()
+            };
+
+            await storageService.saveVersion(versionObj);
+        } catch (e) {
+            console.error("Versioning failed", e);
+        }
+    }
+
+    /**
+     * Pin/unpin a note without altering its updated timestamp.
+     */
+    async togglePin(id) {
+        const note = this.notes.find(n => n.id === id);
+        if (!note) return;
+
+        note.pinned = !note.pinned;
+        await this.persistNote(note, { bumpUpdated: false });
+        this.sortNotes();
+        bus.emit('vault:updated', this.notes);
+    }
+
+    /**
+     * Soft delete a note (move to trash).
+     */
+    async moveToTrash(id) {
+        const note = this.notes.find(n => n.id === id);
+        if (!note) return;
+
+        note.trash = true;
+        note.updated = Date.now();
+        await this.persistNote(note);
+        bus.emit('vault:updated', this.notes);
+    }
+
+    /**
+     * Restore a trashed note.
+     */
+    async restoreFromTrash(id) {
+        const note = this.notes.find(n => n.id === id);
+        if (!note) return;
+
+        note.trash = false;
+        note.updated = Date.now();
+        await this.persistNote(note);
+        this.sortNotes();
+        bus.emit('vault:updated', this.notes);
+    }
+
+    /**
+     * Permanently delete a note.
+     */
+    async deleteNote(id) {
+        await storageService.deleteNote(id);
+        this.notes = this.notes.filter(n => n.id !== id);
+        bus.emit('vault:updated', this.notes);
+    }
+
+    /**
+     * Persist the provided note back to IndexedDB, encrypting its content.
+     * @param {Object} note - decrypted note object
+     * @param {Object} options
+     * @param {boolean} options.bumpUpdated - whether to bump the updated timestamp (default true)
+     */
+    async persistNote(note, { bumpUpdated = true } = {}) {
+        const payload = {
+            title: note.title,
+            body: note.body,
+            folder: note.folder,
+            tags: note.tags
+        };
+        const encryptedData = await cryptoService.encryptData(JSON.stringify(payload));
+
+        const record = {
+            id: note.id,
             data: encryptedData,
-            savedAt: Date.now()
+            created: note.created,
+            updated: bumpUpdated ? Date.now() : note.updated,
+            trash: !!note.trash,
+            pinned: !!note.pinned
         };
 
-        await storageService.saveVersion(versionObj);
-    } catch (e) {
-        console.error("Versioning failed", e);
+        if (bumpUpdated) {
+            note.updated = record.updated;
+        }
+
+        await storageService.saveNote(record);
     }
-}
 
-    // Toggle Pin
-    async togglePin(id) {
-    const note = this.notes.find(n => n.id === id);
-    if (!note) return;
-
-    const newPinnedState = !note.pinned;
-
-    // Persist to        // Reuse create/update logic but preserve exact content?
-    const plainObj = { title: note.title, body: note.body, folder: note.folder, tags: note.tags };
-    const encryptedData = await cryptoService.encryptData(JSON.stringify(plainObj));
-
-    const noteRecord = {
-        id: id,
-        data: encryptedData,
-        updated: note.updated, // Don't bump updated time for pin?
-        trash: note.trash,
-        pinned: newPinnedState
-    };
-
-    await storageService.saveNote(noteRecord);
-
-    // Update local
-    note.pinned = newPinnedState;
-
-    // Re-sort: Pinned first, then updated desc
-    this.sortNotes();
-
-    bus.emit('vault:updated', this.notes);
-}
-
-sortNotes() {
-    this.notes.sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        return b.updated - a.updated;
-    });
-}
-
-    // Soft Delete
-    async moveToTrash(id) {
-    const note = this.notes.find(n => n.id === id);
-    if (!note) return;
-
-    // Re-encrypt to update DB record properly or just update metadata if we separated them.
-    // Since 'trash' is a top-level property in DB object, we just re-save the whole thing.
-    // We reuse the existing encrypted data logic.
-
-    const plainObj = { title: note.title, body: note.body };
-    const encryptedData = await cryptoService.encryptData(JSON.stringify(plainObj));
-
-    const noteRecord = {
-        id: id,
-        data: encryptedData,
-        updated: Date.now(),
-        trash: true
-    };
-
-    await storageService.saveNote(noteRecord);
-
-    note.trash = true;
-    bus.emit('vault:updated', this.notes);
-}
-
-    // Restore
-    async restoreFromTrash(id) {
-    const note = this.notes.find(n => n.id === id);
-    if (!note) return;
-
-    const plainObj = { title: note.title, body: note.body };
-    const encryptedData = await cryptoService.encryptData(JSON.stringify(plainObj));
-
-    const noteRecord = {
-        id: id,
-        data: encryptedData,
-        updated: Date.now(),
-        trash: false
-    };
-
-    await storageService.saveNote(noteRecord);
-
-    note.trash = false;
-    bus.emit('vault:updated', this.notes);
-}
-
-    // Hard Delete
-    async deleteNote(id) {
-    await storageService.deleteNote(id);
-    this.notes = this.notes.filter(n => n.id !== id);
-    bus.emit('vault:updated', this.notes);
-}
+    /**
+     * Sort notes by pinned first, then by updated timestamp desc.
+     */
+    sortNotes() {
+        this.notes.sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return b.updated - a.updated;
+        });
+    }
 }
 
 export const vaultService = new VaultService();
+

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -7,6 +7,10 @@
     <title>PINBRIDGE | Secure Vault</title>
     <meta name="theme-color" content="#0f1115">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="/public/icons/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/public/icons/web/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/public/icons/web/icon-16.png">
+    <link rel="apple-touch-icon" href="/public/icons/ios/icon-180.png">
     <link rel="stylesheet" href="src/styles.css">
 
     <!-- Fonts -->
@@ -28,6 +32,7 @@
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="screen hidden">
         <div class="auth-card glass-panel">
+            <img src="/public/icons/android/icon-192.png" alt="PINBRIDGE logo" class="app-logo">
             <h1 class="brand-title">PINBRIDGE</h1>
             <p class="subtitle">Secure. Offline. Private.</p>
 
@@ -36,12 +41,12 @@
                 <form id="setup-form">
                     <div class="input-group">
                         <label>Create Vault PIN</label>
-                        <input type="password" id="setup-pin" placeholder="••••••" required minlength="4"
+                        <input type="password" id="setup-pin" placeholder="******" required minlength="4"
                             autocomplete="new-password">
                     </div>
                     <div class="input-group">
                         <label>Confirm PIN</label>
-                        <input type="password" id="setup-pin-confirm" placeholder="••••••" required minlength="4"
+                        <input type="password" id="setup-pin-confirm" placeholder="******" required minlength="4"
                             autocomplete="new-password">
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Initialize Vault</button>
@@ -54,7 +59,7 @@
                 <form id="login-form">
                     <div class="input-group">
                         <label>Enter PIN or Recovery Key</label>
-                        <input type="password" id="login-pin" placeholder="••••••" required
+                        <input type="password" id="login-pin" placeholder="******" required
                             autocomplete="current-password">
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Unlock</button>
@@ -159,8 +164,8 @@
                     <button class="btn-tool" id="btn-copy-title" title="Copy Title">T</button>
                     <button class="btn-tool" id="btn-copy-body" title="Copy Content">C</button>
                     <div class="divider-v"></div>
-                    <button class="btn-tool" id="btn-pin-note" title="Pin Note">★</button>
-                    <button class="btn-tool danger" id="btn-delete" title="Delete">🗑️</button>
+                    <button class="btn-tool" id="btn-pin-note" title="Pin Note">&#9733;</button>
+                    <button class="btn-tool danger" id="btn-delete" title="Delete">&#128465;</button>
                 </div>
             </div>
 

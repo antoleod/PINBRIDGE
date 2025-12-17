@@ -13,6 +13,16 @@ export const Utils = {
     },
 
     /**
+     * Simple unique id helper (prefers crypto.randomUUID when available)
+     */
+    generateId() {
+        if (typeof crypto.randomUUID === 'function') {
+            return crypto.randomUUID();
+        }
+        return this.uuidv4();
+    },
+
+    /**
      * Convert ArrayBuffer to Hex String
      */
     bufferToHex(buffer) {
@@ -42,5 +52,18 @@ export const Utils = {
      */
     bufferToStr(buffer) {
         return new TextDecoder().decode(buffer);
+    },
+
+    /**
+     * Escape HTML entities to prevent injection in previews
+     */
+    escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 };
