@@ -340,9 +340,17 @@ body {
 }
 
 
+.modal-overlay {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.35s ease, visibility 0.35s ease;
+    pointer-events: none;
+}
+
 .modal-overlay:not(.hidden) {
     opacity: 1;
     visibility: visible;
+    pointer-events: all;
 }
 
 .modal-content {
@@ -355,12 +363,23 @@ body {
     max-height: 80vh;
     max-height: 80dvh;
     overflow-y: auto;
-    transform: scale(0.9) translateY(20px);
+    transform: translateY(10px);
     transition: all 0.3s ease;
 }
 
 .modal-overlay:not(.hidden) .modal-content {
-    transform: scale(1) translateY(0);
+    animation: floatIn 0.45s ease forwards;
+}
+
+@keyframes floatIn {
+    0% {
+        transform: translateY(20px) scale(0.95);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
 }
 
 .settings-panel {
@@ -586,6 +605,15 @@ body {
     opacity: 0;
     transform: translateY(10px);
     pointer-events: none; /* Prevent interaction with hidden forms */
+}
+
+#auth-login {
+    animation: fadeSlideUp 0.4s ease;
+}
+
+#username-recommendation-text {
+    font-weight: 600;
+    color: var(--brand-primary);
 }
 
 
@@ -1969,6 +1997,7 @@ body.safe-view-mode {
     display: flex;
     justify-content: center;
     align-items: center;
+    pointer-events: none;
 }
 
 .modal-content {
@@ -1976,6 +2005,10 @@ body.safe-view-mode {
     max-width: 480px;
     padding: 2rem;
     border-radius: var(--radius-lg);
+}
+
+.modal-overlay:not(.hidden) {
+    pointer-events: all;
 }
 
 .modal-content h2 {
@@ -2309,6 +2342,61 @@ body.safe-view-mode {
 
 .recovery-method-form.hidden {
     display: none;
+}
+
+#auth-recovery {
+    animation: fadeSlideUp 0.45s ease;
+}
+
+.recovery-method-btn {
+    position: relative;
+    overflow: hidden;
+    border-color: transparent;
+}
+
+.recovery-method-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.35), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.recovery-method-btn:hover::after,
+.recovery-method-btn.active::after {
+    opacity: 1;
+}
+
+.recovery-method-btn.active {
+    color: var(--brand-primary);
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+}
+
+.recovery-method-btn .method-icon {
+    font-size: 2.25rem;
+    animation: iconFloat 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes fadeSlideUp {
+    0% {
+        opacity: 0;
+        transform: translateY(16px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes iconFloat {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-4px);
+    }
 }
 
 input[type="file"] {

@@ -52,7 +52,8 @@
                         <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo" class="app-logo">
                     </div>
                     <h1 class="brand-title">PINBRIDGE</h1>
-                    <p class="subtitle" id="brand-subtitle" data-i18n="tagline">Your data, secured offline and in-sync.</p>
+                    <p class="subtitle" id="brand-subtitle" data-i18n="tagline">Your data, secured offline and in-sync.
+                    </p>
                 </div>
                 <div class="lang-switcher">
                     <label for="language-select" data-i18n="languageLabel">Language</label>
@@ -60,81 +61,55 @@
                 </div>
             </div>
 
-            <div id="auth-choice" class="auth-choice">
-                <p class="lede" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.</p>
-                <p class="hint center">Use the ⚙️ settings menu to create a new vault or log in.</p>
-            </div>
-
-            <!-- SETUP FORM -->
-            <div id="auth-setup" class="hidden">
-                <p class="eyebrow" data-i18n="setupEyebrow">New Vault</p>
-                <h2 class="form-title" data-i18n="setupTitle">Create your credentials</h2>
-                <form id="setup-form">
+            <!-- LOGIN FORM -->
+            <div id="auth-login">
+                <p class="eyebrow" data-i18n="loginEyebrow">Access</p>
+                <h2 class="form-title" data-i18n="loginTitle">Secure Login</h2>
+                <p class="hint center">Only existing vault users may unlock their data here. Registration is disabled.
+                </p>
+                <p class="hint center">
+                    Suggested username:
+                    <strong id="username-recommendation-text">unknown</strong>
+                </p>
+                <form id="login-form">
                     <div class="input-group">
-                        <label for="setup-username" data-i18n="usernameLabel">Username</label>
-                        <input type="text" id="setup-username" autocomplete="username"
+                        <label for="login-username" data-i18n="usernameLabel">Username</label>
+                        <input type="text" id="login-username" autocomplete="username"
                             data-i18n-placeholder="usernamePlaceholder">
                     </div>
-                    <div class="input-row">
-                        <div class="input-group">
-                            <label for="setup-pin" data-i18n="pinLabel">PIN</label>
-                            <input type="password" id="setup-pin" required minlength="4" autocomplete="new-password"
-                                data-i18n-placeholder="pinPlaceholder">
-                        </div>
-                        <div class="input-group">
-                            <label for="setup-pin-confirm" data-i18n="confirmPinLabel">Confirm PIN</label>
-                            <input type="password" id="setup-pin-confirm" required minlength="4"
-                                autocomplete="new-password" data-i18n-placeholder="confirmPinPlaceholder">
-                        </div>
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block accent" data-i18n="setupSubmit">Initialize
-                        Vault</button>
-                    <p class="hint center" data-i18n="setupHint">Notes stay on this device. Recovery Key appears once.
-                    </p>
-                </form>
-            </div>
-
-            <!-- LOGIN FORM -->
-            <div id="auth-login" class="hidden">
-                <p class="eyebrow" data-i18n="loginEyebrow">Access</p>
-                <h2 class="form-title" data-i18n="loginTitle">Unlock</h2>
-                <form id="login-form">
                     <div class="input-group">
                         <label for="login-pin" data-i18n="pinLabel">PIN</label>
                         <input type="password" id="login-pin" autocomplete="current-password"
                             data-i18n-placeholder="pinPlaceholder">
                     </div>
-                    <div class="input-group">
-                        <label for="login-recovery" data-i18n="recoveryLabel">Recovery Key (optional)</label>
-                        <input type="password" id="login-recovery" autocomplete="one-time-code"
-                            data-i18n-placeholder="recoveryPlaceholder">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block accent"
+                    <button type="button" id="btn-login-submit" class="btn btn-primary btn-block accent"
                         data-i18n="loginSubmit">Login</button>
-                    <p class="hint center" data-i18n="loginHint">If you do not have a vault, create one below.</p>
+                    <p class="hint center">Need help? Go to Settings → Recovery to restore access.</p>
                 </form>
             </div>
             <div class="auth-actions">
-                <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile" aria-label="Open settings">
+                <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile"
+                    aria-label="Open settings">
                     ⚙️ Open settings
                 </button>
             </div>
         </div>
     </div>
 
-        <!-- SETTINGS MODAL -->
-    <div id="auth-settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+    <!-- SETTINGS MODAL -->
+    <div id="auth-settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+        aria-labelledby="settings-modal-title">
         <div class="modal-content glass-panel settings-panel">
             <div class="settings-panel-header">
                 <div>
                     <p class="eyebrow">Vault Safety</p>
-                    <h2 id="settings-modal-title">Account & Recovery</h2>
+                    <h2 id="auth-settings-modal-title">Account & Recovery</h2>
                     <p class="settings-panel-subtitle">Use alternative sign-in flows or reset this device safely.</p>
                 </div>
                 <button class="btn-icon ghost" id="btn-close-settings" aria-label="Close settings">×</button>
             </div>
             <div class="settings-actions">
-                <button type="button" class="settings-action" id="btn-account-recovery-modal">
+                <button type="button" class="settings-action" id="btn-auth-recovery">
                     <span class="settings-action-icon">🔐</span>
                     <div class="settings-action-content">
                         <span class="settings-action-title">Account Recovery</span>
@@ -145,14 +120,16 @@
                     <span class="settings-action-icon">🗝️</span>
                     <div class="settings-action-content">
                         <span class="settings-action-title">Use Recovery Key</span>
-                        <span class="settings-action-desc">Unlock with the recovery key you were shown during setup.</span>
+                        <span class="settings-action-desc">Unlock with the recovery key you were shown during
+                            setup.</span>
                     </div>
                 </button>
                 <button type="button" class="settings-action" id="btn-sync-modal">
                     <span class="settings-action-icon">🔄</span>
                     <div class="settings-action-content">
                         <span class="settings-action-title">Sync with another device</span>
-                        <span class="settings-action-desc">Share encrypted data with another authorized PINBRIDGE client.</span>
+                        <span class="settings-action-desc">Share encrypted data with another authorized PINBRIDGE
+                            client.</span>
                     </div>
                 </button>
             </div>
@@ -160,11 +137,13 @@
     </div>
 
     <!-- ACCOUNT RECOVERY MODAL -->
-    <div id="recovery-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="recovery-modal-title">
+    <div id="recovery-modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+        aria-labelledby="recovery-modal-title">
         <div class="modal-content glass-panel settings-panel">
             <div class="modal-header">
                 <h2 id="recovery-modal-title">Account Recovery</h2>
-                <button id="close-auth-recovery-modal" class="btn-icon ghost" aria-label="Close recovery modal">×</button>
+                <button id="close-auth-recovery-modal" class="btn-icon ghost"
+                    aria-label="Close recovery modal">×</button>
             </div>
             <div id="auth-recovery" class="auth-form">
                 <p class="hint">Choose a recovery method to regain access to your vault.</p>
@@ -232,7 +211,7 @@
         </div>
     </div>
 
-<!-- VAULT SCREEN -->
+    <!-- VAULT SCREEN -->
     <div id="vault-screen" class="screen hidden">
 
         <!-- SIDEBAR -->
@@ -301,6 +280,13 @@
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </button>
+                <button class="nav-item" data-view="archive" title="Archive" data-i18n-title="navArchive"
+                    aria-label="Archive">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2" />
+                        <path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
             </div>
 
             <div class="sidebar-divider"></div>
@@ -313,8 +299,8 @@
                     <span class="sync-dot status-offline"></span>
                     <span class="sync-label" data-i18n="statusOffline">Offline</span>
                 </div>
-                <button class="nav-item" id="btn-settings" title="Settings" data-i18n-title="settings"
-                    aria-label="Settings">
+                <button class="nav-item" id="btn-vault-settings" title="Settings" data-i18n-title="settings"
+                    aria-label="Open vault settings">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" />
@@ -364,20 +350,27 @@
             <div class="list-header">
                 <div class="list-header-main">
                     <h2 data-i18n="listTitle">My Notes</h2>
-                    <button id="btn-toggle-compact" class="btn btn-text compact-toggle">Compact</button>
+                    <div class="view-switcher">
+                        <button id="btn-view-grid" class="btn-icon ghost active" title="Grid View">⊞</button>
+                        <button id="btn-view-list" class="btn-icon ghost" title="List View">≡</button>
+                    </div>
                 </div>
                 <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)"
                     data-i18n-title="newNoteTooltip">+</button>
             </div>
 
-            <!-- v2.0 QUICK DROP ZONE -->
-            <div id="quick-drop-zone" class="quick-drop collapsed">
-                <input type="text" placeholder="Quick Drop... (Enter to stash)" id="quick-drop-input"
-                    data-i18n-placeholder="quickDropPlaceholder">
+            <!-- INTELLIGENT NOTE BAR -->
+            <div id="intelligent-note-bar" class="quick-drop collapsed">
+                <input type="text" placeholder="Take a note... (auto-detects lists, links, etc.)"
+                    id="intelligent-note-input" data-i18n-placeholder="intelligentNotePlaceholder">
             </div>
 
             <div class="search-container">
-                <input type="text" id="search-input" placeholder="Search..." data-i18n-placeholder="searchPlaceholder">
+                <input type="text" id="search-input" placeholder="Search notes, #tags, or types..."
+                    data-i18n-placeholder="searchPlaceholder">
+                <!-- Placeholder for combined filters UI -->
+                <button id="btn-advanced-search" class="btn-icon ghost" title="Advanced Search"
+                    style="display: none;">⚲</button>
             </div>
 
             <div id="notes-list" class="scroll-container">
@@ -416,8 +409,11 @@
                     <button class="btn-tool" id="btn-history" title="View History">&#128339;</button>
                     <button class="btn-tool" id="btn-toggle-readonly" title="Toggle Read-Only">&#128274;</button>
                     <div class="divider-v"></div>
-                    <button class="btn-tool" id="btn-pin-note" title="Pin Note"
-                        data-i18n-title="pinNote">&#9733;</button>
+                    <button class="btn-tool" id="btn-set-reminder" title="Set Reminder"
+                        data-i18n-title="setReminder">🔔</button>
+                    <button class="btn-tool" id="btn-protect-note" title="Protect Note"
+                        data-i18n-title="protectNote">🛡️</button>
+                    <button class="btn-tool" id="btn-pin-note" title="Pin Note" data-i18n-title="pinNote">⭐</button>
                     <button class="btn-tool danger" id="btn-delete" title="Delete"
                         data-i18n-title="delete">&#128465;</button>
                     <span id="word-count-badge" class="count-badge">0 w</span>
@@ -534,6 +530,31 @@
         </div>
     </div>
 
+    <!-- REMINDERS MODAL -->
+    <div id="reminders-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Set Reminder</h2>
+                <button id="close-reminders-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div class="form-group">
+                <label for="reminder-datetime">Date & Time</label>
+                <input type="datetime-local" id="reminder-datetime" class="input-field">
+            </div>
+            <div class="form-group">
+                <label for="reminder-recurrence">Recurrence</label>
+                <select id="reminder-recurrence" class="settings-select">
+                    <option value="none">None</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button id="save-reminder" class="btn btn-primary">Set Reminder</button>
+            </div>
+        </div>
+    </div>
     <!-- HISTORY MODAL -->
     <div id="history-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel note-history-modal">
@@ -572,88 +593,191 @@
                 <button class="settings-tab" data-tab="security">Security</button>
                 <button class="settings-tab" data-tab="tools">Tools</button>
             </div>
-            <div id="settings-general" class="settings-content">
-                <h3>General Settings</h3>
-                <h4>Theme</h4>
-                <div id="theme-switcher" class="settings-grid">
-                    <!-- Theme options are injected here -->
-                </div>
-                <div class="divider"></div>
-                <h4>Sync</h4>
-                <div class="settings-item">
-                    <div class="settings-item-content">
-                        <span class="settings-item-title">Cloud Sync</span>
-                        <span class="settings-item-desc">Securely sync your encrypted vault across devices.</span>
+            <div class="settings-content-container">
+                <!-- General Settings Panel -->
+                <div id="settings-general" class="settings-content">
+                    <h3>General Settings</h3>
+                    <h4>Theme</h4>
+                    <div id="theme-switcher" class="settings-grid">
+                        <!-- Theme options are injected here -->
                     </div>
-                    <div class="toggle-switch">
-                        <input type="checkbox" id="toggle-sync-enabled" class="toggle-input">
-                        <label for="toggle-sync-enabled" class="toggle-label"></label>
+                    <div class="divider"></div>
+                    <h4>Sync</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Cloud Sync</span>
+                            <span class="settings-item-desc">Securely sync your encrypted vault across devices.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-sync-enabled" class="toggle-input">
+                            <label for="toggle-sync-enabled" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <h4>View Preferences</h4>
+                    <div class="settings-item">
+                        <span class="settings-item-title">Default View</span>
+                        <select id="default-view-select" class="settings-select">
+                            <option value="grid">Grid</option>
+                            <option value="list">List</option>
+                        </select>
+                    </div>
+                    <div class="divider"></div>
+                    <h4>Input Intelligence</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Auto-detection</span>
+                            <span class="settings-item-desc">Automatically detect checklists, tags, and commands like
+                                !pin.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-input-detection" class="toggle-input" checked>
+                            <label for="toggle-input-detection" class="toggle-label"></label>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div id="settings-security" class="settings-content hidden">
-                <h3>Security & Recovery</h3>
-                <h4>Active Recovery Methods</h4>
-                <div id="active-recovery-methods" class="recovery-methods-list">
-                    <!-- Active methods are rendered here -->
-                </div>
+                <div id="settings-security" class="settings-content hidden">
+                    <h3>Security & Recovery</h3>
+                    <h4>Session Security</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Auto-Lock on Inactivity</span>
+                            <span class="settings-item-desc">Lock the vault after a period of inactivity.</span>
+                        </div>
+                        <select id="autolock-timeout-select" class="settings-select">
+                            <option value="0">Disabled</option>
+                            <option value="1">1 Minute</option>
+                            <option value="5">5 Minutes</option>
+                            <option value="15">15 Minutes</option>
+                            <option value="30">30 Minutes</option>
+                        </select>
+                    </div>
+                    <div class="divider"></div>
+                    <h4>Active Recovery Methods</h4>
+                    <div id="active-recovery-methods" class="recovery-methods-list">
+                        <!-- Active methods are rendered here -->
+                    </div>
 
-                <h4>Recovery Actions</h4>
-                <div class="recovery-actions">
-                    <div class="recovery-action-card">
-                        <div class="action-header">
-                            <span class="action-icon">🎫</span>
-                            <div>
-                                <strong>Backup Codes</strong>
-                                <p>Generate one-time codes to use if you lose your PIN.</p>
+                    <h4>Recovery Actions</h4>
+                    <div class="recovery-actions">
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">🎫</span>
+                                <div>
+                                    <strong>Backup Codes</strong>
+                                    <p>Generate one-time codes to use if you lose your PIN.</p>
+                                </div>
                             </div>
+                            <button id="btn-generate-backup-codes" class="btn btn-secondary">Generate</button>
                         </div>
-                        <button id="btn-generate-backup-codes" class="btn btn-secondary">Generate</button>
-                    </div>
-                    <div class="recovery-action-card">
-                        <div class="action-header">
-                            <span class="action-icon">❓</span>
-                            <div>
-                                <strong>Secret Question</strong>
-                                <p>Set up a question only you can answer.</p>
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">❓</span>
+                                <div>
+                                    <strong>Secret Question</strong>
+                                    <p>Set up a question only you can answer.</p>
+                                </div>
                             </div>
+                            <button id="btn-setup-secret-question" class="btn btn-secondary">Set Up</button>
                         </div>
-                        <button id="btn-setup-secret-question" class="btn btn-secondary">Set Up</button>
-                    </div>
-                    <div class="recovery-action-card">
-                        <div class="action-header">
-                            <span class="action-icon">💾</span>
-                            <div>
-                                <strong>Recovery File</strong>
-                                <p>Generate an encrypted file to recover your vault on a new device.</p>
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">💾</span>
+                                <div>
+                                    <strong>Recovery File</strong>
+                                    <p>Generate an encrypted file to recover your vault on a new device.</p>
+                                </div>
                             </div>
+                            <button id="btn-generate-recovery-file" class="btn btn-secondary">Generate</button>
                         </div>
-                        <button id="btn-generate-recovery-file" class="btn btn-secondary">Generate</button>
-                    </div>
-                    <div class="recovery-action-card">
-                        <button id="btn-link-device" class="btn btn-secondary">Link New Device</button>
-                        <div class="action-header">
-                            <span class="action-icon">📱</span>
-                            <div>
-                                <strong>Link New Device</strong>
-                                <p>Securely sync your vault to another device using a QR code.</p>
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">📱</span>
+                                <div>
+                                    <strong>Link New Device</strong>
+                                    <p>Securely sync your vault to another device using a QR code.</p>
+                                </div>
                             </div>
+                            <button id="btn-link-device" class="btn btn-secondary">Link</button>
                         </div>
-                        <button id="btn-link-device" class="btn btn-secondary">Link</button>
                     </div>
+                </div>
+                <div id="settings-tools" class="settings-content hidden">
+                    <h3>Tools</h3>
+                    <h4>Password Generator</h4>
+                    <div class="generated-password-container">
+                        <input type="text" id="generated-password-display" class="input-field" readonly
+                            placeholder="Your new password will appear here...">
+                        <button id="btn-copy-password" class="btn btn-secondary">📋</button>
+                    </div>
+                    <div class="password-options-grid">
+                        <!-- Password options will be added here later -->
+                    </div>
+                    <button id="btn-generate-password" class="btn btn-primary" style="margin-top: 1rem;">Generate New
+                        Password</button>
+                    <div class="divider"></div>
+                    <h4>Data Management</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Sync Tags</span>
+                            <span class="settings-item-desc">Sync tag names and colors across devices.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-tag-sync" class="toggle-input">
+                            <label for="toggle-tag-sync" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Duplicate Note Detection</span>
+                            <span class="settings-item-desc">Warn when saving a note that appears to be a
+                                duplicate.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-duplicate-detection" class="toggle-input">
+                            <label for="toggle-duplicate-detection" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <button id="btn-find-duplicates" class="btn btn-secondary" style="margin-top: 1rem;">Find All
+                        Duplicates</button>
                 </div>
             </div>
-            <div id="settings-tools" class="settings-content hidden">
-                <h3>Tools</h3>
-                <h4>Password Generator</h4>
-                <div class="generated-password-container">
-                    <input type="text" id="generated-password-display" class="input-field" readonly placeholder="Your new password will appear here...">
-                    <button id="btn-copy-password" class="btn btn-secondary">📋</button>
+        </div>
+    </div>
+    </div>
+
+    <!-- NOTE PROTECTION / SELF-DESTRUCT MODAL -->
+    <div id="note-protection-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>🛡️ Note Protection</h2>
+                <button id="close-note-protection-modal" class="btn-icon ghost">×</button>
+            </div>
+            <p class="hint">Configure security settings for this specific note.</p>
+
+            <div class="form-group">
+                <label for="self-destruct-select">Self-Destruct Rule</label>
+                <select id="self-destruct-select" class="settings-select">
+                    <option value="never">Never</option>
+                    <option value="on_read">After first read</option>
+                    <option value="on_checklist_complete">When checklist is completed</option>
+                    <option value="after_time">After a set time</option>
+                </select>
+                <p class="warning-text hidden" id="self-destruct-warning">Warning: This action is irreversible. The note
+                    will be permanently deleted.</p>
+            </div>
+
+            <div class="form-group hidden" id="self-destruct-time-group">
+                <label for="self-destruct-time-value">Time until deletion</label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="number" id="self-destruct-time-value" class="input-field" min="1" value="1"
+                        style="flex-grow: 1;">
+                    <select id="self-destruct-time-unit" class="settings-select" style="flex-grow: 2;">
+                        <option value="minutes">Minutes</option>
+                        <option value="hours">Hours</option>
+                        <option value="days">Days</option>
+                    </select>
                 </div>
-                <div class="password-options-grid">
-                    <!-- Password options will be added here later -->
-                </div>
-                <button id="btn-generate-password" class="btn btn-primary" style="margin-top: 1rem;">Generate New Password</button>
             </div>
         </div>
     </div>
@@ -675,7 +799,8 @@
                     <input type="hidden" id="qr-data-input">
                     <div class="form-group">
                         <label for="confirmation-code-input">Confirmation Code</label>
-                        <input type="text" id="confirmation-code-input" class="input-field" placeholder="Enter code from other device" required>
+                        <input type="text" id="confirmation-code-input" class="input-field"
+                            placeholder="Enter code from other device" required>
                     </div>
                     <button type="submit" class="btn btn-primary">Confirm & Link</button>
                 </form>
@@ -762,8 +887,8 @@
             <form id="generate-file-form">
                 <div class="form-group">
                     <label for="generate-file-username">Username</label>
-                    <input type="text" id="generate-file-username" placeholder="Your vault username"
-                        class="input-field" required>
+                    <input type="text" id="generate-file-username" placeholder="Your vault username" class="input-field"
+                        required>
                     <p class="hint">Must match the username of the vault you are recovering.</p>
                 </div>
                 <div class="form-group">
@@ -789,7 +914,8 @@
                 <button id="close-pairing-modal" class="btn-icon ghost">×</button>
             </div>
             <div class="pairing-content">
-                <p class="hint">Scan the QR code with your new device to securely transfer your vault. The devices must be on the same network.</p>
+                <p class="hint">Scan the QR code with your new device to securely transfer your vault. The devices must
+                    be on the same network.</p>
                 <div class="pairing-display">
                     <div id="pairing-qr-code" class="pairing-qr">
                         <!-- QR Code will be injected here -->

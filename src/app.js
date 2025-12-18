@@ -41,13 +41,10 @@ async function init() {
             return;
         }
 
-        const hasVault = await vaultService.hasExistingVault();
+        await vaultService.hasExistingVault();
+        uiService.refreshUsernameRecommendation();
         uiService.showScreen('auth');
-        if (hasVault) {
-            uiService.showLoginForm();
-        } else {
-            uiService.showAuthChoice();
-        }
+        uiService.showLoginForm();
     } catch (e) {
         console.error("Critical Initialization Error", e);
         uiService.showToast(i18n.t('toastVaultLoadFailed', { error: 'init' }), "error");

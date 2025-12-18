@@ -29,6 +29,8 @@ class UIService {
         this.isFocusMode = false;
         this.isReadOnly = false; // Read-only mode state
         this.qrScanner = null;
+        this.usernameRecommendationText = null;
+        this.storedUsername = null;
     }
 
     _cacheDomElements() {
@@ -40,23 +42,14 @@ class UIService {
         };
 
         this.forms = {
-            choice: document.getElementById('auth-choice'),
-            setup: document.getElementById('auth-setup'),
             login: document.getElementById('auth-login'),
-            setupForm: document.getElementById('setup-form'),
             loginForm: document.getElementById('login-form'),
-            btnCreateStart: document.getElementById('btn-create-start'),
-            btnLoginStart: document.getElementById('btn-login-start'),
-            btnShowSetup: document.getElementById('btn-show-setup'),
-            btnShowLogin: document.getElementById('btn-show-login')
+            loginButton: document.getElementById('btn-login-submit')
         };
 
         this.inputs = {
-            setupUsername: document.getElementById('setup-username'),
-            setupPin: document.getElementById('setup-pin'),
-            setupPinConfirm: document.getElementById('setup-pin-confirm'),
+            loginUsername: document.getElementById('login-username'),
             loginPin: document.getElementById('login-pin'),
-            loginRecovery: document.getElementById('login-recovery'),
             noteTitle: document.getElementById('note-title'),
             noteContent: document.getElementById('note-content'),
             noteFolder: document.getElementById('note-folder'),
@@ -87,6 +80,7 @@ class UIService {
         this.authSettingsRecoverySection = document.getElementById('auth-settings-recovery-section');
         this.authSettingsActions = document.querySelector('#auth-settings-modal .settings-actions');
         const topbar = document.getElementById('mobile-topbar');
+        this.usernameRecommendationText = document.getElementById('username-recommendation-text');
         this.mobile = {
             topbar,
             navPills: topbar ? Array.from(topbar.querySelectorAll('.nav-pill')) : [],
@@ -114,6 +108,7 @@ class UIService {
         this.updateAutoSaveUI();
         this.updateCompactViewUI();
         this.refreshSaveButtonState();
+        this.refreshUsernameRecommendation();
         this.setStatus(i18n.t('statusReady'));
     }
     
@@ -202,13 +197,15 @@ class UIService {
     }
 
     addAuthEventListeners() {
-        this.forms.btnCreateStart?.addEventListener('click', () => this.showSetupForm());
-        this.forms.btnLoginStart?.addEventListener('click', () => this.showLoginForm());
-        this.forms.btnShowSetup?.addEventListener('click', () => this.showSetupForm());
-        this.forms.btnShowLogin?.addEventListener('click', () => this.showLoginForm());
-
-        this.forms.setupForm?.addEventListener('submit', (e) => this.handleSetupSubmit(e));
         this.forms.loginForm?.addEventListener('submit', (e) => this.handleLoginSubmit(e));
+        this.forms.loginButton?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.forms.loginForm?.requestSubmit) {
+                this.forms.loginForm.requestSubmit();
+            } else {
+                this.forms.loginForm?.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
 
         // Settings modal
         document.getElementById('btn-settings-desktop')?.addEventListener('click', () => this.showSettingsModal());
@@ -226,9 +223,9 @@ class UIService {
         this.settingsModal.forgotBtn?.addEventListener('click', () => {
             this.hideSettingsModal();
             this.showLoginForm();
-            this.inputs.loginRecovery?.focus();
-            this.inputs.loginRecovery?.classList.add('input-focus-hint');
-            setTimeout(() => this.inputs.loginRecovery?.classList.remove('input-focus-hint'), 1200);
+            this.inputs.loginUsername?.focus();
+            this.inputs.loginUsername?.classList.add('input-focus-hint');
+            setTimeout(() => this.inputs.loginUsername?.classList.remove('input-focus-hint'), 1200);
             this.showToast(i18n.t('toastRecoveryHint'), 'info');
         });
 
@@ -308,14 +305,6 @@ class UIService {
     }
 
     // Original methods, now updated to hide auth-settings-modal if it's open
-    showAuthChoice() {
-        this.forms.choice?.classList.remove('hidden');
-        this.forms.setup?.classList.add('hidden');
-        this.forms.login?.classList.add('hidden');
-        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
-        this.loadSecretQuestion();
-    }
-
     async loadSecretQuestion() {
         try {
             const secretData = await storageService.getRecoveryMethod('secret_question');
@@ -466,100 +455,74 @@ class UIService {
         reader.readAsText(file);
     }
 
-    showAuthChoice() {
-        this.forms.choice?.classList.remove('hidden');
-        this.forms.setup?.classList.add('hidden');
-        this.forms.login?.classList.add('hidden');
-        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
-    }
-
-    showSetupForm() {
-        this.forms.choice?.classList.add('hidden');
-        this.forms.login?.classList.add('hidden');
-        this.forms.setup?.classList.remove('hidden');
-        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
-        this.inputs.setupUsername?.focus();
-    }
-
     showLoginForm() {
-        this.forms.choice?.classList.add('hidden');
-        this.forms.setup?.classList.add('hidden');
         this.forms.login?.classList.remove('hidden');
-        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
-        this.inputs.loginPin?.focus();
-    }
-
-    async handleSetupSubmit(e) {
-        e.preventDefault();
-        const username = (this.inputs.setupUsername?.value || '').trim();
-        const p1 = (this.inputs.setupPin?.value || '').trim();
-        const p2 = (this.inputs.setupPinConfirm?.value || '').trim();
-
-        if (!username) {
-            this.showToast(i18n.t('authErrorUsernameRequired'), 'error');
-            return;
-        }
-        if (!p1 || !p2) {
-            this.showToast(i18n.t('authErrorPinRequired'), 'error');
-            return;
-        }
-        if (p1 !== p2) {
-            this.showToast(i18n.t('authErrorPinMismatch'), 'error');
-            return;
-        }
-
-        try {
-            const hasVault = await vaultService.hasExistingVault();
-            if (hasVault) {
-                const confirmReset = confirm(i18n.t('settingsResetConfirm'));
-                if (!confirmReset) {
-                    this.showLoginForm();
-                    return;
-                }
-                await storageService.resetAll();
-            }
-
-            const recoveryKey = await authService.createVault(username, p1);
-            this.showRecoveryKeyModal(recoveryKey, async () => {
-                await storageService.setMeta('vault_username', username);
-                this.showToast(i18n.t('toastWelcomeBack'), 'success');
-            });
-        } catch (err) {
-            this.showToast(i18n.t('toastVaultLoadFailed', { error: err?.message || 'error' }), 'error');
-        }
+        this.settingsModal.overlay?.classList.add('hidden');
+        this.inputs.loginUsername?.focus();
     }
 
     async handleLoginSubmit(e) {
         e.preventDefault();
+        const username = (this.inputs.loginUsername?.value || '').trim();
         const pin = (this.inputs.loginPin?.value || '').trim();
-        const recovery = (this.inputs.loginRecovery?.value || '').trim();
 
-        if (!pin && !recovery) {
+        if (!username || !pin) {
             this.showToast(i18n.t('authErrorPinRequired'), 'error');
             return;
         }
 
         try {
-            if (recovery) {
-                await authService.unlockWithRecovery(recovery);
-            } else {
-                await authService.unlockWithPin(pin);
+            const storedName = await this._fetchStoredUsername();
+            if (storedName && storedName.toLowerCase() !== username.toLowerCase()) {
+                this.showToast('Username does not match the stored vault.', 'error');
+                return;
             }
+
+            await authService.unlockWithPin(pin);
 
             const welcomeName = vaultService.meta?.username || await storageService.getMeta('vault_username');
             const greeting = welcomeName ? i18n.t('toastWelcomeNamed', { name: welcomeName }) : i18n.t('toastWelcomeBack');
-            this.showToast(recovery ? i18n.t('toastRecoveryUnlocked') : greeting, 'success');
+            this.showToast(greeting, 'success');
+            this.refreshUsernameRecommendation();
         } catch (err) {
             this.showToast(this.resolveAuthErrorMessage(err?.message || err), 'error');
             if (this.inputs.loginPin) this.inputs.loginPin.value = '';
-            if (this.inputs.loginRecovery) this.inputs.loginRecovery.value = '';
 
             const code = err?.message || err;
             if (code === 'VAULT_METADATA_MISSING' || code === 'NO_VAULT') {
-                this.showSetupForm();
-                this.inputs.setupUsername?.focus();
+                this.showToast(i18n.t('authErrorMissingVault'), 'info');
             }
         }
+    }
+
+    refreshUsernameRecommendation() {
+        if (!this.usernameRecommendationText) return;
+        this._fetchStoredUsername().then((name) => {
+            this.usernameRecommendationText.textContent = name || 'unknown';
+        }).catch(() => {
+            this.usernameRecommendationText.textContent = 'unknown';
+        });
+    }
+
+    async _fetchStoredUsername() {
+        if (this.storedUsername !== null) return this.storedUsername;
+        if (vaultService.meta?.username) {
+            this.storedUsername = vaultService.meta.username;
+            return this.storedUsername;
+        }
+
+        if (!storageService.db) {
+            return null;
+        }
+
+        const cryptoMeta = await storageService.getCryptoMeta();
+        if (cryptoMeta?.username) {
+            this.storedUsername = cryptoMeta.username;
+            return this.storedUsername;
+        }
+        const cached = await storageService.getMeta('vault_username');
+        this.storedUsername = cached || null;
+        return this.storedUsername;
     }
 
     async handleResetLocal() {
@@ -1397,46 +1360,6 @@ class UIService {
     }
 
     async renderTagsManager() {
-    _stopCameraForQRScan() {
-        if (this.qrScanner) {
-            cancelAnimationFrame(this.qrScanner);
-            this.qrScanner = null;
-        }
-        const video = this._getById('qr-video');
-        if (video && video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-        }
-    }
-
-    async _handleScannedData() {
-        const qrData = this._getById('qr-data-input').value;
-        const confirmationCode = this._getById('confirmation-code-input').value;
-        const statusEl = this._getById('scan-qr-status');
-
-        if (!qrData || !confirmationCode) {
-            statusEl.textContent = 'Error: Missing data. Please scan again.';
-            return;
-        }
-
-        this._stopCameraForQRScan();
-
-        try {
-            await pairingService.joinPairingSession(qrData, confirmationCode, {
-                onConnecting: () => statusEl.textContent = 'Connecting to peer...',
-                onHandshake: () => statusEl.textContent = 'Performing secure handshake...',
-                onComplete: () => {
-                    statusEl.textContent = 'Success! Vault imported.';
-                    this.showToast('Vault successfully linked and unlocked!', 'success');
-                    // The 'auth:unlock' event will be fired by the service, handling the UI transition.
-                    this.hideScanQRModal();
-                },
-                onError: (err) => statusEl.textContent = `Error: ${err.message}`
-            });
-        } catch (err) {
-            statusEl.textContent = `Failed to start pairing: ${err.message}`;
-        }
-    }
         const container = document.getElementById('tags-list');
         const tags = notesService.getAllTags();
 
@@ -1491,6 +1414,47 @@ class UIService {
                 this.showToast(`Tag color updated to ${color}`, 'success');
             });
         });
+    }
+
+    _stopCameraForQRScan() {
+        if (this.qrScanner) {
+            cancelAnimationFrame(this.qrScanner);
+            this.qrScanner = null;
+        }
+        const video = this._getById('qr-video');
+        if (video && video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+    }
+
+    async _handleScannedData() {
+        const qrData = this._getById('qr-data-input').value;
+        const confirmationCode = this._getById('confirmation-code-input').value;
+        const statusEl = this._getById('scan-qr-status');
+
+        if (!qrData || !confirmationCode) {
+            statusEl.textContent = 'Error: Missing data. Please scan again.';
+            return;
+        }
+
+        this._stopCameraForQRScan();
+
+        try {
+            await pairingService.joinPairingSession(qrData, confirmationCode, {
+                onConnecting: () => statusEl.textContent = 'Connecting to peer...',
+                onHandshake: () => statusEl.textContent = 'Performing secure handshake...',
+                onComplete: () => {
+                    statusEl.textContent = 'Success! Vault imported.';
+                    this.showToast('Vault successfully linked and unlocked!', 'success');
+                    // The 'auth:unlock' event will be fired by the service, handling the UI transition.
+                    this.hideScanQRModal();
+                },
+                onError: (err) => statusEl.textContent = `Error: ${err.message}`
+            });
+        } catch (err) {
+            statusEl.textContent = `Failed to start pairing: ${err.message}`;
+        }
     }
 
     toggleReadOnly() {
