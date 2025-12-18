@@ -74,7 +74,9 @@ class UIService {
             topbar,
             navPills: topbar ? Array.from(topbar.querySelectorAll('.nav-pill')) : [],
             btnNew: document.getElementById('mobile-new-note'),
-            btnLock: document.getElementById('mobile-lock')
+            btnLock: document.getElementById('mobile-lock'),
+            btnMenu: document.getElementById('btn-mobile-menu'),
+            backdrop: document.getElementById('mobile-nav-backdrop')
         };
     }
 
@@ -337,6 +339,14 @@ class UIService {
             };
         });
 
+        // Mobile menu (hamburger) toggle
+        if (this.mobile.btnMenu) {
+            this.mobile.btnMenu.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.toggleMobileSidebar();
+            });
+        }
+
         this.inputs.search?.addEventListener('input', (e) => this.handleSearchInput(e));
 
         document.getElementById('btn-new-note')?.addEventListener('click', () => this.handleNewNote());
@@ -355,6 +365,19 @@ class UIService {
                 if (!quickDropInput.value) this.quickDropZone?.classList.add('collapsed');
             });
         }
+    }
+
+    toggleMobileSidebar() {
+        const isOpen = document.body.classList.toggle('mobile-sidebar-open');
+        let backdrop = document.getElementById('mobile-nav-backdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.id = 'mobile-nav-backdrop';
+            backdrop.className = 'mobile-nav-backdrop';
+            document.body.appendChild(backdrop);
+            backdrop.addEventListener('click', () => this.toggleMobileSidebar());
+        }
+        backdrop.classList.toggle('visible', isOpen);
     }
 
     addEditorEventListeners() {
