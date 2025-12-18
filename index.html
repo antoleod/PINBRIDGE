@@ -32,62 +32,86 @@
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="screen hidden auth-hero">
         <div class="auth-card glass-panel auth-stack">
-            <div class="auth-brand">
-                <div class="logo-ring">
-                    <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo" class="app-logo">
+            <div class="auth-card-header">
+                <div class="auth-brand">
+                    <div class="logo-ring">
+                        <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo" class="app-logo">
+                    </div>
+                    <h1 class="brand-title">PINBRIDGE</h1>
+                    <p class="subtitle" id="brand-subtitle" data-i18n="tagline">Secure. Offline. Private.</p>
                 </div>
-                <h1 class="brand-title">PINBRIDGE</h1>
-                <p class="subtitle">Secure. Offline. Private.</p>
+                <div class="lang-switcher">
+                    <label for="language-select" data-i18n="languageLabel">Language</label>
+                    <select id="language-select"></select>
+                </div>
+            </div>
+
+            <div id="auth-choice" class="auth-choice">
+                <p class="lede" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.</p>
+                <div class="auth-choice-actions">
+                    <button type="button" class="btn btn-primary btn-block accent" id="btn-create-start" data-i18n="actionCreateVault">Create New Vault</button>
+                    <button type="button" class="btn btn-secondary btn-block ghost" id="btn-login-start" data-i18n="actionExistingVault">I already have a Vault</button>
+                </div>
+                <div class="auth-choice-meta">
+                    <p class="hint" data-i18n="authChoiceCreateHint">Set a username and PIN to start a secure vault.</p>
+                    <p class="hint" data-i18n="authChoiceLoginHint">Unlock with your username + PIN.</p>
+                </div>
             </div>
 
             <!-- SETUP FORM -->
-            <div id="auth-setup">
-                <p class="eyebrow">Nuevo Vault</p>
-                <h2 class="form-title">Crear tu PIN</h2>
+            <div id="auth-setup" class="hidden">
+                <p class="eyebrow" data-i18n="setupEyebrow">New Vault</p>
+                <h2 class="form-title" data-i18n="setupTitle">Create your credentials</h2>
                 <form id="setup-form">
                     <div class="input-group">
-                        <label>Nombre para mostrar (opcional)</label>
-                        <input type="text" id="setup-display-name" placeholder="Ej. Ana, Equipo, Personal">
+                        <label for="setup-username" data-i18n="usernameLabel">Username</label>
+                        <input type="text" id="setup-username" autocomplete="username" data-i18n-placeholder="usernamePlaceholder">
                     </div>
-                    <div class="input-group">
-                        <label>Crea tu PIN</label>
-                        <input type="password" id="setup-pin" placeholder="••••" required minlength="4" autocomplete="new-password">
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="setup-pin" data-i18n="pinLabel">PIN</label>
+                            <input type="password" id="setup-pin" required minlength="4" autocomplete="new-password" data-i18n-placeholder="pinPlaceholder">
+                        </div>
+                        <div class="input-group">
+                            <label for="setup-pin-confirm" data-i18n="confirmPinLabel">Confirm PIN</label>
+                            <input type="password" id="setup-pin-confirm" required minlength="4" autocomplete="new-password" data-i18n-placeholder="confirmPinPlaceholder">
+                        </div>
                     </div>
-                    <div class="input-group">
-                        <label>Confirma PIN</label>
-                        <input type="password" id="setup-pin-confirm" placeholder="••••" required minlength="4" autocomplete="new-password">
-                    </div>
-                    <button type="submit" class="btn btn-primary btn-block accent">Inicializar Vault</button>
-                    <p class="hint center">Tus notas quedan en este dispositivo. La Recovery Key se muestra una sola vez.</p>
+                    <button type="submit" class="btn btn-primary btn-block accent" data-i18n="setupSubmit">Initialize Vault</button>
+                    <p class="hint center" data-i18n="setupHint">Notes stay on this device. Recovery Key appears once.</p>
                 </form>
             </div>
 
             <!-- LOGIN FORM -->
             <div id="auth-login" class="hidden">
-                <p class="eyebrow">Acceso</p>
-                <h2 class="form-title">Desbloquear</h2>
+                <p class="eyebrow" data-i18n="loginEyebrow">Access</p>
+                <h2 class="form-title" data-i18n="loginTitle">Unlock</h2>
                 <form id="login-form">
                     <div class="input-group">
-                        <label for="login-pin">PIN</label>
-                        <input type="password" id="login-pin" placeholder="••••" autocomplete="current-password">
+                        <label for="login-username" data-i18n="usernameLabel">Username</label>
+                        <input type="text" id="login-username" autocomplete="username" data-i18n-placeholder="usernamePlaceholder">
                     </div>
                     <div class="input-group">
-                        <label for="login-recovery">Recovery Key (opcional)</label>
-                        <input type="password" id="login-recovery" placeholder="Introduce tu Recovery Key" autocomplete="one-time-code">
+                        <label for="login-pin" data-i18n="pinLabel">PIN</label>
+                        <input type="password" id="login-pin" autocomplete="current-password" data-i18n-placeholder="pinPlaceholder">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block accent">Entrar</button>
-                    <p class="hint center">Si no tienes Vault, créalo abajo.</p>
+                    <div class="input-group">
+                        <label for="login-recovery" data-i18n="recoveryLabel">Recovery Key (optional)</label>
+                        <input type="password" id="login-recovery" autocomplete="one-time-code" data-i18n-placeholder="recoveryPlaceholder">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block accent" data-i18n="loginSubmit">Login</button>
+                    <p class="hint center" data-i18n="loginHint">If you do not have a vault, create one below.</p>
                 </form>
             </div>
 
             <div class="auth-toggle">
-                <button type="button" class="btn btn-secondary ghost" id="btn-show-setup">Crear Vault</button>
-                <button type="button" class="btn btn-secondary ghost" id="btn-show-login">Ya tengo Vault</button>
+                <button type="button" class="btn btn-secondary ghost" id="btn-show-setup" data-i18n="actionCreateVault">Create New Vault</button>
+                <button type="button" class="btn btn-secondary ghost" id="btn-show-login" data-i18n="actionExistingVault">I already have a Vault</button>
             </div>
             <div class="auth-actions">
-                <button type="button" class="btn btn-text" id="btn-forgot">Usar Recovery Key</button>
-                <button type="button" class="btn btn-text" id="btn-reset-local">Reset local</button>
-                <button type="button" class="btn btn-text" id="btn-sync">Sync con otro dispositivo</button>
+                <button type="button" class="btn btn-text" id="btn-forgot" data-i18n="actionUseRecovery">Use Recovery Key</button>
+                <button type="button" class="btn btn-text" id="btn-reset-local" data-i18n="actionReset">Reset local</button>
+                <button type="button" class="btn btn-text" id="btn-sync" data-i18n="actionSync">Sync with another device</button>
             </div>
         </div>
     </div>
@@ -104,7 +128,7 @@
             </div>
 
             <div class="nav-items">
-                <button class="nav-item active" data-view="all" title="All Notes">
+                <button class="nav-item active" data-view="all" title="All Notes" data-i18n-title="navAll" aria-label="All Notes">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -118,14 +142,14 @@
                             stroke-linejoin="round" />
                     </svg>
                 </button>
-                <button class="nav-item" data-view="favorites" title="Favorites">
+                <button class="nav-item" data-view="favorites" title="Favorites" data-i18n-title="navFavorites" aria-label="Favorites">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <polygon
                             points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </button>
-                <button class="nav-item" data-view="trash" title="Trash">
+                <button class="nav-item" data-view="trash" title="Trash" data-i18n-title="navTrash" aria-label="Trash">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" />
@@ -141,7 +165,7 @@
             </div>
 
             <div class="sidebar-bottom">
-                <button class="nav-item" id="btn-lock" title="Lock Vault">
+                <button class="nav-item" id="btn-lock" title="Lock Vault" data-i18n-title="lockVault" aria-label="Lock Vault">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" />
@@ -158,12 +182,12 @@
                 <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
             </button>
             <div class="topbar-actions">
-                <button class="nav-pill" data-view="all" title="Notas">Notas</button>
-                <button class="nav-pill" data-view="favorites" title="Favoritos">Favoritos</button>
-                <button class="nav-pill" data-view="trash" title="Papelera">Papelera</button>
+                <button class="nav-pill" data-view="all" title="Notes" data-i18n="mobileNotes">Notes</button>
+                <button class="nav-pill" data-view="favorites" title="Favorites" data-i18n="mobileFavorites">Favorites</button>
+                <button class="nav-pill" data-view="trash" title="Trash" data-i18n="mobileTrash">Trash</button>
             </div>
             <div class="topbar-utilities">
-                <button id="mobile-new-note" class="btn-icon-primary" title="Nueva nota">+</button>
+                <button id="mobile-new-note" class="btn-icon-primary" title="New note" data-i18n-title="newNoteTooltip">+</button>
                 <button id="mobile-lock" class="btn-icon ghost" title="Lock">🔒</button>
             </div>
         </div>
@@ -172,19 +196,19 @@
         <section class="list-panel">
             <div class="list-header">
                 <div class="list-header-main">
-                    <h2>My Notes</h2>
-                    <button id="btn-toggle-compact" class="btn btn-text compact-toggle">Compact: Off</button>
+                    <h2 data-i18n="listTitle">My Notes</h2>
+                    <button id="btn-toggle-compact" class="btn btn-text compact-toggle">Compact</button>
                 </div>
-                <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)">+</button>
+                <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)" data-i18n-title="newNoteTooltip">+</button>
             </div>
 
             <!-- v2.0 QUICK DROP ZONE -->
             <div id="quick-drop-zone" class="quick-drop collapsed">
-                <input type="text" placeholder="Quick Drop... (Enter to stash)" id="quick-drop-input">
+                <input type="text" placeholder="Quick Drop... (Enter to stash)" id="quick-drop-input" data-i18n-placeholder="quickDropPlaceholder">
             </div>
 
             <div class="search-container">
-                <input type="text" id="search-input" placeholder="Search...">
+                <input type="text" id="search-input" placeholder="Search..." data-i18n-placeholder="searchPlaceholder">
             </div>
 
             <div id="notes-list" class="scroll-container">
@@ -197,29 +221,29 @@
             <div class="editor-toolbar glass-header">
                 <div class="meta-inputs">
                     <input type="text" id="note-folder" placeholder="Folder..." list="folder-suggestions"
-                        class="meta-input">
-                    <input type="text" id="note-tags" placeholder="#tags..." class="meta-input">
+                        class="meta-input" data-i18n-placeholder="folderPlaceholder">
+                    <input type="text" id="note-tags" placeholder="#tags..." class="meta-input" data-i18n-placeholder="tagsPlaceholder">
                     <datalist id="folder-suggestions"></datalist>
                 </div>
                 <div class="status-actions">
-                    <span id="editor-status" class="status-badge">Ready</span>
-                    <button id="btn-save-note" class="btn btn-text">Save</button>
-                    <button id="btn-toggle-autosave" class="btn btn-text">Auto Save: On</button>
+                    <span id="editor-status" class="status-badge" data-i18n="statusReady">Ready</span>
+                    <button id="btn-save-note" class="btn btn-text" data-i18n="btnSave">Save</button>
+                    <button id="btn-toggle-autosave" class="btn btn-text">Auto Save</button>
                 </div>
 
                 <div class="editor-actions">
                     <!-- v2.0 ONE TAP COPY -->
-                    <button class="btn-tool" id="btn-copy-title" title="Copy Title">T</button>
-                    <button class="btn-tool" id="btn-copy-body" title="Copy Content">C</button>
+                    <button class="btn-tool" id="btn-copy-title" title="Copy Title" data-i18n-title="copyTitle">T</button>
+                    <button class="btn-tool" id="btn-copy-body" title="Copy Content" data-i18n-title="copyBody">C</button>
                     <div class="divider-v"></div>
-                    <button class="btn-tool" id="btn-pin-note" title="Pin Note">&#9733;</button>
-                    <button class="btn-tool danger" id="btn-delete" title="Delete">&#128465;</button>
+                    <button class="btn-tool" id="btn-pin-note" title="Pin Note" data-i18n-title="pinNote">&#9733;</button>
+                    <button class="btn-tool danger" id="btn-delete" title="Delete" data-i18n-title="delete">&#128465;</button>
                 </div>
             </div>
 
             <div class="editor-canvas">
-                <input type="text" id="note-title" placeholder="Untitled Note" class="editor-input-title">
-                <textarea id="note-content" placeholder="Start typing..." class="editor-input-body"></textarea>
+                <input type="text" id="note-title" placeholder="Untitled Note" class="editor-input-title" data-i18n-placeholder="noteTitlePlaceholder">
+                <textarea id="note-content" placeholder="Start typing..." class="editor-input-body" data-i18n-placeholder="noteBodyPlaceholder"></textarea>
             </div>
         </section>
 
@@ -230,13 +254,13 @@
     <!-- RECOVERY KEY MODAL -->
     <div id="recovery-key-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
-            <h2>Save Your Recovery Key</h2>
-            <p class="warning-text">This is the ONLY time you will see this key. Save it somewhere safe. You will need it if you forget your PIN.</p>
+            <h2 data-i18n="recoveryTitle">Save Your Recovery Key</h2>
+            <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it somewhere safe. You will need it if you forget your PIN.</p>
             <div class="recovery-key-container">
                 <pre id="recovery-key-display"></pre>
-                <button id="copy-recovery-key" class="btn btn-secondary">Copy</button>
+                <button id="copy-recovery-key" class="btn btn-secondary" data-i18n="recoveryCopy">Copy</button>
             </div>
-            <button id="close-recovery-modal" class="btn btn-primary btn-block">I have saved my key. Continue.</button>
+            <button id="close-recovery-modal" class="btn btn-primary btn-block" data-i18n="recoveryClose">I have saved my key. Continue.</button>
         </div>
     </div>
 

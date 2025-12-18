@@ -7,41 +7,42 @@ import { notesService } from '../notes/notes.js';
 import { storageService } from '../../storage/db.js';
 import { authService } from '../auth/auth.js';
 import { syncService } from '../sync/sync.js';
+import { i18n } from '../../core/i18n.js';
 
 export const settingsService = {
     async exportJSON() {
         const notes = await notesService.loadAll();
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(notes, null, 2));
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(notes, null, 2));
         this.downloadFile(dataStr, `pinbridge_backup_${new Date().toISOString().slice(0, 10)}.json`);
     },
 
     async exportCSV() {
         const notes = await notesService.loadAll();
-        let csvContent = "data:text/csv;charset=utf-8,ID,Title,Body,Folder,Tags,Created,Updated\n";
+        let csvContent = 'data:text/csv;charset=utf-8,ID,Title,Body,Folder,Tags,Created,Updated\n';
         notes.forEach(n => {
             const title = (n.title || '').replace(/"/g, '""');
             const body = (n.body || '').replace(/"/g, '""');
             const row = `"${n.id}","${title}","${body}","${n.folder || ''}","${(n.tags || []).join(' ')}","${n.created || ''}","${n.updated || ''}"`;
-            csvContent += row + "\n";
+            csvContent += row + '\n';
         });
-        this.downloadFile(csvContent, `pinbridge_notes.csv`);
+        this.downloadFile(csvContent, 'pinbridge_notes.csv');
     },
 
     downloadFile(dataUrl, filename) {
         const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataUrl);
-        downloadAnchorNode.setAttribute("download", filename);
+        downloadAnchorNode.setAttribute('href', dataUrl);
+        downloadAnchorNode.setAttribute('download', filename);
         document.body.appendChild(downloadAnchorNode);
         downloadAnchorNode.click();
         downloadAnchorNode.remove();
     },
 
     async importJSON() {
-        const input = prompt("Pega aquí el JSON exportado de PINBRIDGE:");
+        const input = prompt(i18n.t('settingsPromptImport'));
         if (!input) return;
         try {
             const parsed = JSON.parse(input);
-            if (!Array.isArray(parsed)) throw new Error("Formato inválido");
+            if (!Array.isArray(parsed)) throw new Error(i18n.t('settingsImportInvalid'));
             await storageService.resetAll();
             for (const note of parsed) {
                 const record = {
@@ -59,10 +60,10 @@ export const settingsService = {
                 };
                 await storageService.saveNote(record);
             }
-            alert("Importación completada. Reinicia sesión.");
+            alert(i18n.t('settingsImportSuccess'));
             location.reload();
         } catch (e) {
-            alert("Importación fallida: " + e.message);
+            alert(i18n.t('settingsImportFailed', { error: e.message }));
         }
     },
 
@@ -70,11 +71,11 @@ export const settingsService = {
         const notes = await notesService.loadAll();
         const payload = JSON.stringify(notes);
         await navigator.clipboard.writeText(payload);
-        alert("Backup copiado al portapapeles. Pégalo en tu otro dispositivo e importa.");
+        alert(i18n.t('backupCopied'));
     },
 
     async resetVault() {
-        const confirmed = confirm("Reset Vault?\nEsto borra tus notas, PIN y sesión local. No se puede deshacer.");
+        const confirmed = confirm(i18n.t('settingsResetConfirm'));
         if (!confirmed) return;
         await storageService.resetAll();
         authService.logout();
@@ -87,27 +88,27 @@ export const settingsService = {
         overlay.className = 'modal-overlay';
         overlay.innerHTML = `
             <div class="modal-content glass-panel" style="max-width:520px">
-                <h2 style="margin-top:0">Portabilidad y control</h2>
-                <p class="hint">Exporta, importa o resetea. Todo ocurre en tu dispositivo.</p>
+                <h2 style="margin-top:0">${i18n.t('settingsTitle')}</h2>
+                <p class="hint">${i18n.t('settingsHint')}</p>
                 <div class="settings-grid">
-                    <button id="btn-export-json" class="btn btn-secondary">Exportar JSON</button>
-                    <button id="btn-export-csv" class="btn btn-secondary">Exportar CSV</button>
+                    <button id="btn-export-json" class="btn btn-secondary">${i18n.t('settingsExportJson')}</button>
+                    <button id="btn-export-csv" class="btn btn-secondary">${i18n.t('settingsExportCsv')}</button>
                 </div>
                 <div class="settings-grid" style="margin-top:0.5rem">
-                    <button id="btn-import-json" class="btn btn-secondary">Importar JSON</button>
-                    <button id="btn-copy-backup" class="btn btn-secondary">Copiar backup al portapapeles</button>
+                    <button id="btn-import-json" class="btn btn-secondary">${i18n.t('settingsImportJson')}</button>
+                    <button id="btn-copy-backup" class="btn btn-secondary">${i18n.t('settingsCopyBackup')}</button>
                 </div>
                 <div class="settings-grid" style="margin-top:0.5rem">
-                    <button id="btn-sync-export" class="btn btn-primary">Guardar backup (.json)</button>
-                    <button id="btn-sync-import" class="btn btn-primary">Importar backup (.json)</button>
+                    <button id="btn-sync-export" class="btn btn-primary">${i18n.t('settingsSyncExport')}</button>
+                    <button id="btn-sync-import" class="btn btn-primary">${i18n.t('settingsSyncImport')}</button>
                 </div>
-                <p class="hint">Sync manual: exporta y mueve el archivo o copia/pega entre dispositivos. Todo sigue local.</p>
+                <p class="hint">${i18n.t('settingsSyncHint')}</p>
                 <div class="divider"></div>
                 <div class="danger-zone">
-                    <p class="warning-text">Reset borra todo el contenido local y requerirá crear un Vault nuevo.</p>
-                    <button id="btn-reset-vault" class="btn btn-primary btn-block">Reset Vault</button>
+                    <p class="warning-text">${i18n.t('settingsResetWarning')}</p>
+                    <button id="btn-reset-vault" class="btn btn-primary btn-block">${i18n.t('settingsResetCta')}</button>
                 </div>
-                <button id="btn-close-settings" class="btn btn-text" style="margin-top:1rem">Cerrar</button>
+                <button id="btn-close-settings" class="btn btn-text" style="margin-top:1rem">${i18n.t('settingsClose')}</button>
             </div>
         `;
 

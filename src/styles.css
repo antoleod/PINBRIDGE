@@ -72,6 +72,11 @@ body {
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* --- AUTH SCREEN --- */
 #auth-screen.auth-hero {
     justify-content: center;
@@ -138,6 +143,48 @@ body {
     gap: 0.5rem;
 }
 .auth-actions .btn-text { width: 100%; }
+.auth-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.lang-switcher {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35rem;
+}
+.lang-switcher label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+.lang-switcher select {
+    background: rgba(0,0,0,0.35);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.55rem 0.75rem;
+    min-width: 160px;
+}
+.auth-choice {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    animation: fadeIn 0.4s ease;
+}
+.auth-choice-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+}
+.auth-choice-meta {
+    display: grid;
+    gap: 0.35rem;
+    text-align: left;
+}
 
 
 .brand-title {
@@ -682,6 +729,39 @@ button.btn:active {
     font-size: 1rem;
     font-weight: 600;
     color: white;
+}
+
+.note-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.note-actions {
+    display: flex;
+    gap: 0.3rem;
+}
+
+.note-action {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    padding: 4px 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.note-action:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: white;
+}
+
+.note-action.active {
+    color: var(--brand-primary);
+    border-color: var(--brand-primary);
+    background: rgba(59, 130, 246, 0.12);
 }
 
 .note-badge {
