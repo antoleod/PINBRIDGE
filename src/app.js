@@ -92,14 +92,41 @@ async function init() {
 
 // When the vault is unlocked, create the session and load the UI.
 bus.on('auth:unlock', async () => {
+    console.log('auth:unlock event fired');
     uiService.showScreen('vault');
+    
+    // Small delay to ensure vault is fully initialized
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     try {
+        // Ensure vault is unlocked
+        if (!vaultService.isUnlocked()) {
+            console.error('Vault is not unlocked');
+            uiService.showToast('Vault is locked. Please try again.', 'error');
+            return;
+        }
+        
+        console.log('Loading notes...');
         const notes = await notesService.loadAll();
-        searchService.buildIndex(notes);
-        uiService.renderCurrentView(notes);
+        console.log('Notes loaded:', notes.length, 'notes');
+        
+        if (notes && Array.isArray(notes)) {
+            searchService.buildIndex(notes);
+            uiService.renderCurrentView(notes);
+            
+            // Initialize feather icons after rendering
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        } else {
+            console.error('Notes is not an array:', notes);
+            uiService.renderCurrentView([]);
+        }
     } catch (err) {
         console.error("Vault load failed", err);
         uiService.showToast(i18n.t('toastVaultLoadFailed', { error: err?.message || 'unknown error' }), "error");
+        // Still render empty view to show the UI
+        uiService.renderCurrentView([]);
     }
 });
 

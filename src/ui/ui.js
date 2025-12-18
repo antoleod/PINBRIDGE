@@ -37,7 +37,11 @@ class UIService {
         document.getElementById('auth-recovery')?.classList.add('hidden');
         this.recoveryModal.authRecoveryOverlay?.classList.add('hidden');
         this.forms.register?.classList.add('hidden');
+        document.getElementById('auth-choice')?.classList.add('hidden');
         this.forms.login?.classList.remove('hidden');
+        // Show/hide toggle buttons
+        document.getElementById('btn-auth-choice-existing')?.style.setProperty('display', 'none');
+        document.getElementById('btn-auth-choice-create')?.style.setProperty('display', 'inline-flex');
         this.inputs.loginUsername?.focus();
     }
 
@@ -55,7 +59,11 @@ class UIService {
 
     showRegisterForm() {
         this.forms.login?.classList.add('hidden');
+        document.getElementById('auth-choice')?.classList.add('hidden');
         this.forms.register?.classList.remove('hidden');
+        // Show/hide toggle buttons
+        document.getElementById('btn-auth-choice-create')?.style.setProperty('display', 'none');
+        document.getElementById('btn-auth-choice-existing')?.style.setProperty('display', 'inline-flex');
         this.inputs.registerUsername?.focus();
     }
 
@@ -164,6 +172,15 @@ class UIService {
         this.refreshSaveButtonState();
         this.refreshUsernameRecommendation();
         this.setStatus(i18n.t('statusReady'));
+        
+        // Initialize settings menu values
+        const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
+        const sortBy = localStorage.getItem('pinbridge.notes_sort') || 'updated';
+        const togglePreview = document.getElementById('toggle-show-preview');
+        const sortSelect = document.getElementById('notes-sort-select');
+        if (togglePreview) togglePreview.checked = showPreview;
+        if (sortSelect) sortSelect.value = sortBy;
+        
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
@@ -264,8 +281,17 @@ class UIService {
             }
         });
 
-        document.getElementById('btn-auth-choice-create')?.addEventListener('click', () => this.showRegisterForm());
-        document.getElementById('btn-auth-choice-existing')?.addEventListener('click', () => this.showLoginForm());
+        // Auth choice buttons (now in auth-actions)
+        document.querySelectorAll('#btn-auth-choice-create').forEach(btn => {
+            btn.addEventListener('click', () => this.showRegisterForm());
+        });
+        document.querySelectorAll('#btn-auth-choice-existing').forEach(btn => {
+            btn.addEventListener('click', () => this.showLoginForm());
+        });
+
+        // Switch between login and register
+        document.getElementById('btn-switch-to-register')?.addEventListener('click', () => this.showRegisterForm());
+        document.getElementById('btn-switch-to-login')?.addEventListener('click', () => this.showLoginForm());
 
         this.forms.registerForm?.addEventListener('submit', (e) => this.handleRegisterSubmit(e));
         this.forms.registerButton?.addEventListener('click', (e) => {
@@ -680,6 +706,38 @@ class UIService {
         document.getElementById('btn-new-note')?.addEventListener('click', () => this.handleNewNote());
         if (this.mobile.btnNew) this.mobile.btnNew.onclick = () => this.handleNewNote();
 
+        // Notes settings menu
+        document.getElementById('btn-notes-settings')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleNotesSettingsMenu();
+        });
+
+        // Close settings menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('notes-settings-menu');
+            const btn = document.getElementById('btn-notes-settings');
+            if (menu && !menu.contains(e.target) && !btn?.contains(e.target)) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        // Settings toggles
+        document.getElementById('toggle-compact-view')?.addEventListener('change', (e) => {
+            this.compactViewEnabled = e.target.checked;
+            localStorage.setItem('pinbridge.compact_notes', this.compactViewEnabled);
+            this.updateCompactViewUI();
+        });
+
+        document.getElementById('toggle-show-preview')?.addEventListener('change', (e) => {
+            localStorage.setItem('pinbridge.show_preview', e.target.checked);
+            this.renderCurrentView();
+        });
+
+        document.getElementById('notes-sort-select')?.addEventListener('change', (e) => {
+            localStorage.setItem('pinbridge.notes_sort', e.target.value);
+            this.renderCurrentView();
+        });
+
         document.getElementById('btn-lock')?.addEventListener('click', () => authService.forceLogout('manual'));
         if (this.mobile.btnLock) this.mobile.btnLock.onclick = () => authService.forceLogout('manual');
 
@@ -734,29 +792,7 @@ class UIService {
         this.inputs.noteTags?.addEventListener('input', () => this.scheduleAutoSave());
 
         document.getElementById('btn-delete')?.addEventListener('click', () => this.handleDelete());
-        document.getElementById('btn-save-note')?.addEventListener('click', async () => {
-            try {
-                const success = await this.persistNote(true);
-                if (success) this.showToast(i18n.t('toastNoteSaved'), 'success');
-            } catch (err) {
-                console.error('Save failed', err);
-                this.showToast(i18n.t('toastVaultLoadFailed', { error: 'Save Error' }), 'error');
-            }
-        });
-        document.getElementById('btn-toggle-autosave')?.addEventListener('click', () => this.toggleAutoSave());
-
-        // Formatting & Tools
-        document.getElementById('btn-md-bold')?.addEventListener('click', () => this.insertMarkdown('**', '**'));
-        document.getElementById('btn-md-italic')?.addEventListener('click', () => this.insertMarkdown('_', '_'));
-        document.getElementById('btn-md-list')?.addEventListener('click', () => this.insertMarkdown('\n- ', ''));
-        document.getElementById('btn-md-check')?.addEventListener('click', () => this.insertMarkdown('\n- [ ] ', ''));
-
-        // Focus Mode
-        document.getElementById('btn-focus-mode')?.addEventListener('click', () => this.toggleFocusMode());
-        document.getElementById('btn-exit-focus-mode')?.addEventListener('click', () => this.toggleFocusMode(false));
-
-        document.getElementById('btn-duplicate')?.addEventListener('click', () => this.handleDuplicate());
-        document.getElementById('btn-download')?.addEventListener('click', () => this.handleDownload());
+        // Minimal toolbar actions
         document.getElementById('btn-pin-note')?.addEventListener('click', () => this.handlePinNote());
 
         // History
@@ -1861,6 +1897,25 @@ class UIService {
         this.renderCurrentView();
     }
 
+    async handleArchiveNote(noteId) {
+        if (!this.ensureAuthenticated()) return;
+        const note = notesService.notes.find(n => n.id === noteId);
+        if (!note) return;
+        
+        if (note.archived) {
+            await notesService.unarchiveNote(noteId);
+            this.showToast('Note unarchived', 'success');
+        } else {
+            await notesService.archiveNote(noteId);
+            this.showToast('Note archived', 'success');
+        }
+        
+        if (this.activeNoteId === noteId) {
+            this.activeNoteId = null;
+            this.clearEditor();
+        }
+    }
+
     async handleQuickDrop(e) {
         if (!this.ensureAuthenticated()) return;
         if (e.key === 'Enter') {
@@ -1900,18 +1955,49 @@ class UIService {
     }
 
     getFilteredNotes(notes = notesService.notes) {
-        if (this.currentView === 'trash') return notes.filter(n => n.trash);
-        if (this.currentView === 'templates') return notes.filter(n => n.isTemplate && !n.trash);
+        if (this.currentView === 'trash') return this.sortNotes(notes.filter(n => n.trash));
+        if (this.currentView === 'templates') return this.sortNotes(notes.filter(n => n.isTemplate && !n.trash));
+        if (this.currentView === 'archive') return this.sortNotes(notes.filter(n => n.archived && !n.trash));
 
-        // Normal views should EXCLUDE templates
-        let filtered = notes.filter(n => !n.trash && !n.isTemplate);
+        // Normal views should EXCLUDE templates, archived, and trash
+        let filtered = notes.filter(n => !n.trash && !n.isTemplate && !n.archived);
 
-        if (this.currentView === 'favorites') return filtered.filter(n => n.pinned);
+        if (this.currentView === 'favorites') filtered = filtered.filter(n => n.pinned);
         if (this.currentView.startsWith('folder:')) {
             const folder = this.currentView.split('folder:')[1];
-            return filtered.filter(n => n.folder === folder);
+            filtered = filtered.filter(n => n.folder === folder);
         }
-        return filtered; // 'all' view
+        
+        return this.sortNotes(filtered);
+    }
+
+    sortNotes(notes) {
+        const sortBy = localStorage.getItem('pinbridge.notes_sort') || 'updated';
+        const sorted = [...notes];
+        
+        switch (sortBy) {
+            case 'created':
+                sorted.sort((a, b) => (b.created || 0) - (a.created || 0));
+                break;
+            case 'title':
+                sorted.sort((a, b) => {
+                    const titleA = (a.title || '').toLowerCase();
+                    const titleB = (b.title || '').toLowerCase();
+                    return titleA.localeCompare(titleB);
+                });
+                break;
+            case 'updated':
+            default:
+                sorted.sort((a, b) => (b.updated || 0) - (a.updated || 0));
+                break;
+        }
+        
+        // Always show pinned notes first
+        return sorted.sort((a, b) => {
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            return 0;
+        });
     }
 
     renderNoteList(notes) {
@@ -1933,67 +2019,82 @@ class UIService {
             const badges = [];
             if (note.pinned) badges.push('<span class="note-badge">&#9733;</span>');
 
+            const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
+            const previewText = showPreview ? Utils.escapeHtml(note.body?.substring(0, 100) || '') || '' : '';
+            
             div.innerHTML = `
-                <div class="note-top">
+                <div class="note-top-minimal">
                     <h4>${Utils.escapeHtml(note.title) || i18n.t('noteTitlePlaceholder')}${badges.join(' ')}</h4>
-                     <div class="note-actions">
-                        <button class="note-action" data-action="history" title="View History">
-                            <svg viewBox="0 0 24 24" class="icon-small"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                    <div class="note-actions-minimal">
+                        <button class="note-action-icon ${note.pinned ? 'active' : ''}" data-action="pin" title="${note.pinned ? 'Unpin' : 'Pin as favorite'}" data-note-id="${note.id}">
+                            <i data-feather="star"></i>
                         </button>
-                        <button class="note-action" data-action="duplicate" title="Duplicate Note">
-                            <svg viewBox="0 0 24 24" class="icon-small"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                        <button class="note-action-icon ${note.archived ? 'active' : ''}" data-action="archive" title="${note.archived ? 'Unarchive' : 'Archive'}" data-note-id="${note.id}">
+                            <i data-feather="archive"></i>
                         </button>
-                        <button class="note-action" data-action="archive" title="Archive Note">
-                            <svg viewBox="0 0 24 24" class="icon-small"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                        <button class="note-action-icon" data-action="trash" title="Delete" data-note-id="${note.id}">
+                            <i data-feather="trash-2"></i>
                         </button>
-                        <button class="note-action" data-action="pin" title="${i18n.t('pinNote')}">
-                            <svg viewBox="0 0 24 24" class="icon-small"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
-                        </button>
-                        <button class="note-action" data-action="trash" title="${note.trash ? i18n.t('deleteForever') : i18n.t('delete')}">&#128465;</button>
                     </div>
                 </div>
-                <p>${Utils.escapeHtml(note.body) || i18n.t('noteBodyPlaceholder')}</p>
+                ${showPreview ? `<p class="note-preview">${previewText}</p>` : ''}
             `;
 
             div.onclick = (e) => {
-                if (e.target.classList.contains('note-action')) return;
+                // Don't select note if clicking on action buttons
+                if (e.target.closest('.note-action-icon')) {
+                    e.stopPropagation();
+                    return;
+                }
                 this.selectNote(note);
             };
 
-            div.querySelectorAll('.note-action').forEach(btn => {
-                btn.onclick = async (e) => {
+            // Add event listeners for action buttons
+            div.querySelectorAll('.note-action-icon').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const action = btn.dataset.action;
+                    const noteId = btn.dataset.noteId;
+                    
                     switch (action) {
                         case 'pin':
-                            await notesService.togglePin(note.id);
+                            await notesService.togglePin(noteId);
+                            // Re-initialize feather icons after update
+                            if (typeof feather !== 'undefined') {
+                                feather.replace();
+                            }
                             this.renderCurrentView();
                             break;
                         case 'trash':
                             if (note.trash) {
-                                await notesService.deleteNote(note.id);
+                                if (confirm('Permanently delete this note?')) {
+                                    await notesService.deleteNote(noteId);
+                                }
                             } else {
-                                await notesService.moveToTrash(note.id);
+                                await notesService.moveToTrash(noteId);
                             }
-                            this.activeNoteId = null;
-                            this.clearEditor();
+                            if (this.activeNoteId === noteId) {
+                                this.activeNoteId = null;
+                                this.clearEditor();
+                            }
                             this.renderCurrentView();
                             break;
-                        case 'duplicate':
-                            this.selectNote(note); // Select it first
-                            await this.handleDuplicate();
-                            break;
-                        case 'history':
-                            this.selectNote(note); // Select it first
-                            await this.showHistoryModal();
-                            break;
                         case 'archive':
-                            // Placeholder for archive functionality
-                            this.showToast(`Archive function for "${note.title}" not yet implemented.`, 'info');
+                            await this.handleArchiveNote(noteId);
+                            // Re-initialize feather icons after update
+                            if (typeof feather !== 'undefined') {
+                                feather.replace();
+                            }
+                            this.renderCurrentView();
                             break;
                     }
-                };
+                });
             });
+            
+            // Initialize feather icons for this note
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
 
             listEl.appendChild(div);
         });
@@ -2004,13 +2105,12 @@ class UIService {
         const el = document.querySelector(`.note-item[data-id="${note.id}"]`);
         if (!el) return;
         const titleEl = el.querySelector('h4');
-        const bodyEl = el.querySelector('p');
-        const actions = el.querySelector('.note-actions');
+        const bodyEl = el.querySelector('.note-preview');
         const badge = note.pinned ? '<span class="note-badge">&#9733;</span>' : '';
         if (titleEl) titleEl.innerHTML = `${Utils.escapeHtml(note.title) || i18n.t('noteTitlePlaceholder')}${badge}`;
-        if (bodyEl) bodyEl.innerHTML = Utils.escapeHtml(note.body) || i18n.t('noteBodyPlaceholder');
-        if (actions) {
-            actions.querySelector('[data-action="pin"]')?.classList.toggle('active', !!note.pinned);
+        if (bodyEl) {
+            const preview = note.body?.substring(0, 100) || '';
+            bodyEl.textContent = preview;
         }
     }
 
@@ -2150,10 +2250,25 @@ class UIService {
         if (this.autoSaveEnabled) this.scheduleAutoSave();
     }
 
+    toggleNotesSettingsMenu() {
+        const menu = document.getElementById('notes-settings-menu');
+        if (menu) {
+            menu.classList.toggle('hidden');
+            // Initialize feather icons when menu opens
+            if (!menu.classList.contains('hidden') && typeof feather !== 'undefined') {
+                feather.replace();
+            }
+        }
+    }
+
     updateCompactViewUI() {
         document.body.classList.toggle('compact-notes', this.compactViewEnabled);
         const btn = document.getElementById('btn-toggle-compact');
         if (btn) btn.innerText = i18n.t('compactLabel', { state: i18n.t(this.compactViewEnabled ? 'compactOn' : 'compactOff') });
+        
+        // Update settings menu toggle
+        const toggle = document.getElementById('toggle-compact-view');
+        if (toggle) toggle.checked = this.compactViewEnabled;
     }
 
     toggleCompactView() {

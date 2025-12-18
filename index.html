@@ -54,17 +54,14 @@
                         <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo" class="app-logo">
                     </div>
                     <h1 class="brand-title">PINBRIDGE</h1>
-                    <p class="subtitle" id="brand-subtitle" data-i18n="tagline">Your data, secured offline and in-sync.
-                    </p>
                 </div>
                 <div class="lang-switcher">
-                    <label for="language-select" data-i18n="languageLabel">Language</label>
                     <select id="language-select"></select>
                 </div>
             </div>
 
             <div id="auth-forms-container">
-                <div id="auth-choice" class="auth-choice-panel glass-panel">
+                <div id="auth-choice" class="auth-choice-panel glass-panel hidden">
                     <div class="auth-choice-meta">
                         <p class="eyebrow" data-i18n="authChoiceTitle">Select an option to continue</p>
                         <p class="hint" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.</p>
@@ -82,23 +79,15 @@
                 </div>
                 <!-- LOGIN FORM -->
                 <div id="auth-login">
-                    <p class="eyebrow" data-i18n="loginEyebrow">Access Your Vault</p>
-                    <h2 class="form-title" data-i18n="loginTitle">Secure Login</h2>
-                    <p class="hint center">
-                        Suggested username:
-                        <strong id="username-recommendation-text">unknown</strong>
-                    </p>
                     <form id="login-form">
                         <div class="input-group">
-                            <label for="login-username" data-i18n="usernameLabel">Username</label>
                             <input type="text" id="login-username" autocomplete="username"
-                                data-i18n-placeholder="usernamePlaceholder">
+                                placeholder="Username" data-i18n-placeholder="usernamePlaceholder">
                         </div>
                         <div class="input-group">
-                            <label for="login-pin" data-i18n="pinLabel">PIN</label>
                             <div class="input-wrapper">
                                 <input type="password" id="login-pin" autocomplete="current-password"
-                                    data-i18n-placeholder="pinPlaceholder">
+                                    placeholder="PIN" data-i18n-placeholder="pinPlaceholder">
                                 <button type="button" class="btn-toggle-visibility" data-target="login-pin"
                                     aria-label="Show PIN" title="Show PIN">
                                     <!-- Icon will be injected by JS -->
@@ -106,27 +95,28 @@
                             </div>
                         </div>
                         <button type="button" id="btn-login-submit" class="btn btn-primary btn-block accent"
-                            data-i18n="loginSubmit">Unlock Vault</button>
+                            data-i18n="loginSubmit">Unlock</button>
                     </form>
+                    <p class="hint center" style="margin-top: 1rem; font-size: 0.85rem;">
+                        Don't have a vault? 
+                        <button type="button" class="btn-link" id="btn-switch-to-register" style="background: none; border: none; color: var(--brand-primary); cursor: pointer; text-decoration: underline; padding: 0; font-size: inherit;">
+                            Create one
+                        </button>
+                    </p>
                 </div>
 
                 <!-- REGISTRATION FORM -->
                 <div id="auth-register" class="hidden">
-                    <p class="eyebrow" data-i18n="registerEyebrow">Create a Vault</p>
-                    <h2 class="form-title" data-i18n="registerTitle">New Registration</h2>
-                    <p class="hint center">Create a secure, offline-first vault for your data.</p>
                     <form id="register-form">
                         <div class="input-group">
-                            <label for="register-username" data-i18n="usernameLabel">Username</label>
                             <input type="text" id="register-username" autocomplete="username"
-                                data-i18n-placeholder="usernamePlaceholder" required>
+                                placeholder="Username" data-i18n-placeholder="usernamePlaceholder" required>
                             <span class="error-message" id="register-username-error"></span>
                         </div>
                         <div class="input-group">
-                            <label for="register-pin" data-i18n="pinLabel">PIN (4-6 digits)</label>
                             <div class="input-wrapper">
                                 <input type="password" id="register-pin" autocomplete="new-password"
-                                    data-i18n-placeholder="pinPlaceholder" minlength="4" maxlength="6" required>
+                                    placeholder="PIN (4-6 digits)" data-i18n-placeholder="pinPlaceholder" minlength="4" maxlength="6" required>
                                 <button type="button" class="btn-toggle-visibility" data-target="register-pin"
                                     aria-label="Show PIN" title="Show PIN">
                                     <!-- Icon will be injected by JS -->
@@ -137,14 +127,22 @@
                         <button type="button" id="btn-register-submit" class="btn btn-primary btn-block accent"
                             data-i18n="registerSubmit">Create Vault</button>
                     </form>
+                    <p class="hint center" style="margin-top: 1rem; font-size: 0.85rem;">
+                        Already have a vault? 
+                        <button type="button" class="btn-link" id="btn-switch-to-login" style="background: none; border: none; color: var(--brand-primary); cursor: pointer; text-decoration: underline; padding: 0; font-size: inherit;">
+                            Sign in
+                        </button>
+                    </p>
                 </div>
             </div>
 
             <div class="auth-actions">
-                <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i> Account Recovery</button>
+                <button type="button" class="btn btn-text" id="btn-auth-choice-existing" style="display: none;"><span data-i18n="actionExistingVault">I have a vault</span></button>
+                <button type="button" class="btn btn-text" id="btn-auth-choice-create" style="display: none;"><span data-i18n="actionCreateVault">Create vault</span></button>
+                <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i> Recovery</button>
                 <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile"
                     aria-label="Open settings">
-                    <i data-feather="settings"></i> Open settings
+                    <i data-feather="settings"></i>
                 </button>
             </div>
         </div>
@@ -273,11 +271,13 @@
             </div>
         </div>
 
-        <!-- VAULT SCREEN -->
-        <div id="vault-screen" class="screen hidden">
+    </div>
 
-            <!-- SIDEBAR -->
-            <nav class="sidebar glass-panel">
+    <!-- VAULT SCREEN -->
+    <div id="vault-screen" class="screen hidden">
+
+        <!-- SIDEBAR -->
+        <nav class="sidebar glass-panel">
                 <div class="sidebar-top">
                     <div class="logo-small">
                         <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE mark">
@@ -388,10 +388,10 @@
                         </svg>
                     </button>
                 </div>
-            </nav>
+        </nav>
 
-            <!-- MOBILE TOP BAR -->
-            <div id="mobile-topbar" class="mobile-topbar hidden glass-panel">
+        <!-- MOBILE TOP BAR -->
+        <div id="mobile-topbar" class="mobile-topbar hidden glass-panel">
                 <button id="btn-mobile-menu" class="btn-icon ghost" title="Menu" aria-label="Open menu"><i data-feather="menu"></i></button>
                 <button class="topbar-logo" title="PINBRIDGE">
                     <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
@@ -407,94 +407,81 @@
                         data-i18n-title="newNoteTooltip">+</button>
                     <button id="mobile-lock" class="btn-icon ghost" title="Lock"><i data-feather="lock"></i></button>
                 </div>
-            </div>
+        </div>
 
-            <!-- LIST PANEL -->
-            <section class="list-panel">
+        <!-- LIST PANEL -->
+        <section class="list-panel">
                 <div class="list-header">
-                    <div class="list-header-main">
-                        <h2 data-i18n="listTitle">My Notes</h2>
-                        <div class="view-switcher">
-                            <button id="btn-view-grid" class="btn-icon ghost active" title="Grid View"><i data-feather="grid"></i></button>
-                            <button id="btn-view-list" class="btn-icon ghost" title="List View"><i data-feather="list"></i></button>
-                        </div>
-                    </div>
-                    <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)"
-                        data-i18n-title="newNoteTooltip">+</button>
-                </div>
-
-                <!-- INTELLIGENT NOTE BAR -->
-                <div id="intelligent-note-bar" class="quick-drop collapsed">
-                    <input type="text" placeholder="Take a note... (auto-detects lists, links, etc.)"
-                        id="intelligent-note-input" data-i18n-placeholder="intelligentNotePlaceholder">
-                </div>
-
-                <div class="search-container">
-                    <input type="text" id="search-input" placeholder="Search notes, #tags, or types..."
+                    <input type="text" id="search-input" placeholder="Search..." class="search-input-minimal"
                         data-i18n-placeholder="searchPlaceholder">
-                    <!-- Placeholder for combined filters UI -->
-                    <button id="btn-advanced-search" class="btn-icon ghost" title="Advanced Search"
-                        style="display: none;"><i data-feather="search"></i></button>
+                    <div class="list-header-actions">
+                        <button id="btn-notes-settings" class="btn-icon-minimal" title="Notes Settings">
+                            <i data-feather="settings"></i>
+                        </button>
+                        <button id="btn-new-note" class="btn-new-minimal" title="New Note (N)"
+                            data-i18n-title="newNoteTooltip">+</button>
+                    </div>
+                </div>
+
+                <!-- Notes Settings Menu -->
+                <div id="notes-settings-menu" class="notes-settings-menu hidden">
+                    <div class="settings-menu-item">
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="toggle-compact-view" class="toggle-input">
+                            <span class="toggle-label">Compact view</span>
+                        </label>
+                    </div>
+                    <div class="settings-menu-item">
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="toggle-show-preview" class="toggle-input" checked>
+                            <span class="toggle-label">Show preview</span>
+                        </label>
+                    </div>
+                    <div class="settings-menu-item">
+                        <label>Sort by</label>
+                        <select id="notes-sort-select" class="settings-select-minimal">
+                            <option value="updated">Last updated</option>
+                            <option value="created">Date created</option>
+                            <option value="title">Title</option>
+                        </select>
+                    </div>
                 </div>
 
                 <div id="notes-list" class="scroll-container">
                     <!-- Notes injected here -->
                 </div>
-            </section>
+        </section>
 
-            <!-- EDITOR PANEL -->
-            <section class="editor-panel">
-                <div class="editor-toolbar glass-header">
-                    <div class="meta-inputs">
-                        <input type="text" id="note-folder" placeholder="Folder..." list="folder-suggestions"
-                            class="meta-input" data-i18n-placeholder="folderPlaceholder">
-                        <input type="text" id="note-tags" placeholder="#tags..." class="meta-input"
+        <!-- EDITOR PANEL -->
+        <section class="editor-panel">
+                <div class="editor-toolbar-minimal">
+                    <div class="editor-meta-minimal">
+                        <input type="text" id="note-folder" placeholder="Folder" list="folder-suggestions"
+                            class="meta-input-minimal" data-i18n-placeholder="folderPlaceholder">
+                        <input type="text" id="note-tags" placeholder="#tags" class="meta-input-minimal"
                             data-i18n-placeholder="tagsPlaceholder">
                         <datalist id="folder-suggestions"></datalist>
                     </div>
-                    <div class="status-actions">
-                        <span id="editor-status" class="status-badge" data-i18n="statusReady">Ready</span>
-                        <button id="btn-save-note" class="btn btn-text" data-i18n="btnSave">Save</button>
-                        <button id="btn-toggle-autosave" class="btn btn-text">Auto Save</button>
-                    </div>
-
-                    <div class="editor-actions">
-                        <button class="btn-tool" id="btn-md-bold" title="Bold"><strong>B</strong></button>
-                        <button class="btn-tool" id="btn-md-italic" title="Italic"><em>I</em></button>
-                        <button class="btn-tool" id="btn-md-list" title="List">&#8226;</button>
-                        <button class="btn-tool" id="btn-md-check" title="Checkbox">&#9745;</button>
-                        <div class="divider-v"></div>
-                        <button class="btn-tool" id="btn-focus-mode" title="Focus Mode (F)">&#9974;</button>
-                        <div class="divider-v"></div>
-                        <!-- v2.0 ACTIONS -->
-                        <button class="btn-tool" id="btn-insert-template" title="Insert Template">&#10010;T</button>
-                        <button class="btn-tool" id="btn-duplicate" title="Duplicate Note">&#x2398;</button>
-                        <button class="btn-tool" id="btn-download" title="Download Text">&#x2193;</button>
-                        <button class="btn-tool" id="btn-history" title="View History">&#128339;</button>
-                        <button class="btn-tool" id="btn-toggle-readonly" title="Toggle Read-Only">&#128274;</button>
-                        <div class="divider-v"></div>
-                        <button class="btn-tool" id="btn-set-reminder" title="Set Reminder"
-                            data-i18n-title="setReminder"><i data-feather="bell"></i></button>
-                        <button class="btn-tool" id="btn-protect-note" title="Protect Note"
-                            data-i18n-title="protectNote"><i data-feather="shield"></i></button>
-                        <button class="btn-tool" id="btn-pin-note" title="Pin Note" data-i18n-title="pinNote"><i data-feather="map-pin"></i></button>
-                        <button class="btn-tool danger" id="btn-delete" title="Delete"
-                            data-i18n-title="delete">&#128465;</button>
-                        <span id="word-count-badge" class="count-badge">0 w</span>
+                    <div class="editor-actions-minimal">
+                        <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
+                            <i data-feather="map-pin"></i>
+                        </button>
+                        <button class="btn-tool-minimal" id="btn-delete" title="Delete" data-i18n-title="delete">
+                            <i data-feather="trash-2"></i>
+                        </button>
                     </div>
                 </div>
 
                 <div class="editor-canvas">
-                    <input type="text" id="note-title" placeholder="Untitled Note" class="editor-input-title"
+                    <input type="text" id="note-title" placeholder="Untitled" class="editor-input-title"
                         data-i18n-placeholder="noteTitlePlaceholder">
                     <textarea id="note-content" placeholder="Start typing..." class="editor-input-body"
                         data-i18n-placeholder="noteBodyPlaceholder"></textarea>
                 </div>
-                <button id="btn-exit-focus-mode" class="btn-icon ghost hidden" title="Exit Focus Mode (Esc)">×</button>
-            </section>
+        </section>
 
-            <!-- DASHBOARD PANEL -->
-            <section class="dashboard-panel hidden">
+        <!-- DASHBOARD PANEL -->
+        <section class="dashboard-panel hidden">
                 <div class="dashboard-header">
                     <h1>Dashboard</h1>
                     <p class="subtitle">Your productivity at a glance</p>
@@ -573,11 +560,11 @@
                         </div>
                     </div>
                 </div>
-            </section>
+        </section>
 
-        </div>
+    </div>
 
-        <!-- COMMAND PALETTE (Dynamically injected but CSS ready) -->
+    <!-- COMMAND PALETTE (Dynamically injected but CSS ready) -->
 
         <!-- RECOVERY KEY MODAL -->
         <div id="recovery-key-modal" class="modal-overlay hidden">
@@ -812,7 +799,6 @@
                 </div>
             </div>
         </div>
-    </div>
 
     <!-- NOTE PROTECTION / SELF-DESTRUCT MODAL -->
     <div id="note-protection-modal" class="modal-overlay hidden">

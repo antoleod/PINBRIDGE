@@ -30,7 +30,16 @@ class NotesService {
      * Load all notes from IndexedDB and parse them into memory.
      */
     async loadAll() {
-        this.notes = vaultService.getNotes().map(n => ({ ...n }));
+        if (!vaultService.isUnlocked()) {
+            console.warn('Cannot load notes: vault is locked');
+            this.notes = [];
+            return this.notes;
+        }
+        
+        const vaultNotes = vaultService.getNotes();
+        console.log('Vault notes from getNotes():', vaultNotes?.length || 0);
+        
+        this.notes = (vaultNotes || []).map(n => ({ ...n }));
         this.sortNotes();
         bus.emit('notes:loaded', this.notes);
         return this.notes;
@@ -222,6 +231,34 @@ class NotesService {
         if (!note) return;
 
         note.trash = false;
+        note.updated = Date.now();
+        await this.persistNote(note);
+        this.sortNotes();
+        bus.emit('notes:updated', this.notes);
+    }
+
+    /**
+     * Archive a note.
+     */
+    async archiveNote(id) {
+        const note = this.notes.find(n => n.id === id);
+        if (!note) return;
+
+        note.archived = true;
+        note.updated = Date.now();
+        await this.persistNote(note);
+        this.sortNotes();
+        bus.emit('notes:updated', this.notes);
+    }
+
+    /**
+     * Unarchive a note.
+     */
+    async unarchiveNote(id) {
+        const note = this.notes.find(n => n.id === id);
+        if (!note) return;
+
+        note.archived = false;
         note.updated = Date.now();
         await this.persistNote(note);
         this.sortNotes();

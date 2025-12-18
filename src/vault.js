@@ -128,6 +128,10 @@ class VaultService {
   }
 
   getNotes() {
+    if (!this.vault) {
+      console.warn('Vault not initialized, returning empty notes array');
+      return [];
+    }
     return this.vault.notes || [];
   }
 
