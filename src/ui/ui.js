@@ -71,7 +71,7 @@ class UIService {
         };
 
         this.settingsModal = {
-            overlay: document.getElementById('settings-modal'),
+            overlay: document.getElementById('auth-settings-modal'),
             closeBtn: document.getElementById('btn-close-settings'),
             forgotBtn: document.getElementById('btn-forgot-modal'),
             syncBtn: document.getElementById('btn-sync-modal'),
@@ -210,25 +210,9 @@ class UIService {
             settingsService.renderSettingsModal();
         });
 
-        this.settingsModal.resetBtn?.addEventListener('click', () => {
+        this.settingsModal.resetBtn?.addEventListener('click', async () => {
             this.hideSettingsModal();
-            if (confirm(i18n.t('confirmResetLocal'))) {
-                this.handleResetLocal();
-            }
-        });
-
-        this.forms.btnResetLocal?.addEventListener('click', async () => {
-            const confirmed = confirm(i18n.t('confirmResetLocal'));
-            if (!confirmed) return;
-            try {
-                await vaultService.fileRecoveryResetRequest();
-            } catch (e) {
-                console.warn('Recovery request failed', e);
-            }
-            await storageService.resetAll();
-            authService.forceLogout('manual');
-            this.showToast(i18n.t('toastResetDone'), 'info');
-            location.reload();
+            await this.handleResetLocal();
         });
 
         // Account Recovery
@@ -503,6 +487,20 @@ class UIService {
                 this.inputs.setupUsername?.focus();
             }
         }
+    }
+
+    async handleResetLocal() {
+        const confirmed = confirm(i18n.t('confirmResetLocal'));
+        if (!confirmed) return;
+        try {
+            await vaultService.fileRecoveryResetRequest();
+        } catch (e) {
+            console.warn('Recovery request failed', e);
+        }
+        await storageService.resetAll();
+        authService.forceLogout('manual');
+        this.showToast(i18n.t('toastResetDone'), 'info');
+        location.reload();
     }
 
     resolveAuthErrorMessage(code) {

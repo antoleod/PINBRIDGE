@@ -126,18 +126,12 @@
                 </form>
             </div>
 
-            <div class="auth-toggle">
-                <button type="button" class="btn btn-secondary ghost" id="btn-show-setup"
-                    data-i18n="actionCreateVault">Create New Vault</button>
-                <button type="button" class="btn btn-secondary ghost" id="btn-show-login"
-                    data-i18n="actionExistingVault">I already have a Vault</button>
-            </div>
-            <div class="auth-settings-mobile mobile-only">
-                <p class="settings-mobile-label">Vault controls</p>
-                <button type="button" class="btn btn-text settings-mobile-launcher" id="btn-settings-mobile"
-                    aria-label="Open settings">
-                    <span class="settings-action-icon">⚙️</span>
-                    <span>Open settings</span>
+            <div class="auth-actions">
+                <button type="button" class="btn btn-text" id="btn-show-setup" data-i18n="actionCreateVault">Create New Vault</button>
+                <button type="button" class="btn btn-text" id="btn-show-login" data-i18n="actionExistingVault">I already have a Vault</button>
+                <button type="button" class="btn btn-text" id="btn-account-recovery">🔐 Account Recovery</button>
+                <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile" aria-label="Open settings">
+                    ⚙️ Open settings
                 </button>
             </div>
 
@@ -210,7 +204,7 @@
     </div>
 
         <!-- SETTINGS MODAL -->
-    <div id="settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+    <div id="auth-settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
         <div class="modal-content glass-panel settings-panel">
             <div class="settings-panel-header">
                 <div>
