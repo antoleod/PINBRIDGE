@@ -415,6 +415,8 @@
                     <button class="btn-tool" id="btn-md-list" title="List">&#8226;</button>
                     <button class="btn-tool" id="btn-md-check" title="Checkbox">&#9745;</button>
                     <div class="divider-v"></div>
+                    <button class="btn-tool" id="btn-focus-mode" title="Focus Mode (F)">&#9974;</button>
+                    <div class="divider-v"></div>
                     <!-- v2.0 ACTIONS -->
                     <button class="btn-tool" id="btn-insert-template" title="Insert Template">&#10010;T</button>
                     <button class="btn-tool" id="btn-duplicate" title="Duplicate Note">&#x2398;</button>
@@ -436,6 +438,7 @@
                 <textarea id="note-content" placeholder="Start typing..." class="editor-input-body"
                     data-i18n-placeholder="noteBodyPlaceholder"></textarea>
             </div>
+            <button id="btn-exit-focus-mode" class="btn-icon ghost hidden" title="Exit Focus Mode (Esc)">×</button>
         </section>
 
         <!-- DASHBOARD PANEL -->
@@ -561,6 +564,34 @@
             </div>
             <div id="template-list" class="history-list scroll-container">
                 <!-- Templates injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL (Main) -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel settings-modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div class="settings-content">
+                <h4>Theme</h4>
+                <div id="theme-switcher" class="settings-grid">
+                    <!-- Theme options will be injected here -->
+                </div>
+                <div class="divider"></div>
+                <h4>Sync</h4>
+                <div class="settings-item">
+                    <div class="settings-item-content">
+                        <span class="settings-item-title">Cloud Sync</span>
+                        <span class="settings-item-desc">Securely sync your encrypted vault across devices. Disabled by default.</span>
+                    </div>
+                    <div class="toggle-switch">
+                        <input type="checkbox" id="toggle-sync-enabled" class="toggle-input">
+                        <label for="toggle-sync-enabled" class="toggle-label"></label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

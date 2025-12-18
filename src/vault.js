@@ -13,7 +13,7 @@ class VaultService {
     this.uid = null;
     this.localUpdatedAt = null;
     this.realtimeUnsub = null;
-    this.syncEnabled = true;
+    this.syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
   }
 
   async init(uid) {

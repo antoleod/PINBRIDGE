@@ -24,6 +24,7 @@ class UIService {
         this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') === 'true';
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
         this.saveTimeout = null;
+        this.isFocusMode = false;
         this.isReadOnly = false; // Read-only mode state
     }
 
@@ -99,6 +100,12 @@ class UIService {
         this.updateCompactViewUI();
         this.refreshSaveButtonState();
         this.setStatus(i18n.t('statusReady'));
+    }
+    
+    hapticFeedback() {
+        if ('vibrate' in navigator) {
+            navigator.vibrate(10); // Subtle vibration for 10ms
+        }
     }
 
     applyTranslations() {
@@ -245,11 +252,12 @@ class UIService {
 
         document.getElementById('recovery-file-form')?.addEventListener('submit', (e) => {
             e.preventDefault();
-            this.handleRecoveryFileSubmit();
+            this.handleUnlockWithRecoveryFile();
         });
     }
 
     showRecoveryForm() {
+        // Hide other auth views
         this.forms.choice?.classList.add('hidden');
         this.forms.login?.classList.add('hidden');
         this.forms.setup?.classList.add('hidden');
@@ -373,27 +381,40 @@ class UIService {
         }
     }
 
-    async handleRecoveryFileSubmit() {
+    async handleUnlockWithRecoveryFile() {
         const fileInput = document.getElementById('recovery-file-input');
+        const usernameInput = document.getElementById('recovery-file-username');
+        const codeInput = document.getElementById('recovery-file-code');
         const file = fileInput.files[0];
 
         if (!file) {
             this.showToast('Please select a recovery file', 'error');
             return;
         }
+        const username = usernameInput.value.trim();
+        const partialPin = codeInput.value.trim();
 
-        try {
-            const vaultKey = await recoveryService.importRecoveryFile(file);
-
-            // Use the imported vault key to unlock
-            const keyBase64 = Utils.bufferToBase64(await crypto.subtle.exportKey('raw', vaultKey));
-            await authService.unlockWithRecovery(keyBase64);
-
-            this.showToast('Account recovered successfully!', 'success');
-        } catch (err) {
-            console.error('Recovery file import failed', err);
-            this.showToast('Invalid recovery file', 'error');
+        if (!username || !partialPin) {
+            this.showToast('Username and Recovery Code are required.', 'error');
+            return;
         }
+
+        const reader = new FileReader();
+        reader.onload = async (event) => {
+            try {
+                const fileContent = event.target.result;
+                await authService.unlockWithRecoveryFile(fileContent, username, partialPin);
+                // The 'auth:unlock' event will handle the rest
+                this.showToast('Vault unlocked successfully with recovery file!', 'success');
+            } catch (error) {
+                console.error('Failed to unlock with recovery file:', error);
+                this.showToast('Unlock failed. Invalid file or credentials.', 'error');
+            }
+        };
+        reader.onerror = () => {
+            this.showToast('Error reading the recovery file.', 'error');
+        }
+        reader.readAsText(file);
     }
 
     showAuthChoice() {
@@ -641,6 +662,10 @@ class UIService {
         document.getElementById('btn-md-list')?.addEventListener('click', () => this.insertMarkdown('\n- ', ''));
         document.getElementById('btn-md-check')?.addEventListener('click', () => this.insertMarkdown('\n- [ ] ', ''));
 
+        // Focus Mode
+        document.getElementById('btn-focus-mode')?.addEventListener('click', () => this.toggleFocusMode());
+        document.getElementById('btn-exit-focus-mode')?.addEventListener('click', () => this.toggleFocusMode(false));
+
         document.getElementById('btn-duplicate')?.addEventListener('click', () => this.handleDuplicate());
         document.getElementById('btn-download')?.addEventListener('click', () => this.handleDownload());
         document.getElementById('btn-pin-note')?.addEventListener('click', () => this.handlePinNote());
@@ -685,6 +710,18 @@ class UIService {
         document.getElementById('close-settings-modal')?.addEventListener('click', () => {
             document.getElementById('settings-modal').classList.add('hidden');
         });
+        
+        // Theme switcher logic
+        const themeSwitcher = document.getElementById('theme-switcher');
+        if (themeSwitcher) {
+            themeSwitcher.addEventListener('click', (e) => this.handleThemeChange(e));
+        }
+
+        // Sync toggle
+        const syncToggle = document.getElementById('toggle-sync-enabled');
+        if (syncToggle) {
+            syncToggle.addEventListener('change', (e) => this.handleSyncToggle(e.target.checked));
+        }
 
         // Settings Tabs
         document.querySelectorAll('.settings-tab').forEach(tab => {
@@ -725,12 +762,98 @@ class UIService {
         document.getElementById('close-tags-manager')?.addEventListener('click', () => {
             document.getElementById('tags-manager-modal').classList.add('hidden');
         });
+
+        // Generate Recovery File Modal
+        document.getElementById('btn-generate-recovery-file')?.addEventListener('click', () => this.openGenerateFileModal());
+        document.getElementById('close-generate-file-modal')?.addEventListener('click', () => this.closeGenerateFileModal());
+        document.getElementById('cancel-generate-file')?.addEventListener('click', () => this.closeGenerateFileModal());
+        document.getElementById('generate-file-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleGenerateFileSubmit();
+        });
+    }
+
+    toggleFocusMode(forceState) {
+        this.isFocusMode = typeof forceState === 'boolean' ? forceState : !this.isFocusMode;
+        document.body.classList.toggle('focus-mode-active', this.isFocusMode);
+        this.hapticFeedback();
+
+        if (this.isFocusMode) {
+            this.showToast('Focus Mode enabled. Press "F" or "Esc" to exit.', 'info');
+        }
+    }
+
+    addKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key.toLowerCase() === 'f' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+                e.preventDefault();
+                this.toggleFocusMode();
+            }
+            if (e.key === 'Escape' && this.isFocusMode) {
+                this.toggleFocusMode(false);
+            }
+        });
     }
 
     async openSettingsModal() {
         const modal = document.getElementById('settings-modal');
+        this.renderThemeSwitcher();
+        // Set the toggle to the correct initial state
+        const syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
+        const syncToggle = document.getElementById('toggle-sync-enabled');
+        if (syncToggle) syncToggle.checked = syncEnabled;
         modal.classList.remove('hidden');
         await this.renderActiveRecoveryMethods();
+    }
+
+    renderThemeSwitcher() {
+        const container = document.getElementById('theme-switcher');
+        if (!container) return;
+
+        const themes = [
+            { id: 'dark', name: 'Default Dark' },
+            { id: 'amoled', name: 'AMOLED Black' },
+            { id: 'low-contrast', name: 'Low Contrast' }
+        ];
+
+        const currentTheme = localStorage.getItem('pinbridge.theme') || 'dark';
+
+        container.innerHTML = themes.map(theme => `
+            <button class="settings-action ${currentTheme === theme.id ? 'active' : ''}" data-theme="${theme.id}">
+                <div class="settings-action-content">
+                    <span class="settings-action-title">${theme.name}</span>
+                </div>
+            </button>
+        `).join('');
+    }
+
+    handleThemeChange(e) {
+        const button = e.target.closest('[data-theme]');
+        if (!button) return;
+
+        const theme = button.dataset.theme;
+        document.body.setAttribute('data-theme', theme);
+        localStorage.setItem('pinbridge.theme', theme);
+
+        // Update active class
+        document.querySelectorAll('#theme-switcher .settings-action').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        button.classList.add('active');
+        this.hapticFeedback();
+    }
+
+    handleSyncToggle(isEnabled) {
+        localStorage.setItem('pinbridge.sync_enabled', isEnabled);
+        vaultService.setSyncEnabled(isEnabled);
+        this.hapticFeedback();
+        if (isEnabled) {
+            this.showToast('Cloud Sync enabled. Your vault will now sync when online.', 'success');
+            // Trigger a sync check
+            bus.emit('sync:toggled', true);
+        } else {
+            this.showToast('Cloud Sync disabled. Changes will only be saved on this device.', 'info');
+        }
     }
 
     switchSettingsTab(tabName) {
@@ -887,6 +1010,34 @@ class UIService {
             console.error('Failed to save secret question', err);
             this.showToast('Failed to save secret question', 'error');
         }
+    }
+
+    openGenerateFileModal() {
+        const modal = document.getElementById('generate-file-modal');
+        if (!modal) return;
+
+        // Pre-fill username if available
+        const usernameInput = document.getElementById('generate-file-username');
+        if (usernameInput && vaultService.meta?.username) {
+            usernameInput.value = vaultService.meta.username;
+        }
+
+        modal.classList.remove('hidden');
+    }
+
+    closeGenerateFileModal() {
+        const modal = document.getElementById('generate-file-modal');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    async handleGenerateFileSubmit() {
+        const username = document.getElementById('generate-file-username').value.trim();
+        const partialPin = document.getElementById('generate-file-code').value.trim();
+
+        await authService.generateAndDownloadRecoveryFile(username, partialPin);
+
+        // Close modal on success
+        this.closeGenerateFileModal();
     }
 
     async openTagsManager() {
@@ -1194,6 +1345,11 @@ class UIService {
     }
 
     addKeyboardShortcuts() {
+        // Apply the current theme on startup
+        const savedTheme = localStorage.getItem('pinbridge.theme') || 'dark';
+        if (savedTheme !== 'dark') {
+            document.body.setAttribute('data-theme', savedTheme);
+        }
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();
@@ -1621,6 +1777,69 @@ class UIService {
         `;
         document.body.appendChild(el);
 
+        const input = el.querySelector('input');
+        const results = el.querySelector('.palette-results');
+
+        const commands = [
+            { id: 'settings', label: i18n.t('settingsTitle'), action: () => settingsService.renderSettingsModal() },
+            { id: 'new', label: i18n.t('newNoteTooltip'), action: () => this.handleNewNote() },
+            { id: 'all', label: i18n.t('navAll'), action: () => document.querySelector('[data-view="all"]')?.click() },
+            { id: 'trash', label: i18n.t('navTrash'), action: () => document.querySelector('[data-view="trash"]')?.click() },
+            { id: 'lock', label: i18n.t('lockVault'), action: () => authService.forceLogout('manual') }
+        ];
+
+        input.addEventListener('input', () => {
+            const q = input.value.toLowerCase();
+            const matches = commands.filter(c => c.label.toLowerCase().includes(q));
+            this.renderPalette(matches, results);
+        });
+        el.addEventListener('click', (e) => {
+            if (e.target === el) this.togglePalette(false);
+        });
+    }
+
+    renderPalette(items, container) {
+        container.innerHTML = '';
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'palette-item';
+            div.innerHTML = `<span>${item.label}</span>`;
+            div.onclick = () => {
+                item.action();
+                this.togglePalette(false);
+            };
+            container.appendChild(div);
+        });
+    }
+
+    togglePalette(show) {
+        const el = document.getElementById('command-palette');
+        if (!el) return;
+        const input = el.querySelector('input');
+        if (show) {
+            el.classList.remove('hidden');
+            input.value = '';
+            input.focus();
+            input.dispatchEvent(new Event('input'));
+        } else {
+            el.classList.add('hidden');
+        }
+    }
+
+    setStatus(text) {
+        const status = document.getElementById('editor-status');
+        if (status) status.innerText = text;
+    }
+
+    ensureAuthenticated() {
+        if (vaultService.isUnlocked()) return true;
+        this.showScreen('auth');
+        this.showToast(i18n.t('authRequired'), 'error');
+        return false;
+    }
+}
+
+export const uiService = new UIService();
         const input = el.querySelector('input');
         const results = el.querySelector('.palette-results');
 
