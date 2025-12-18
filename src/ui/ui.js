@@ -239,6 +239,11 @@ class UIService {
         });
 
         // Account Recovery
+        this.settingsModal.recoveryBtn?.addEventListener('click', () => {
+            this.hideSettingsModal();
+            this.showAuthRecoveryModal();
+        });
+
         document.getElementById('btn-account-recovery')?.addEventListener('click', () => this.showAuthRecoveryModal());
         this.recoveryModal.authRecoveryCloseBtn?.addEventListener('click', () => this.hideAuthRecoveryModal());
         this.recoveryModal.authRecoveryOverlay?.addEventListener('click', (e) => {
