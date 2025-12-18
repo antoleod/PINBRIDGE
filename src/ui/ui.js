@@ -35,8 +35,10 @@ class UIService {
 
     showLoginForm() {
         document.getElementById('auth-recovery')?.classList.add('hidden');
-        this.forms.login?.classList.remove('hidden');
         this.recoveryModal.authRecoveryOverlay?.classList.add('hidden');
+        this.forms.register?.classList.add('hidden');
+        this.forms.login?.classList.remove('hidden');
+        this.inputs.loginUsername?.focus();
     }
 
     showAuthRecoveryModal() {
@@ -51,6 +53,34 @@ class UIService {
         this.forms.login?.classList.remove('hidden');
     }
 
+    showRegisterForm() {
+        this.forms.login?.classList.add('hidden');
+        this.forms.register?.classList.remove('hidden');
+        this.inputs.registerUsername?.focus();
+    }
+
+    async handleRegisterSubmit(e) {
+        e.preventDefault();
+        const username = (this.inputs.registerUsername?.value || '').trim();
+        const pin = (this.inputs.registerPin?.value || '').trim();
+
+        if (!username || !pin) {
+            this.showToast("Username and PIN are required.", 'error');
+            return;
+        }
+
+        if (pin.length < 4 || pin.length > 6) {
+            this.showToast('PIN must be between 4 and 6 digits.', 'error');
+            return;
+        }
+
+        try {
+            await authService.register(username, pin);
+        } catch (err) {
+            this.showToast(this.resolveAuthErrorMessage(err?.message || err), 'error');
+        }
+    }
+
     _cacheDomElements() {
         this.screens = {
             loading: document.getElementById('loading-screen'),
@@ -62,12 +92,17 @@ class UIService {
         this.forms = {
             login: document.getElementById('auth-login'),
             loginForm: document.getElementById('login-form'),
-            loginButton: document.getElementById('btn-login-submit')
+            loginButton: document.getElementById('btn-login-submit'),
+            register: document.getElementById('auth-register'),
+            registerForm: document.getElementById('register-form'),
+            registerButton: document.getElementById('btn-register-submit')
         };
 
         this.inputs = {
             loginUsername: document.getElementById('login-username'),
             loginPin: document.getElementById('login-pin'),
+            registerUsername: document.getElementById('register-username'),
+            registerPin: document.getElementById('register-pin'),
             noteTitle: document.getElementById('note-title'),
             noteContent: document.getElementById('note-content'),
             noteFolder: document.getElementById('note-folder'),
@@ -128,6 +163,9 @@ class UIService {
         this.refreshSaveButtonState();
         this.refreshUsernameRecommendation();
         this.setStatus(i18n.t('statusReady'));
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
     }
     
     hapticFeedback() {
@@ -222,6 +260,19 @@ class UIService {
                 this.forms.loginForm.requestSubmit();
             } else {
                 this.forms.loginForm?.dispatchEvent(new Event('submit', { cancelable: true }));
+            }
+        });
+
+        document.getElementById('btn-show-register')?.addEventListener('click', () => this.showRegisterForm());
+        document.getElementById('btn-show-login')?.addEventListener('click', () => this.showLoginForm());
+
+        this.forms.registerForm?.addEventListener('submit', (e) => this.handleRegisterSubmit(e));
+        this.forms.registerButton?.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.forms.registerForm?.requestSubmit) {
+                this.forms.registerForm.requestSubmit();
+            } else {
+                this.forms.registerForm?.dispatchEvent(new Event('submit', { cancelable: true }));
             }
         });
 

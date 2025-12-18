@@ -19,6 +19,7 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="./src/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 </head>
 
 <body>
@@ -40,7 +41,7 @@
                 </div>
                 <div class="header-actions">
                     <button class="btn-settings" id="btn-settings-desktop" title="Settings" aria-label="Open settings">
-                        <span class="settings-icon">??</span>
+                        <i data-feather="settings"></i>
                     </button>
                 </div>
             </div>
@@ -62,37 +63,76 @@
                 </div>
             </div>
 
-            <!-- LOGIN FORM -->
-            <div id="auth-login">
-                <p class="eyebrow" data-i18n="loginEyebrow">Access</p>
-                <h2 class="form-title" data-i18n="loginTitle">Secure Login</h2>
-                <p class="hint center">Only existing vault users may unlock their data here. Registration is disabled.
-                </p>
-                <p class="hint center">
-                    Suggested username:
-                    <strong id="username-recommendation-text">unknown</strong>
-                </p>
-                <form id="login-form">
-                    <div class="input-group">
-                        <label for="login-username" data-i18n="usernameLabel">Username</label>
-                        <input type="text" id="login-username" autocomplete="username"
-                            data-i18n-placeholder="usernamePlaceholder">
-                    </div>
-                    <div class="input-group">
-                        <label for="login-pin" data-i18n="pinLabel">PIN</label>
-                        <input type="password" id="login-pin" autocomplete="current-password"
-                            data-i18n-placeholder="pinPlaceholder">
-                    </div>
-                    <button type="button" id="btn-login-submit" class="btn btn-primary btn-block accent"
-                        data-i18n="loginSubmit">Login</button>
-                    <p class="hint center">Need help? Go to Settings ? Recovery to restore access.</p>
-                </form>
+            <div id="auth-forms-container">
+                <!-- LOGIN FORM -->
+                <div id="auth-login">
+                    <p class="eyebrow" data-i18n="loginEyebrow">Access Your Vault</p>
+                    <h2 class="form-title" data-i18n="loginTitle">Secure Login</h2>
+                    <p class="hint center">
+                        Suggested username:
+                        <strong id="username-recommendation-text">unknown</strong>
+                    </p>
+                    <form id="login-form">
+                        <div class="input-group">
+                            <label for="login-username" data-i18n="usernameLabel">Username</label>
+                            <input type="text" id="login-username" autocomplete="username"
+                                data-i18n-placeholder="usernamePlaceholder">
+                        </div>
+                        <div class="input-group">
+                            <label for="login-pin" data-i18n="pinLabel">PIN</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="login-pin" autocomplete="current-password"
+                                    data-i18n-placeholder="pinPlaceholder">
+                                <button type="button" class="btn-toggle-visibility" data-target="login-pin"
+                                    aria-label="Show PIN" title="Show PIN">
+                                    <!-- Icon will be injected by JS -->
+                                </button>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-login-submit" class="btn btn-primary btn-block accent"
+                            data-i18n="loginSubmit">Unlock Vault</button>
+                    </form>
+                    <p class="hint center">New here? <button type="button" id="btn-show-register"
+                            class="btn btn-text">Create a new vault</button></p>
+                </div>
+
+                <!-- REGISTRATION FORM -->
+                <div id="auth-register" class="hidden">
+                    <p class="eyebrow" data-i18n="registerEyebrow">Create a Vault</p>
+                    <h2 class="form-title" data-i18n="registerTitle">New Registration</h2>
+                    <p class="hint center">Create a secure, offline-first vault for your data.</p>
+                    <form id="register-form">
+                        <div class="input-group">
+                            <label for="register-username" data-i18n="usernameLabel">Username</label>
+                            <input type="text" id="register-username" autocomplete="username"
+                                data-i18n-placeholder="usernamePlaceholder" required>
+                            <span class="error-message" id="register-username-error"></span>
+                        </div>
+                        <div class="input-group">
+                            <label for="register-pin" data-i18n="pinLabel">PIN (4-6 digits)</label>
+                            <div class="input-wrapper">
+                                <input type="password" id="register-pin" autocomplete="new-password"
+                                    data-i18n-placeholder="pinPlaceholder" minlength="4" maxlength="6" required>
+                                <button type="button" class="btn-toggle-visibility" data-target="register-pin"
+                                    aria-label="Show PIN" title="Show PIN">
+                                    <!-- Icon will be injected by JS -->
+                                </button>
+                            </div>
+                            <span class="error-message" id="register-pin-error"></span>
+                        </div>
+                        <button type="button" id="btn-register-submit" class="btn btn-primary btn-block accent"
+                            data-i18n="registerSubmit">Create Vault</button>
+                    </form>
+                    <p class="hint center">Already have a vault? <button type="button" id="btn-show-login"
+                            class="btn btn-text">Login instead</button></p>
+                </div>
             </div>
+
             <div class="auth-actions">
-                <button type="button" class="btn btn-text" id="btn-account-recovery">?? Account Recovery</button>
+                <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i> Account Recovery</button>
                 <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile"
                     aria-label="Open settings">
-                    ?? Open settings
+                    <i data-feather="settings"></i> Open settings
                 </button>
             </div>
         </div>
@@ -112,7 +152,7 @@
                 </div>
                 <div class="settings-actions">
                     <button type="button" class="settings-action" id="btn-auth-recovery">
-                        <span class="settings-action-icon">??</span>
+                        <span class="settings-action-icon"><i data-feather="shield"></i></span>
                         <div class="settings-action-content">
                             <span class="settings-action-title">Account Recovery</span>
                             <span class="settings-action-desc">Regain access to your vault using a recovery
@@ -120,7 +160,7 @@
                         </div>
                     </button>
                     <button type="button" class="settings-action" id="btn-forgot-modal">
-                        <span class="settings-action-icon">???</span>
+                        <span class="settings-action-icon"><i data-feather="key"></i></span>
                         <div class="settings-action-content">
                             <span class="settings-action-title">Use Recovery Key</span>
                             <span class="settings-action-desc">Unlock with the recovery key you were shown during
@@ -128,7 +168,7 @@
                         </div>
                     </button>
                     <button type="button" class="settings-action" id="btn-sync-modal">
-                        <span class="settings-action-icon">??</span>
+                        <span class="settings-action-icon"><i data-feather="refresh-cw"></i></span>
                         <div class="settings-action-content">
                             <span class="settings-action-title">Sync with another device</span>
                             <span class="settings-action-desc">Share encrypted data with another authorized PINBRIDGE
@@ -153,19 +193,19 @@
 
                     <div class="recovery-method-selector">
                         <button type="button" class="recovery-method-btn active" data-method="recovery-key">
-                            <span class="method-icon">??</span>
+                            <span class="method-icon"><i data-feather="key"></i></span>
                             <span>Recovery Key</span>
                         </button>
                         <button type="button" class="recovery-method-btn" data-method="backup-code">
-                            <span class="method-icon">??</span>
+                            <span class="method-icon"><i data-feather="file-text"></i></span>
                             <span>Backup Code</span>
                         </button>
                         <button type="button" class="recovery-method-btn" data-method="secret-question">
-                            <span class="method-icon">?</span>
+                            <span class="method-icon"><i data-feather="help-circle"></i></span>
                             <span>Secret Question</span>
                         </button>
                         <button type="button" class="recovery-method-btn" data-method="recovery-file">
-                            <span class="method-icon">??</span>
+                            <span class="method-icon"><i data-feather="file"></i></span>
                             <span>Recovery File</span>
                         </button>
                     </div>
@@ -174,8 +214,14 @@
                     <form id="recovery-key-form" class="recovery-method-form">
                         <div class="input-group">
                             <label for="recovery-key-input">Recovery Key</label>
-                            <input type="password" id="recovery-key-input" placeholder="Enter your recovery key"
-                                autocomplete="off">
+                            <div class="input-wrapper">
+                                <input type="password" id="recovery-key-input" placeholder="Enter your recovery key"
+                                    autocomplete="off">
+                                <button type="button" class="btn-toggle-visibility" data-target="recovery-key-input"
+                                    aria-label="Show recovery key" title="Show recovery key">
+                                    <!-- Icon will be injected by JS -->
+                                </button>
+                            </div>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
                     </form>
@@ -210,7 +256,7 @@
                         <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
                     </form>
 
-                    <button type="button" class="btn btn-text" id="btn-back-from-recovery">? Back to Login</button>
+                    <button type="button" class="btn btn-text" id="btn-back-from-recovery"><i data-feather="arrow-left"></i> Back to Login</button>
                 </div>
             </div>
         </div>
@@ -334,7 +380,7 @@
 
             <!-- MOBILE TOP BAR -->
             <div id="mobile-topbar" class="mobile-topbar hidden glass-panel">
-                <button id="btn-mobile-menu" class="btn-icon ghost" title="Menu" aria-label="Open menu">?</button>
+                <button id="btn-mobile-menu" class="btn-icon ghost" title="Menu" aria-label="Open menu"><i data-feather="menu"></i></button>
                 <button class="topbar-logo" title="PINBRIDGE">
                     <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
                 </button>
@@ -347,7 +393,7 @@
                 <div class="topbar-utilities">
                     <button id="mobile-new-note" class="btn-icon-primary" title="New note"
                         data-i18n-title="newNoteTooltip">+</button>
-                    <button id="mobile-lock" class="btn-icon ghost" title="Lock">??</button>
+                    <button id="mobile-lock" class="btn-icon ghost" title="Lock"><i data-feather="lock"></i></button>
                 </div>
             </div>
 
@@ -357,8 +403,8 @@
                     <div class="list-header-main">
                         <h2 data-i18n="listTitle">My Notes</h2>
                         <div class="view-switcher">
-                            <button id="btn-view-grid" class="btn-icon ghost active" title="Grid View">?</button>
-                            <button id="btn-view-list" class="btn-icon ghost" title="List View">=</button>
+                            <button id="btn-view-grid" class="btn-icon ghost active" title="Grid View"><i data-feather="grid"></i></button>
+                            <button id="btn-view-list" class="btn-icon ghost" title="List View"><i data-feather="list"></i></button>
                         </div>
                     </div>
                     <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)"
@@ -376,7 +422,7 @@
                         data-i18n-placeholder="searchPlaceholder">
                     <!-- Placeholder for combined filters UI -->
                     <button id="btn-advanced-search" class="btn-icon ghost" title="Advanced Search"
-                        style="display: none;">?</button>
+                        style="display: none;"><i data-feather="search"></i></button>
                 </div>
 
                 <div id="notes-list" class="scroll-container">
@@ -416,10 +462,10 @@
                         <button class="btn-tool" id="btn-toggle-readonly" title="Toggle Read-Only">&#128274;</button>
                         <div class="divider-v"></div>
                         <button class="btn-tool" id="btn-set-reminder" title="Set Reminder"
-                            data-i18n-title="setReminder">??</button>
+                            data-i18n-title="setReminder"><i data-feather="bell"></i></button>
                         <button class="btn-tool" id="btn-protect-note" title="Protect Note"
-                            data-i18n-title="protectNote">???</button>
-                        <button class="btn-tool" id="btn-pin-note" title="Pin Note" data-i18n-title="pinNote">?</button>
+                            data-i18n-title="protectNote"><i data-feather="shield"></i></button>
+                        <button class="btn-tool" id="btn-pin-note" title="Pin Note" data-i18n-title="pinNote"><i data-feather="map-pin"></i></button>
                         <button class="btn-tool danger" id="btn-delete" title="Delete"
                             data-i18n-title="delete">&#128465;</button>
                         <span id="word-count-badge" class="count-badge">0 w</span>
@@ -760,7 +806,7 @@
     <div id="note-protection-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
             <div class="modal-header">
-                <h2>??? Note Protection</h2>
+                <h2><i data-feather="shield"></i> Note Protection</h2>
                 <button id="close-note-protection-modal" class="btn-icon ghost">×</button>
             </div>
             <p class="hint">Configure security settings for this specific note.</p>
@@ -825,16 +871,16 @@
                 <h2>Your Backup Codes</h2>
                 <button id="close-backup-codes-modal" class="btn-icon ghost">×</button>
             </div>
-            <p class="warning-text">?? Save these codes in a safe place. Each code can only be used once.</p>
+            <p class="warning-text"><i data-feather="alert-triangle"></i> Save these codes in a safe place. Each code can only be used once.</p>
             <div class="backup-codes-container">
                 <div id="backup-codes-display" class="backup-codes-grid">
                     <!-- Codes injected here -->
                 </div>
             </div>
             <div class="modal-actions">
-                <button id="copy-backup-codes" class="btn btn-secondary">?? Copy All</button>
-                <button id="download-backup-codes" class="btn btn-secondary">?? Download</button>
-                <button id="confirm-backup-codes" class="btn btn-primary">? I've Saved Them</button>
+                <button id="copy-backup-codes" class="btn btn-secondary"><i data-feather="copy"></i> Copy All</button>
+                <button id="download-backup-codes" class="btn btn-secondary"><i data-feather="download"></i> Download</button>
+                <button id="confirm-backup-codes" class="btn btn-primary"><i data-feather="check-circle"></i> I've Saved Them</button>
             </div>
         </div>
     </div>
@@ -872,7 +918,7 @@
     <div id="tags-manager-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel settings-modal">
             <div class="modal-header">
-                <h2>??? Tags Manager</h2>
+                <h2><i data-feather="tag"></i> Tags Manager</h2>
                 <button id="close-tags-manager" class="btn-icon ghost">×</button>
             </div>
             <p class="hint">Manage colors for your tags. Changes apply to all notes.</p>
@@ -903,8 +949,14 @@
                 </div>
                 <div class="form-group">
                     <label for="generate-file-code">Recovery Code (4+ digits)</label>
-                    <input type="password" id="generate-file-code" placeholder="Create a short, memorable code"
-                        class="input-field" required minlength="4">
+                    <div class="input-wrapper">
+                        <input type="password" id="generate-file-code" placeholder="Create a short, memorable code"
+                            class="input-field" required minlength="4">
+                        <button type="button" class="btn-toggle-visibility" data-target="generate-file-code"
+                            aria-label="Show recovery code" title="Show recovery code">
+                            <!-- Icon will be injected by JS -->
+                        </button>
+                    </div>
                     <p class="hint">You will need this code AND the file to recover your account.</p>
                 </div>
                 <div class="modal-actions">

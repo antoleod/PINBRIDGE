@@ -720,6 +720,34 @@ body {
     margin-bottom: 1.25rem;
 }
 
+.input-wrapper {
+    position: relative;
+}
+
+.input-wrapper input {
+    padding-right: 3rem; /* Make space for the icon */
+}
+
+.btn-toggle-visibility {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 3rem;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s;
+}
+
+.btn-toggle-visibility:hover {
+    color: var(--text-primary);
+}
+
 .input-group label {
     display: block;
     font-size: 0.85rem;
