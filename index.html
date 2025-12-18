@@ -64,6 +64,22 @@
             </div>
 
             <div id="auth-forms-container">
+                <div id="auth-choice" class="auth-choice-panel glass-panel">
+                    <div class="auth-choice-meta">
+                        <p class="eyebrow" data-i18n="authChoiceTitle">Select an option to continue</p>
+                        <p class="hint" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.</p>
+                    </div>
+                    <div class="auth-choice-actions">
+                        <button type="button" class="btn btn-primary" id="btn-auth-choice-create">
+                            <span data-i18n="actionCreateVault">Create New Vault</span>
+                            <small data-i18n="authChoiceCreateHint">Set a username and PIN to start a secure vault.</small>
+                        </button>
+                        <button type="button" class="btn btn-secondary" id="btn-auth-choice-existing">
+                            <span data-i18n="actionExistingVault">I already have a Vault</span>
+                            <small data-i18n="authChoiceLoginHint">Unlock with your username + PIN.</small>
+                        </button>
+                    </div>
+                </div>
                 <!-- LOGIN FORM -->
                 <div id="auth-login">
                     <p class="eyebrow" data-i18n="loginEyebrow">Access Your Vault</p>
@@ -92,8 +108,6 @@
                         <button type="button" id="btn-login-submit" class="btn btn-primary btn-block accent"
                             data-i18n="loginSubmit">Unlock Vault</button>
                     </form>
-                    <p class="hint center">New here? <button type="button" id="btn-show-register"
-                            class="btn btn-text">Create a new vault</button></p>
                 </div>
 
                 <!-- REGISTRATION FORM -->
@@ -123,8 +137,6 @@
                         <button type="button" id="btn-register-submit" class="btn btn-primary btn-block accent"
                             data-i18n="registerSubmit">Create Vault</button>
                     </form>
-                    <p class="hint center">Already have a vault? <button type="button" id="btn-show-login"
-                            class="btn btn-text">Login instead</button></p>
                 </div>
             </div>
 

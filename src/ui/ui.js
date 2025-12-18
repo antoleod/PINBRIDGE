@@ -263,8 +263,8 @@ class UIService {
             }
         });
 
-        document.getElementById('btn-show-register')?.addEventListener('click', () => this.showRegisterForm());
-        document.getElementById('btn-show-login')?.addEventListener('click', () => this.showLoginForm());
+        document.getElementById('btn-auth-choice-create')?.addEventListener('click', () => this.showRegisterForm());
+        document.getElementById('btn-auth-choice-existing')?.addEventListener('click', () => this.showLoginForm());
 
         this.forms.registerForm?.addEventListener('submit', (e) => this.handleRegisterSubmit(e));
         this.forms.registerButton?.addEventListener('click', (e) => {
