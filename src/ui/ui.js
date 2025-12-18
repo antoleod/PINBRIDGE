@@ -33,6 +33,24 @@ class UIService {
         this.storedUsername = null;
     }
 
+    showLoginForm() {
+        document.getElementById('auth-recovery')?.classList.add('hidden');
+        this.forms.login?.classList.remove('hidden');
+        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden');
+    }
+
+    showAuthRecoveryModal() {
+        this.forms.login?.classList.add('hidden');
+        this.recoveryModal.authRecoveryOverlay?.classList.remove('hidden');
+        document.getElementById('auth-recovery')?.classList.remove('hidden');
+    }
+
+    hideAuthRecoveryModal() {
+        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden');
+        document.getElementById('auth-recovery')?.classList.add('hidden');
+        this.forms.login?.classList.remove('hidden');
+    }
+
     _cacheDomElements() {
         this.screens = {
             loading: document.getElementById('loading-screen'),
