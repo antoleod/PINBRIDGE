@@ -44,10 +44,7 @@ class UIService {
             btnCreateStart: document.getElementById('btn-create-start'),
             btnLoginStart: document.getElementById('btn-login-start'),
             btnShowSetup: document.getElementById('btn-show-setup'),
-            btnShowLogin: document.getElementById('btn-show-login'),
-            btnForgot: document.getElementById('btn-forgot'),
-            btnSync: document.getElementById('btn-sync'),
-            btnResetLocal: document.getElementById('btn-reset-local')
+            btnShowLogin: document.getElementById('btn-show-login')
         };
 
         this.inputs = {
@@ -186,23 +183,17 @@ class UIService {
         this.forms.setupForm?.addEventListener('submit', (e) => this.handleSetupSubmit(e));
         this.forms.loginForm?.addEventListener('submit', (e) => this.handleLoginSubmit(e));
 
-        this.forms.btnForgot?.addEventListener('click', () => {
-            this.showLoginForm();
-            this.inputs.loginRecovery?.focus();
-            this.inputs.loginRecovery?.classList.add('input-focus-hint');
-            setTimeout(() => this.inputs.loginRecovery?.classList.remove('input-focus-hint'), 1200);
-            this.showToast(i18n.t('toastRecoveryHint'), 'info');
-        });
-
-        this.forms.btnSync?.addEventListener('click', () => {
-            settingsService.renderSettingsModal();
-        });
-
         // Settings modal
         document.getElementById('btn-settings-desktop')?.addEventListener('click', () => this.showSettingsModal());
+        document.getElementById('btn-settings-mobile')?.addEventListener('click', () => this.showSettingsModal());
         this.settingsModal.closeBtn?.addEventListener('click', () => this.hideSettingsModal());
         this.settingsModal.overlay?.addEventListener('click', (e) => {
             if (e.target === this.settingsModal.overlay) this.hideSettingsModal();
+        });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.settingsModal.overlay && !this.settingsModal.overlay.classList.contains('hidden')) {
+                this.hideSettingsModal();
+            }
         });
 
         this.settingsModal.forgotBtn?.addEventListener('click', () => {

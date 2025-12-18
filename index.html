@@ -39,7 +39,7 @@
                     <span class="header-title">PINBRIDGE</span>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-settings" id="btn-settings-desktop" title="Settings">
+                    <button class="btn-settings" id="btn-settings-desktop" title="Settings" aria-label="Open settings">
                         <span class="settings-icon">⚙️</span>
                     </button>
                 </div>
@@ -132,6 +132,14 @@
                 <button type="button" class="btn btn-secondary ghost" id="btn-show-login"
                     data-i18n="actionExistingVault">I already have a Vault</button>
             </div>
+            <div class="auth-settings-mobile mobile-only">
+                <p class="settings-mobile-label">Vault controls</p>
+                <button type="button" class="btn btn-text settings-mobile-launcher" id="btn-settings-mobile"
+                    aria-label="Open settings">
+                    <span class="settings-action-icon">⚙️</span>
+                    <span>Open settings</span>
+                </button>
+            </div>
 
             <!-- ACCOUNT RECOVERY FORM -->
             <div id="auth-recovery" class="auth-form hidden">
@@ -201,51 +209,44 @@
         </div>
     </div>
 
-    <!-- SETTINGS MODAL -->
-    <div id="settings-modal" class="modal-overlay hidden">
-        <div class="modal-content settings-modal">
-            <div class="modal-header">
-                <h2>Settings & Account</h2>
-                <button class="modal-close" id="btn-close-settings">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <h3>🔐 Account & Recovery</h3>
-                    <ul class="settings-list">
-                        <li>
-                            <button type="button" class="settings-item" id="btn-forgot-modal">
-                                <span class="action-icon">🗝️</span>
-                                <div class="settings-item-content">
-                                    <span class="settings-item-title">Use Recovery Key</span>
-                                    <span class="settings-item-desc">Restore access without exposing your data</span>
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button" class="settings-item" id="btn-sync-modal">
-                                <span class="action-icon">🔁</span>
-                                <div class="settings-item-content">
-                                    <span class="settings-item-title">Sync with another device</span>
-                                    <span class="settings-item-desc">End-to-end encrypted via Firebase</span>
-                                </div>
-                            </button>
-                        </li>
-                        <li>
-                            <button type="button" class="settings-item danger" id="btn-reset-local-modal">
-                                <span class="action-icon">⚠️</span>
-                                <div class="settings-item-content">
-                                    <span class="settings-item-title">Reset local vault</span>
-                                    <span class="settings-item-desc">Deletes local data — confirmation required</span>
-                                </div>
-                            </button>
-                        </li>
-                    </ul>
+        <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <div class="modal-content glass-panel settings-panel">
+            <div class="settings-panel-header">
+                <div>
+                    <p class="eyebrow">Vault Safety</p>
+                    <h2 id="settings-modal-title">Account & Recovery</h2>
+                    <p class="settings-panel-subtitle">Use alternative sign-in flows or reset this device safely.</p>
                 </div>
+                <button class="btn-icon ghost" id="btn-close-settings" aria-label="Close settings">×</button>
+            </div>
+            <div class="settings-actions">
+                <button type="button" class="settings-action" id="btn-forgot-modal">
+                    <span class="settings-action-icon">🗝️</span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Use Recovery Key</span>
+                        <span class="settings-action-desc">Unlock with the recovery key you were shown during setup.</span>
+                    </div>
+                </button>
+                <button type="button" class="settings-action" id="btn-sync-modal">
+                    <span class="settings-action-icon">🔄</span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Sync with another device</span>
+                        <span class="settings-action-desc">Share encrypted data with another authorized PINBRIDGE client.</span>
+                    </div>
+                </button>
+                <button type="button" class="settings-action settings-action-danger" id="btn-reset-local-modal">
+                    <span class="settings-action-icon">⚠️</span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Reset local vault</span>
+                        <span class="settings-action-desc">Wipe this device’s vault and start again (offline only).</span>
+                    </div>
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- VAULT SCREEN -->
+<!-- VAULT SCREEN -->
     <div id="vault-screen" class="screen hidden">
 
         <!-- SIDEBAR -->
@@ -566,102 +567,6 @@
             </div>
             <div id="template-list" class="history-list scroll-container">
                 <!-- Templates injected here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- SETTINGS MODAL -->
-    <div id="settings-modal" class="modal-overlay hidden">
-        <div class="modal-content glass-panel settings-modal">
-            <div class="modal-header">
-                <h2>Settings</h2>
-                <button id="close-settings-modal" class="btn-icon ghost">×</button>
-            </div>
-
-            <!-- Settings Tabs -->
-            <div class="settings-tabs">
-                <button class="settings-tab active" data-tab="recovery">🔐 Recovery</button>
-                <button class="settings-tab" data-tab="notifications">🔔 Notifications</button>
-                <button class="settings-tab" data-tab="general">⚙️ General</button>
-            </div>
-
-            <!-- Recovery Tab -->
-            <div class="settings-content" id="settings-recovery">
-                <h3>Account Recovery Options</h3>
-                <p class="hint">Choose one or more recovery methods. You control your data—no mandatory email or phone
-                    required.</p>
-
-                <!-- Active Recovery Methods -->
-                <div class="recovery-methods-list">
-                    <h4>Active Recovery Methods</h4>
-                    <div id="active-recovery-methods">
-                        <div class="recovery-method-item active">
-                            <div class="method-info">
-                                <span class="method-icon">🔑</span>
-                                <div>
-                                    <strong>Recovery Key</strong>
-                                    <p>Created on vault setup</p>
-                                </div>
-                            </div>
-                            <span class="badge success">Active</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Add New Recovery Method -->
-                <div class="recovery-actions">
-                    <h4>Add Recovery Method</h4>
-
-                    <div class="recovery-action-card">
-                        <div class="action-header">
-                            <span class="action-icon">🎫</span>
-                            <div>
-                                <strong>Backup Codes</strong>
-                                <p>10 single-use codes for emergency access</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-secondary" id="btn-generate-backup-codes">Generate Codes</button>
-                    </div>
-
-                    <div class="recovery-action-card">
-                        <div class="action-header">
-                            <span class="action-icon">💾</span>
-                            <div>
-                                <strong>Recovery File</strong>
-                                <p>Download encrypted backup of your vault key</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-secondary" id="btn-download-recovery-file">Download File</button>
-                    </div>
-
-                    <div class="recovery-action-card">
-                        <div class="action-header">
-                            <span class="action-icon">❓</span>
-                            <div>
-                                <strong>Secret Question</strong>
-                                <p>Set a personal question only you can answer</p>
-                            </div>
-                        </div>
-                        <button class="btn btn-secondary" id="btn-setup-secret-question">Setup Question</button>
-                    </div>
-                </div>
-
-                <!-- Test Recovery -->
-                <div class="recovery-test">
-                    <button class="btn btn-text" id="btn-test-recovery">🧪 Test Recovery Flow</button>
-                </div>
-            </div>
-
-            <!-- Notifications Tab -->
-            <div class="settings-content hidden" id="settings-notifications">
-                <h3>Notification Preferences</h3>
-                <p class="hint">Coming soon: Customize your notification settings</p>
-            </div>
-
-            <!-- General Tab -->
-            <div class="settings-content hidden" id="settings-general">
-                <h3>General Settings</h3>
-                <p class="hint">Coming soon: Theme, language, and other preferences</p>
             </div>
         </div>
     </div>
