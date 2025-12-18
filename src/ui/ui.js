@@ -774,6 +774,11 @@ class UIService {
         document.getElementById('cancel-secret-question')?.addEventListener('click', () => {
             document.getElementById('secret-question-modal').classList.add('hidden');
         });
+
+        // Password Generator
+        this._getById('btn-generate-password')?.addEventListener('click', () => this.generatePassword());
+        this._getById('btn-copy-password')?.addEventListener('click', () => this.copyPassword());
+
         document.getElementById('save-secret-question')?.addEventListener('click', () => this.saveSecretQuestion());
 
         // Tags Manager
@@ -1067,6 +1072,84 @@ class UIService {
         this.closeGenerateFileModal();
     }
     
+    /**
+     * Password Generator Logic
+     */
+    generatePassword() {
+        const length = parseInt(document.querySelector('input[name="pw-length"]:checked').value);
+        const includeUppercase = this._getById('pw-opt-uppercase').checked;
+        const includeNumbers = this._getById('pw-opt-numbers').checked;
+        const includeSymbols = this._getById('pw-opt-symbols').checked;
+
+        const charsets = {
+            lower: 'abcdefghjkmnpqrstuvwxyz',
+            upper: 'ABCDEFGHJKMNPQRSTUVWXYZ',
+            numbers: '23456789',
+            symbols: '!@#$%&*?_'
+        };
+
+        let characterPool = charsets.lower;
+        const requiredChars = [];
+
+        if (includeUppercase) {
+            characterPool += charsets.upper;
+            requiredChars.push(this._getRandomChar(charsets.upper));
+        }
+        if (includeNumbers) {
+            characterPool += charsets.numbers;
+            requiredChars.push(this._getRandomChar(charsets.numbers));
+        }
+        if (includeSymbols) {
+            characterPool += charsets.symbols;
+            requiredChars.push(this._getRandomChar(charsets.symbols));
+        }
+
+        let password = requiredChars.join('');
+        const remainingLength = length - password.length;
+
+        for (let i = 0; i < remainingLength; i++) {
+            password += this._getRandomChar(characterPool);
+        }
+
+        // Shuffle the password to ensure required characters are not always at the start
+        const shuffledPassword = this._shuffleString(password);
+
+        this._getById('generated-password-display').value = shuffledPassword;
+        this.showToast('New password generated!', 'success');
+    }
+
+    _getRandomChar(charset) {
+        const randomValues = new Uint32Array(1);
+        crypto.getRandomValues(randomValues);
+        return charset[randomValues[0] % charset.length];
+    }
+
+    _shuffleString(str) {
+        const arr = str.split('');
+        for (let i = arr.length - 1; i > 0; i--) {
+            const randomValues = new Uint32Array(1);
+            crypto.getRandomValues(randomValues);
+            const j = randomValues[0] % (i + 1);
+            [arr[i], arr[j]] = [arr[j], arr[i]]; // Swap
+        }
+        return arr.join('');
+    }
+
+    copyPassword() {
+        const password = this._getById('generated-password-display').value;
+        if (!password) return;
+
+        navigator.clipboard.writeText(password).then(() => {
+            this.showToast('Password copied to clipboard!', 'success');
+            if (this._getById('pw-opt-autoclear').checked) {
+                setTimeout(() => {
+                    navigator.clipboard.writeText(' ').catch(() => {}); // Clear clipboard
+                    this.showToast('Clipboard cleared.', 'info');
+                }, 30000);
+            }
+        });
+    }
+
     async findDuplicates() {
         // This is a placeholder for the full UI. For now, we'll log to console.
         this.showToast('Scanning for duplicates...', 'info');

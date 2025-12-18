@@ -1,7 +1,7 @@
 import { ensureAnonymousSession, onAuth, upgradeToEmail } from './firebase.js';
 import { vaultService } from './vault.js';
 import { bus } from './core/bus.js';
-import { toast } from './ui/toast.js'; // Assuming toast.js is created as discussed previously
+import { uiService } from './ui/ui.js';
 
 // Placeholder for vaultService methods that would be needed
 // In a real implementation, these would be in vault.js and handle crypto.
@@ -150,7 +150,7 @@ class AuthService {
   async generateAndDownloadRecoveryFile(username, partialPin) {
     await this.ready;
     if (!username || !partialPin) {
-      toast.error('Username and partial PIN are required to generate the recovery file.');
+      uiService.showToast('Username and partial PIN are required to generate the recovery file.', 'error');
       throw new Error('Missing credentials for recovery file generation.');
     }
 
@@ -162,10 +162,10 @@ class AuthService {
         partialPin
       );
       this._downloadFile(encryptedFileContent, 'pinbridge-recovery.pinbridge.key', 'application/octet-stream');
-      toast.success('Recovery file generated and downloaded successfully!');
+      uiService.showToast('Recovery file generated and downloaded successfully!', 'success');
     } catch (error) {
       console.error('Error generating recovery file:', error);
-      toast.error('Failed to generate recovery file. Please try again.');
+      uiService.showToast('Failed to generate recovery file. Please try again.', 'error');
       throw error;
     }
   }
