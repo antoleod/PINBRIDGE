@@ -3,13 +3,14 @@
  * Wrapper for IndexedDB.
  */
 
-const DB_VERSION = 5; // Increment for recovery store and sync queue index change
+const DB_VERSION = 6; // Increment for tags store
 const STORE_META = 'meta';
 const STORE_VAULT = 'vault';
 const STORE_VERSIONS = 'versions';
 const STORE_SYNC_QUEUE = 'syncQueue'; // Changed from 'sync_queue'
 const STORE_RECOVERY = 'recovery'; // New store for recovery methods
-const STORES = [STORE_META, STORE_VAULT, STORE_VERSIONS, STORE_SYNC_QUEUE, STORE_RECOVERY];
+const STORE_TAGS = 'tags'; // New store for tag metadata
+const STORES = [STORE_META, STORE_VAULT, STORE_VERSIONS, STORE_SYNC_QUEUE, STORE_RECOVERY, STORE_TAGS];
 
 class StorageService {
     constructor() {
@@ -54,6 +55,10 @@ class StorageService {
                 // Recovery store (backup codes, secret questions, etc.)
                 if (!db.objectStoreNames.contains(STORE_RECOVERY)) {
                     db.createObjectStore(STORE_RECOVERY, { keyPath: 'type' });
+                }
+                // Tags store (for colors, sync settings, etc.)
+                if (!db.objectStoreNames.contains(STORE_TAGS)) {
+                    db.createObjectStore(STORE_TAGS, { keyPath: 'name' });
                 }
             };
 
@@ -273,6 +278,24 @@ class StorageService {
 
     async deleteRecoveryMethod(type) {
         return await this.delete(STORE_RECOVERY, type);
+    }
+
+    // --- Tags API ---
+    async saveTag(tagData) {
+        // tagData = { name, color, isSynced, createdAt }
+        return await this.put(STORE_TAGS, tagData);
+    }
+
+    async getTag(tagName) {
+        return await this.get(STORE_TAGS, tagName);
+    }
+
+    async getAllTags() {
+        return await this.getAll(STORE_TAGS);
+    }
+
+    async deleteTag(tagName) {
+        return await this.delete(STORE_TAGS, tagName);
     }
 }
 

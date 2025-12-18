@@ -10,6 +10,7 @@ import { vaultService } from '../vault.js';
 import { storageService } from '../storage/db.js';
 import { recoveryService } from '../modules/recovery/recovery.js';
 import { cryptoService } from '../crypto/crypto.js';
+import { pairingService } from '../modules/pairing/pairing.js'; // To be created
 
 class UIService {
     constructor() {
@@ -88,6 +89,14 @@ class UIService {
             btnMenu: document.getElementById('btn-mobile-menu'),
             backdrop: document.getElementById('mobile-nav-backdrop')
         };
+    }
+    
+    _getById(id) {
+        const el = document.getElementById(id);
+        if (!el) {
+            console.warn(`UI element with id "${id}" not found.`);
+        }
+        return el;
     }
 
     init() {
@@ -723,6 +732,12 @@ class UIService {
             syncToggle.addEventListener('change', (e) => this.handleSyncToggle(e.target.checked));
         }
 
+        // Transparency Controls
+        this._getById('toggle-tag-sync')?.addEventListener('change', (e) => this.handleTagSyncToggle(e.target.checked));
+        this._getById('toggle-duplicate-detection')?.addEventListener('change', (e) => this.handleDuplicateDetectionToggle(e.target.checked));
+
+        // Duplicate Detection
+        this._getById('btn-find-duplicates')?.addEventListener('click', () => this.findDuplicates());
         // Settings Tabs
         document.querySelectorAll('.settings-tab').forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -735,6 +750,10 @@ class UIService {
         document.getElementById('btn-generate-backup-codes')?.addEventListener('click', () => this.generateBackupCodes());
         document.getElementById('btn-download-recovery-file')?.addEventListener('click', () => this.downloadRecoveryFile());
         document.getElementById('btn-setup-secret-question')?.addEventListener('click', () => this.openSecretQuestionModal());
+        
+        // Device Pairing
+        this._getById('btn-link-device')?.addEventListener('click', () => this.showPairingModal());
+        this._getById('close-pairing-modal')?.addEventListener('click', () => this.hidePairingModal());
 
         // Backup Codes Modal
         document.getElementById('close-backup-codes-modal')?.addEventListener('click', () => {
@@ -803,6 +822,10 @@ class UIService {
         const syncToggle = document.getElementById('toggle-sync-enabled');
         if (syncToggle) syncToggle.checked = syncEnabled;
         modal.classList.remove('hidden');
+        // Update dependent toggles
+        const tagSyncToggle = this._getById('toggle-tag-sync');
+        if (tagSyncToggle) tagSyncToggle.disabled = !syncEnabled;
+        this.updateDuplicateDetectionUI();
         await this.renderActiveRecoveryMethods();
     }
 
@@ -854,6 +877,10 @@ class UIService {
         } else {
             this.showToast('Cloud Sync disabled. Changes will only be saved on this device.', 'info');
         }
+        // Also update the UI for dependent toggles
+        const tagSyncToggle = this._getById('toggle-tag-sync');
+        if (tagSyncToggle) tagSyncToggle.disabled = !isEnabled;
+
     }
 
     switchSettingsTab(tabName) {
@@ -1038,6 +1065,116 @@ class UIService {
 
         // Close modal on success
         this.closeGenerateFileModal();
+    }
+    
+    async findDuplicates() {
+        // This is a placeholder for the full UI. For now, we'll log to console.
+        this.showToast('Scanning for duplicates...', 'info');
+        
+        // In a real implementation, you'd get notes with their encrypted hashes
+        // const notes = await notesService.getAllNotesWithHashes();
+        const notes = notesService.notes.filter(n => !n.trash);
+
+        // --- Strategy 1: Identical Titles ---
+        const titles = {};
+        notes.forEach(note => {
+            if (!note.title) return;
+            if (!titles[note.title]) {
+                titles[note.title] = [];
+            }
+            titles[note.title].push(note.id);
+        });
+
+        const titleDuplicates = Object.entries(titles).filter(([_, ids]) => ids.length > 1);
+
+        // --- Strategy 2: Identical Content (simulated with body length) ---
+        // In reality, you would use a hash of the encrypted content.
+        const content = {};
+        notes.forEach(note => {
+            const key = note.body ? note.body.length : 0; // SIMULATION
+            if (key === 0) return;
+            if (!content[key]) {
+                content[key] = [];
+            }
+            content[key].push(note.id);
+        });
+
+        const contentDuplicates = Object.entries(content).filter(([_, ids]) => ids.length > 1);
+
+        console.log('--- Duplicate Scan Results ---');
+        if (titleDuplicates.length > 0) {
+            console.log('Found duplicates by TITLE:');
+            titleDuplicates.forEach(([title, ids]) => {
+                console.log(`- Title: "${title}", Note IDs: ${ids.join(', ')}`);
+            });
+        } else {
+            console.log('No duplicates found by title.');
+        }
+
+        if (contentDuplicates.length > 0) {
+            console.log('Found duplicates by CONTENT (simulated):');
+            contentDuplicates.forEach(([_, ids]) => {
+                console.log(`- Note IDs: ${ids.join(', ')}`);
+            });
+        } else {
+            console.log('No duplicates found by content.');
+        }
+
+        const total = titleDuplicates.length + contentDuplicates.length;
+        this.showToast(total > 0 ? `Found ${total} group(s) of duplicates. See console for details.` : 'No duplicates found.', 'success');
+        
+        // Here you would open a modal to display these results to the user.
+    }
+
+    async showPairingModal() {
+        const modal = this._getById('pairing-modal');
+        if (!modal) return;
+
+        const qrContainer = this._getById('pairing-qr-code');
+        const confirmationDisplay = this._getById('pairing-confirmation-code');
+        const statusDisplay = this._getById('pairing-status');
+
+        modal.classList.remove('hidden');
+        qrContainer.innerHTML = '<div class="loader-pulse"></div>';
+        confirmationDisplay.textContent = '------';
+        statusDisplay.textContent = 'Generating secure session...';
+
+        try {
+            await pairingService.startPairingSession({
+                onQRCode: (qrCodeDataURL) => {
+                    qrContainer.innerHTML = `<img src="${qrCodeDataURL}" alt="Pairing QR Code">`;
+                    statusDisplay.textContent = 'Scan this QR code with your other device.';
+                },
+                onConfirmationCode: (code) => {
+                    confirmationDisplay.textContent = code;
+                },
+                onPeerConnected: () => {
+                    statusDisplay.textContent = 'Device connected. Confirming secure channel...';
+                },
+                onVerified: () => {
+                    statusDisplay.textContent = 'Channel secured. Waiting for confirmation on both devices...';
+                    // Here you would enable a "Confirm" button on the UI
+                },
+                onComplete: () => {
+                    statusDisplay.textContent = 'Pairing successful!';
+                    this.showToast('Device paired successfully!', 'success');
+                    setTimeout(() => this.hidePairingModal(), 2000);
+                },
+                onError: (error) => {
+                    statusDisplay.textContent = `Error: ${error.message}. Please try again.`;
+                    console.error('Pairing Error:', error);
+                }
+            });
+        } catch (err) {
+            statusDisplay.textContent = `Failed to start session: ${err.message}`;
+            console.error('Failed to start pairing session:', err);
+        }
+    }
+
+    hidePairingModal() {
+        pairingService.cancelPairingSession();
+        const modal = this._getById('pairing-modal');
+        if (modal) modal.classList.add('hidden');
     }
 
     async openTagsManager() {
