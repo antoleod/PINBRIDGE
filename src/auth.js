@@ -94,6 +94,7 @@ class AuthService {
       bus.emit('auth:unlock');
       return true;
     }
+    bus.emit('auth:locked', 'no-session');
     return false;
   }
 

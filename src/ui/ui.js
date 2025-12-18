@@ -180,6 +180,11 @@ class UIService {
             this.createCommandPalette();
         });
 
+        bus.on('auth:locked', (reason) => {
+            this.screens.loading?.classList.add('hidden');
+            this.handleLockedSession(reason);
+        });
+
         window.addEventListener('beforeunload', (e) => {
             // Check if save button is enabled (unsaved changes)
             const saveBtn = document.getElementById('btn-save-note');
@@ -564,6 +569,10 @@ class UIService {
         this.clearEditor();
         this.currentView = 'all';
         document.querySelectorAll('.nav-item, .folder-item').forEach(el => el.classList.remove('active'));
+        
+        // Don't show a toast on initial load when no session is found
+        if (reason === 'no-session') return;
+
         const msg = reason === 'idle' ? i18n.t('toastVaultLockedIdle') : i18n.t('toastVaultLocked');
         this.showToast(msg, 'info');
     }
@@ -1997,69 +2006,6 @@ class UIService {
         `;
         document.body.appendChild(el);
 
-        const input = el.querySelector('input');
-        const results = el.querySelector('.palette-results');
-
-        const commands = [
-            { id: 'settings', label: i18n.t('settingsTitle'), action: () => settingsService.renderSettingsModal() },
-            { id: 'new', label: i18n.t('newNoteTooltip'), action: () => this.handleNewNote() },
-            { id: 'all', label: i18n.t('navAll'), action: () => document.querySelector('[data-view="all"]')?.click() },
-            { id: 'trash', label: i18n.t('navTrash'), action: () => document.querySelector('[data-view="trash"]')?.click() },
-            { id: 'lock', label: i18n.t('lockVault'), action: () => authService.forceLogout('manual') }
-        ];
-
-        input.addEventListener('input', () => {
-            const q = input.value.toLowerCase();
-            const matches = commands.filter(c => c.label.toLowerCase().includes(q));
-            this.renderPalette(matches, results);
-        });
-        el.addEventListener('click', (e) => {
-            if (e.target === el) this.togglePalette(false);
-        });
-    }
-
-    renderPalette(items, container) {
-        container.innerHTML = '';
-        items.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'palette-item';
-            div.innerHTML = `<span>${item.label}</span>`;
-            div.onclick = () => {
-                item.action();
-                this.togglePalette(false);
-            };
-            container.appendChild(div);
-        });
-    }
-
-    togglePalette(show) {
-        const el = document.getElementById('command-palette');
-        if (!el) return;
-        const input = el.querySelector('input');
-        if (show) {
-            el.classList.remove('hidden');
-            input.value = '';
-            input.focus();
-            input.dispatchEvent(new Event('input'));
-        } else {
-            el.classList.add('hidden');
-        }
-    }
-
-    setStatus(text) {
-        const status = document.getElementById('editor-status');
-        if (status) status.innerText = text;
-    }
-
-    ensureAuthenticated() {
-        if (vaultService.isUnlocked()) return true;
-        this.showScreen('auth');
-        this.showToast(i18n.t('authRequired'), 'error');
-        return false;
-    }
-}
-
-export const uiService = new UIService();
         const input = el.querySelector('input');
         const results = el.querySelector('.palette-results');
 

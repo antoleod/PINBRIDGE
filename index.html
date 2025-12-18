@@ -11,7 +11,6 @@
     <link rel="icon" type="image/png" sizes="32x32" href="src/public/icons/web/pinbridge_32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="src/public/icons/web/pinbridge_32x32.png">
     <link rel="apple-touch-icon" href="src/public/icons/ios/pinbridge_180x180.png">
-    <link rel="stylesheet" href="src/styles.css">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,7 +53,6 @@
                     </div>
                     <h1 class="brand-title">PINBRIDGE</h1>
                     <p class="subtitle" id="brand-subtitle" data-i18n="tagline">Your data, secured offline and in-sync.</p>
-                    <p class="subtitle-explanation" data-i18n="taglineExplanation">Work seamlessly offline. Your vault automatically syncs with end-to-end encryption when you're back online.</p>
                 </div>
                 <div class="lang-switcher">
                     <label for="language-select" data-i18n="languageLabel">Language</label>
@@ -64,16 +62,7 @@
 
             <div id="auth-choice" class="auth-choice">
                 <p class="lede" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.</p>
-                <div class="auth-choice-actions">
-                    <button type="button" class="btn btn-primary btn-block accent" id="btn-create-start"
-                        data-i18n="actionCreateVault">Create New Vault</button>
-                    <button type="button" class="btn btn-secondary btn-block ghost" id="btn-login-start"
-                        data-i18n="actionExistingVault">I already have a Vault</button>
-                </div>
-                <div class="auth-choice-meta">
-                    <p class="hint" data-i18n="authChoiceCreateHint">Set a username and PIN to start a secure vault.</p>
-                    <p class="hint" data-i18n="authChoiceLoginHint">Unlock with your username + PIN.</p>
-                </div>
+                <p class="hint center">Use the ⚙️ settings menu to create a new vault or log in.</p>
             </div>
 
             <!-- SETUP FORM -->
@@ -127,9 +116,6 @@
             </div>
 
             <div class="auth-actions">
-                <button type="button" class="btn btn-text" id="btn-show-setup" data-i18n="actionCreateVault">Create New Vault</button>
-                <button type="button" class="btn btn-text" id="btn-show-login" data-i18n="actionExistingVault">I already have a Vault</button>
-                <button type="button" class="btn btn-text" id="btn-account-recovery">🔐 Account Recovery</button>
                 <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile" aria-label="Open settings">
                     ⚙️ Open settings
                 </button>
@@ -215,6 +201,13 @@
                 <button class="btn-icon ghost" id="btn-close-settings" aria-label="Close settings">×</button>
             </div>
             <div class="settings-actions">
+                <button type="button" class="settings-action" id="btn-account-recovery">
+                    <span class="settings-action-icon">🔐</span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Account Recovery</span>
+                        <span class="settings-action-desc">Regain access to your vault using a recovery method.</span>
+                    </div>
+                </button>
                 <button type="button" class="settings-action" id="btn-forgot-modal">
                     <span class="settings-action-icon">🗝️</span>
                     <div class="settings-action-content">
