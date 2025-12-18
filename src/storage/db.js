@@ -3,19 +3,21 @@
  * Wrapper for IndexedDB.
  */
 
-const DB_VERSION = 3; // bump for secure storage
+const DB_VERSION = 5; // Increment for recovery store and sync queue index change
 const STORE_META = 'meta';
 const STORE_VAULT = 'vault';
 const STORE_VERSIONS = 'versions';
-const STORES = [STORE_META, STORE_VAULT, STORE_VERSIONS];
+const STORE_SYNC_QUEUE = 'syncQueue'; // Changed from 'sync_queue'
+const STORE_RECOVERY = 'recovery'; // New store for recovery methods
+const STORES = [STORE_META, STORE_VAULT, STORE_VERSIONS, STORE_SYNC_QUEUE, STORE_RECOVERY];
 
 class StorageService {
     constructor() {
         this.db = null;
-        this.currentDbName = 'pinbridge_db';
+        this.currentDbName = null;
     }
 
-    async init(dbName = 'pinbridge_db') {
+    async init(dbName = 'pinbridge') {
         this.currentDbName = dbName;
         if (this.db) {
             this.db.close();
@@ -43,6 +45,15 @@ class StorageService {
                 if (!db.objectStoreNames.contains(STORE_VERSIONS)) {
                     const vStore = db.createObjectStore(STORE_VERSIONS, { keyPath: 'versionId' });
                     vStore.createIndex('noteId', 'noteId', { unique: false });
+                }
+                // Sync Queue
+                if (!db.objectStoreNames.contains(STORE_SYNC_QUEUE)) {
+                    const qStore = db.createObjectStore(STORE_SYNC_QUEUE, { keyPath: 'id', autoIncrement: true });
+                    qStore.createIndex('timestamp', 'timestamp', { unique: false });
+                }
+                // Recovery store (backup codes, secret questions, etc.)
+                if (!db.objectStoreNames.contains(STORE_RECOVERY)) {
+                    db.createObjectStore(STORE_RECOVERY, { keyPath: 'type' });
                 }
             };
 
@@ -166,8 +177,9 @@ class StorageService {
     }
 
     async saveEncryptedVault(record) {
-        // clear legacy records to avoid plaintext leakage
-        await this.clearStore(STORE_VAULT);
+        // We overwrite the single vault record. 
+        // Previously we cleared the store, but that creates a risk of data loss 
+        // if the write fails or app closes between clear and put.
         await this.put(STORE_VAULT, { id: 'vault', ...record });
     }
 
@@ -220,6 +232,47 @@ class StorageService {
         for (const storeName of STORES) {
             await this.clearStore(storeName);
         }
+    }
+
+    // --- Sync Queue API ---
+    async getSyncQueue() {
+        return await this.getAll(STORE_SYNC_QUEUE);
+    }
+
+    async addToSyncQueue(task) {
+        return await this.put(STORE_SYNC_QUEUE, {
+            created: Date.now(),
+            ...task
+        });
+    }
+
+    async removeFromSyncQueue(id) {
+        return await this.delete(STORE_SYNC_QUEUE, id);
+    }
+
+    async clearSyncQueue() {
+        return await this.clearStore(STORE_SYNC_QUEUE);
+    }
+
+    // --- Recovery Methods API ---
+    async saveRecoveryMethod(type, data) {
+        return await this.put(STORE_RECOVERY, {
+            type,
+            ...data,
+            updatedAt: Date.now()
+        });
+    }
+
+    async getRecoveryMethod(type) {
+        return await this.get(STORE_RECOVERY, type);
+    }
+
+    async getAllRecoveryMethods() {
+        return await this.getAll(STORE_RECOVERY);
+    }
+
+    async deleteRecoveryMethod(type) {
+        return await this.delete(STORE_RECOVERY, type);
     }
 }
 

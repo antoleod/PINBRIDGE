@@ -3,6 +3,7 @@ import { storageService } from './storage/db.js';
 import { syncService } from './sync.js';
 import { Utils } from './utils/helpers.js';
 import { bus } from './core/bus.js';
+import { syncManager } from './modules/sync/sync-manager.js';
 
 class VaultService {
   constructor() {
@@ -12,7 +13,6 @@ class VaultService {
     this.uid = null;
     this.localUpdatedAt = null;
     this.realtimeUnsub = null;
-    this.onlineHandler = () => this._resyncPending();
     this.syncEnabled = true;
   }
 
@@ -21,7 +21,6 @@ class VaultService {
     await storageService.init('pinbridge_db');
     this.meta = await storageService.getCryptoMeta();
     this.localUpdatedAt = (await storageService.getEncryptedVault())?.updatedAt || null;
-    window.addEventListener('online', this.onlineHandler);
   }
 
   setSyncEnabled(enabled) {
@@ -79,11 +78,7 @@ class VaultService {
 
     await storageService.saveCryptoMeta(this.meta);
     if (this.syncEnabled) {
-      try {
-        await syncService.pushMeta(this.uid, this.meta);
-      } catch (e) {
-        console.warn('Meta sync deferred (offline)', e);
-      }
+      syncManager.enqueue('PUSH_META', this.meta, this.uid);
     }
     await this.persistVault();
     this._startRealtime();
@@ -124,6 +119,7 @@ class VaultService {
       await this._loadLatestVault();
       this._startRealtime();
     } catch (e) {
+      console.error(e);
       throw new Error('INVALID_PIN');
     }
   }
@@ -161,14 +157,18 @@ class VaultService {
     };
     this.localUpdatedAt = now;
     await storageService.saveEncryptedVault(record);
+
     if (this.syncEnabled) {
-      try {
-        await syncService.pushVault(this.uid, record);
-      } catch (e) {
-        console.warn('Deferred sync (offline)', e);
-      }
+      // Use Queue with optimization
+      syncManager.enqueueOrUpdate('PUSH_VAULT', record, this.uid);
     }
     bus.emit('vault:saved', now);
+  }
+
+  async persistNotes(notes) {
+    if (!Array.isArray(notes)) return;
+    this.vault.notes = notes.map(note => ({ ...note }));
+    await this.persistVault();
   }
 
   async _loadLatestVault() {
@@ -178,40 +178,109 @@ class VaultService {
       try {
         remote = await syncService.fetchVault(this.uid);
       } catch (e) {
-        console.warn('Vault fetch offline', e);
+        console.warn('Vault fetch offline, using local', e);
       }
     }
-    const latest = this._pickLatest(local, remote);
-    if (latest) {
-      await this._decryptIntoMemory(latest);
+
+    const { mergedRecord, mergedData } = await this._smartMerge(local, remote);
+
+    if (mergedData) {
+      this.vault = mergedData;
+      this.localUpdatedAt = mergedRecord.updatedAt;
+
+      // If merge changed something or remote was newer, we save local.
+      // If we merged remote data in, we should persist.
+      await storageService.saveEncryptedVault(mergedRecord);
     } else {
+      // Init empty
       this.vault = { notes: [], meta: { createdAt: new Date().toISOString(), username: this.meta?.username || '' } };
       await this.persistVault();
     }
   }
 
-  async _decryptIntoMemory(doc) {
-    this.vault = await cryptoService.decryptObject(doc.payload, this.dataKey);
-    this.localUpdatedAt = doc.updatedAt;
-    await storageService.saveEncryptedVault(doc);
-  }
+  // Smart Merge Logic: Decrypts both, merges notes by timestamp, re-encrypts.
+  async _smartMerge(localRecord, remoteRecord) {
+    if (!localRecord && !remoteRecord) return { mergedRecord: null, mergedData: null };
 
-  _pickLatest(localDoc, remoteDoc) {
-    if (localDoc && !remoteDoc) return localDoc;
-    if (!localDoc && remoteDoc) return remoteDoc;
-    if (!localDoc && !remoteDoc) return null;
-    const localTime = new Date(localDoc.updatedAt || 0).getTime();
-    const remoteTime = new Date(remoteDoc.updatedAt || 0).getTime();
-    return remoteTime > localTime ? remoteDoc : localDoc;
+    // If only one exists, return it (decrypted)
+    if (localRecord && !remoteRecord) {
+      const data = await cryptoService.decryptObject(localRecord.payload, this.dataKey);
+      return { mergedRecord: localRecord, mergedData: data };
+    }
+    if (!localRecord && remoteRecord) {
+      const data = await cryptoService.decryptObject(remoteRecord.payload, this.dataKey);
+      return { mergedRecord: remoteRecord, mergedData: data };
+    }
+
+    // Both exist. Decrypt.
+    let localData, remoteData;
+    try {
+      localData = await cryptoService.decryptObject(localRecord.payload, this.dataKey);
+    } catch (e) { console.error('Local decrypt fail', e); return { mergedRecord: remoteRecord, mergedData: await cryptoService.decryptObject(remoteRecord.payload, this.dataKey) }; }
+
+    try {
+      remoteData = await cryptoService.decryptObject(remoteRecord.payload, this.dataKey);
+    } catch (e) { console.error('Remote decrypt fail', e); return { mergedRecord: localRecord, mergedData: localData }; }
+
+    // Map merge
+    const noteMap = new Map();
+    localData.notes.forEach(n => noteMap.set(n.id, n));
+
+    // Merge remote into local
+    remoteData.notes.forEach(rNote => {
+      const lNote = noteMap.get(rNote.id);
+      if (!lNote) {
+        // Remote has new note, add it
+        noteMap.set(rNote.id, rNote);
+      } else {
+        // Conflict: Last Write Wins
+        if (rNote.updated > lNote.updated) {
+          noteMap.set(rNote.id, rNote);
+        }
+      }
+    });
+
+    // Reconstruct
+    const mergedNotes = Array.from(noteMap.values());
+    const maxTime = new Date().toISOString();
+
+    const mergedData = {
+      ...localData,
+      notes: mergedNotes,
+      meta: { ...localData.meta, updatedAt: maxTime }
+    };
+
+    // Re-encrypt
+    const payload = await cryptoService.encryptObject(mergedData, this.dataKey);
+    const mergedRecord = {
+      version: '1.0',
+      updatedAt: maxTime,
+      cipher: 'AES-GCM',
+      payload
+    };
+
+    return { mergedRecord, mergedData };
   }
 
   async _handleRemoteSnapshot(doc) {
-    if (!doc) return;
+    if (!doc || !this.dataKey) return; // Ignore if locked
+
+    // Check timestamps to avoid loops
     const remoteTime = new Date(doc.updatedAt || 0).getTime();
     const localTime = new Date(this.localUpdatedAt || 0).getTime();
-    if (remoteTime > localTime) {
-      await this._decryptIntoMemory(doc);
-      bus.emit('vault:remote-update', doc.updatedAt);
+
+    if (remoteTime <= localTime) return; // We are up to date or ahead
+
+    console.log('Remote update detected, merging...');
+    const local = await storageService.getEncryptedVault();
+    const { mergedRecord, mergedData } = await this._smartMerge(local, doc);
+
+    if (mergedData) {
+      this.vault = mergedData;
+      this.localUpdatedAt = mergedRecord.updatedAt;
+      await storageService.saveEncryptedVault(mergedRecord);
+      bus.emit('vault:remote-update', mergedRecord.updatedAt);
+      bus.emit('notes:loaded', this.vault.notes); // Force UI refresh
     }
   }
 
@@ -226,32 +295,50 @@ class VaultService {
     this.vault = { notes: [], meta: {} };
     if (this.realtimeUnsub) this.realtimeUnsub();
     this.realtimeUnsub = null;
-    window.removeEventListener('online', this.onlineHandler);
     bus.emit('vault:locked');
   }
 
-  async fileRecoveryResetRequest() {
-    await syncService.createRecoveryRequest(this.uid);
+  async saveSession() {
+    if (!this.dataKey) return;
+    try {
+      const exported = await cryptoService.exportKeyBytes(this.dataKey);
+      const b64 = Utils.bufferToBase64(exported);
+      sessionStorage.setItem('pb_session_key', b64);
+    } catch (e) {
+      console.warn('Session save failed', e);
+    }
   }
 
-  async _resyncPending() {
-    if (!this.uid) return;
-    if (!this.syncEnabled) return;
-    if (this.meta) {
-      try {
-        await syncService.pushMeta(this.uid, this.meta);
-      } catch (e) {
-        console.warn('Meta resync failed', e);
+  async tryRestoreSession() {
+    const b64 = sessionStorage.getItem('pb_session_key');
+    if (!b64) return false;
+    try {
+      const raw = Utils.base64ToBuffer(b64);
+      this.dataKey = await cryptoService.importRawKey(raw);
+      // We need to load vault
+      if (!this.meta && this.syncEnabled) {
+        const remoteMeta = await syncService.fetchMeta(this.uid);
+        if (remoteMeta) {
+          this.meta = remoteMeta;
+          await storageService.saveCryptoMeta(remoteMeta);
+        }
       }
+      await this._loadLatestVault();
+      this._startRealtime();
+      return true;
+    } catch (e) {
+      console.warn('Session restore failed', e);
+      sessionStorage.removeItem('pb_session_key');
+      return false;
     }
-    const cachedVault = await storageService.getEncryptedVault();
-    if (cachedVault) {
-      try {
-        await syncService.pushVault(this.uid, cachedVault);
-      } catch (e) {
-        console.warn('Vault resync failed', e);
-      }
-    }
+  }
+
+  clearSession() {
+    sessionStorage.removeItem('pb_session_key');
+  }
+
+  async fileRecoveryResetRequest() {
+    syncManager.enqueue('RECOVERY_REQUEST', {}, this.uid);
   }
 }
 

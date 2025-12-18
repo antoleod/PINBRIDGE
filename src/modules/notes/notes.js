@@ -7,6 +7,19 @@
 import { Utils } from '../../utils/helpers.js';
 import { bus } from '../../core/bus.js';
 import { vaultService } from '../../vault.js';
+import { storageService } from '../../storage/db.js';
+
+// Tag color palette
+const TAG_COLORS = {
+    red: '#ef4444',
+    orange: '#f97316',
+    yellow: '#eab308',
+    green: '#22c55e',
+    blue: '#3b82f6',
+    purple: '#a855f7',
+    pink: '#ec4899',
+    gray: '#6b7280'
+};
 
 class NotesService {
     constructor() {
@@ -24,21 +37,70 @@ class NotesService {
     }
 
     /**
+     * Extract hashtags from text and return as tag objects with default color
+     */
+    extractTags(text) {
+        if (!text) return [];
+        const regex = /#[\w-]+/g;
+        const matches = text.match(regex) || [];
+        return matches.map(tag => ({
+            name: tag.substring(1), // Remove #
+            color: 'blue' // Default color
+        }));
+    }
+
+    /**
+     * Get color for a tag name (from existing tags or default)
+     */
+    getTagColor(tagName, existingTags = []) {
+        const existing = existingTags.find(t =>
+            (typeof t === 'string' ? t : t.name) === tagName
+        );
+        return existing?.color || 'blue';
+    }
+
+    /**
+     * Normalize tags to object format {name, color}
+     */
+    normalizeTags(tags) {
+        if (!tags || !Array.isArray(tags)) return [];
+        return tags.map(tag => {
+            if (typeof tag === 'string') {
+                return { name: tag, color: 'blue' };
+            }
+            return tag;
+        });
+    }
+
+    /**
      * Create a new note.
      */
-    async createNote(title, body, folder = "", tags = [], options = {}) {
-        const id = Utils.generateId();
-        const timestamp = Date.now();
+    async createNote(title = "", body = "", folder = "", tags = [], options = {}) {
+        const id = `note-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        // Auto-extract tags from body
+        const extractedTags = this.extractTags(body);
+        const normalizedTags = this.normalizeTags(tags);
+
+        // Merge tags (preserve colors from manual tags)
+        const mergedTags = [...normalizedTags];
+        extractedTags.forEach(extracted => {
+            if (!mergedTags.find(t => t.name === extracted.name)) {
+                mergedTags.push(extracted);
+            }
+        });
+
         const note = {
             id,
             title: title || '',
             body: body || '',
-            folder,
-            tags,
-            created: timestamp,
-            updated: timestamp,
+            folder: folder || '',
+            tags: mergedTags,
             trash: false,
-            pinned: false
+            pinned: false,
+            created: Date.now(),
+            updated: Date.now(),
+            isTemplate: options.isTemplate || false
         };
 
         const { persist = true } = options;
@@ -60,15 +122,69 @@ class NotesService {
         const note = this.notes.find(n => n.id === id);
         if (!note) return;
 
+        // Auto-extract tags from new body
+        const extractedTags = this.extractTags(body || '');
+        const normalizedTags = this.normalizeTags(tags);
+
+        // Merge tags (preserve existing colors)
+        const mergedTags = [...normalizedTags];
+        extractedTags.forEach(extracted => {
+            if (!mergedTags.find(t => t.name === extracted.name)) {
+                // Use existing color if tag was previously used
+                const existingColor = this.getTagColor(extracted.name, note.tags);
+                mergedTags.push({ name: extracted.name, color: existingColor });
+            }
+        });
+
+        // Versioning: Save OLD state before updating if it has content
+        if (note.body || note.title) {
+            await this.saveVersion(note);
+        }
+
         note.title = title || '';
         note.body = body || '';
         note.folder = folder;
-        note.tags = tags;
+        note.tags = mergedTags;
         note.updated = Date.now();
 
         await this.persistNote(note);
         this.sortNotes();
         bus.emit('notes:updated', this.notes);
+    }
+
+    async saveVersion(note) {
+        const versionId = Utils.generateId();
+        const version = {
+            versionId,
+            noteId: note.id,
+            timestamp: Date.now(),
+            title: note.title,
+            body: note.body,
+            folder: note.folder,
+            tags: note.tags
+        };
+        try {
+            await storageService.saveVersion(version);
+        } catch (e) {
+            console.warn('Failed to save version', e);
+        }
+    }
+
+    async getHistory(noteId) {
+        try {
+            return await storageService.getNoteVersions(noteId);
+        } catch (e) {
+            console.warn('Failed to fetch history', e);
+            return [];
+        }
+    }
+
+    async restoreVersion(noteId, versionId) {
+        const history = await this.getHistory(noteId);
+        const version = history.find(v => v.versionId === versionId);
+        if (!version) return;
+
+        await this.updateNote(noteId, version.title, version.body, version.folder, version.tags);
     }
 
     /**
@@ -161,6 +277,56 @@ class NotesService {
             return b.updated - a.updated;
         });
     }
+
+    /**
+     * Update the color of a specific tag across all notes
+     */
+    async updateTagColor(tagName, newColor) {
+        let updated = false;
+
+        this.notes.forEach(note => {
+            if (note.tags && Array.isArray(note.tags)) {
+                note.tags.forEach(tag => {
+                    if ((typeof tag === 'string' ? tag : tag.name) === tagName) {
+                        if (typeof tag === 'object') {
+                            tag.color = newColor;
+                            updated = true;
+                        }
+                    }
+                });
+            }
+        });
+
+        if (updated) {
+            await vaultService.persistNotes(this.notes);
+            bus.emit('notes:updated', this.notes);
+        }
+    }
+
+    /**
+     * Get all unique tags with their colors
+     */
+    getAllTags() {
+        const tagMap = new Map();
+
+        this.notes.forEach(note => {
+            if (note.trash || note.isTemplate) return;
+            if (note.tags && Array.isArray(note.tags)) {
+                note.tags.forEach(tag => {
+                    const tagName = typeof tag === 'string' ? tag : tag.name;
+                    const tagColor = typeof tag === 'object' ? tag.color : 'blue';
+
+                    if (!tagMap.has(tagName)) {
+                        tagMap.set(tagName, { name: tagName, color: tagColor, count: 0 });
+                    }
+                    tagMap.get(tagName).count++;
+                });
+            }
+        });
+
+        return Array.from(tagMap.values()).sort((a, b) => b.count - a.count);
+    }
 }
 
 export const notesService = new NotesService();
+export { TAG_COLORS };

@@ -49,8 +49,10 @@
             <div id="auth-choice" class="auth-choice">
                 <p class="lede" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.</p>
                 <div class="auth-choice-actions">
-                    <button type="button" class="btn btn-primary btn-block accent" id="btn-create-start" data-i18n="actionCreateVault">Create New Vault</button>
-                    <button type="button" class="btn btn-secondary btn-block ghost" id="btn-login-start" data-i18n="actionExistingVault">I already have a Vault</button>
+                    <button type="button" class="btn btn-primary btn-block accent" id="btn-create-start"
+                        data-i18n="actionCreateVault">Create New Vault</button>
+                    <button type="button" class="btn btn-secondary btn-block ghost" id="btn-login-start"
+                        data-i18n="actionExistingVault">I already have a Vault</button>
                 </div>
                 <div class="auth-choice-meta">
                     <p class="hint" data-i18n="authChoiceCreateHint">Set a username and PIN to start a secure vault.</p>
@@ -65,20 +67,25 @@
                 <form id="setup-form">
                     <div class="input-group">
                         <label for="setup-username" data-i18n="usernameLabel">Username</label>
-                        <input type="text" id="setup-username" autocomplete="username" data-i18n-placeholder="usernamePlaceholder">
+                        <input type="text" id="setup-username" autocomplete="username"
+                            data-i18n-placeholder="usernamePlaceholder">
                     </div>
                     <div class="input-row">
                         <div class="input-group">
                             <label for="setup-pin" data-i18n="pinLabel">PIN</label>
-                            <input type="password" id="setup-pin" required minlength="4" autocomplete="new-password" data-i18n-placeholder="pinPlaceholder">
+                            <input type="password" id="setup-pin" required minlength="4" autocomplete="new-password"
+                                data-i18n-placeholder="pinPlaceholder">
                         </div>
                         <div class="input-group">
                             <label for="setup-pin-confirm" data-i18n="confirmPinLabel">Confirm PIN</label>
-                            <input type="password" id="setup-pin-confirm" required minlength="4" autocomplete="new-password" data-i18n-placeholder="confirmPinPlaceholder">
+                            <input type="password" id="setup-pin-confirm" required minlength="4"
+                                autocomplete="new-password" data-i18n-placeholder="confirmPinPlaceholder">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block accent" data-i18n="setupSubmit">Initialize Vault</button>
-                    <p class="hint center" data-i18n="setupHint">Notes stay on this device. Recovery Key appears once.</p>
+                    <button type="submit" class="btn btn-primary btn-block accent" data-i18n="setupSubmit">Initialize
+                        Vault</button>
+                    <p class="hint center" data-i18n="setupHint">Notes stay on this device. Recovery Key appears once.
+                    </p>
                 </form>
             </div>
 
@@ -89,25 +96,100 @@
                 <form id="login-form">
                     <div class="input-group">
                         <label for="login-pin" data-i18n="pinLabel">PIN</label>
-                        <input type="password" id="login-pin" autocomplete="current-password" data-i18n-placeholder="pinPlaceholder">
+                        <input type="password" id="login-pin" autocomplete="current-password"
+                            data-i18n-placeholder="pinPlaceholder">
                     </div>
                     <div class="input-group">
                         <label for="login-recovery" data-i18n="recoveryLabel">Recovery Key (optional)</label>
-                        <input type="password" id="login-recovery" autocomplete="one-time-code" data-i18n-placeholder="recoveryPlaceholder">
+                        <input type="password" id="login-recovery" autocomplete="one-time-code"
+                            data-i18n-placeholder="recoveryPlaceholder">
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block accent" data-i18n="loginSubmit">Login</button>
+                    <button type="submit" class="btn btn-primary btn-block accent"
+                        data-i18n="loginSubmit">Login</button>
                     <p class="hint center" data-i18n="loginHint">If you do not have a vault, create one below.</p>
                 </form>
             </div>
 
             <div class="auth-toggle">
-                <button type="button" class="btn btn-secondary ghost" id="btn-show-setup" data-i18n="actionCreateVault">Create New Vault</button>
-                <button type="button" class="btn btn-secondary ghost" id="btn-show-login" data-i18n="actionExistingVault">I already have a Vault</button>
+                <button type="button" class="btn btn-secondary ghost" id="btn-show-setup"
+                    data-i18n="actionCreateVault">Create New Vault</button>
+                <button type="button" class="btn btn-secondary ghost" id="btn-show-login"
+                    data-i18n="actionExistingVault">I already have a Vault</button>
             </div>
             <div class="auth-actions">
-                <button type="button" class="btn btn-text" id="btn-forgot" data-i18n="actionUseRecovery">Use Recovery Key</button>
-                <button type="button" class="btn btn-text" id="btn-reset-local" data-i18n="actionReset">Reset local</button>
-                <button type="button" class="btn btn-text" id="btn-sync" data-i18n="actionSync">Sync with another device</button>
+                <button type="button" class="btn btn-text" id="btn-forgot" data-i18n="actionUseRecovery">Use Recovery
+                    Key</button>
+                <button type="button" class="btn btn-text" id="btn-account-recovery">🔐 Account Recovery</button>
+                <button type="button" class="btn btn-text" id="btn-reset-local" data-i18n="actionReset">Reset
+                    local</button>
+                <button type="button" class="btn btn-text" id="btn-sync" data-i18n="actionSync">Sync with another
+                    device</button>
+            </div>
+
+            <!-- ACCOUNT RECOVERY FORM -->
+            <div id="auth-recovery" class="auth-form hidden">
+                <h2>Account Recovery</h2>
+                <p class="hint">Choose a recovery method to regain access to your vault.</p>
+
+                <div class="recovery-method-selector">
+                    <button type="button" class="recovery-method-btn active" data-method="recovery-key">
+                        <span class="method-icon">🔑</span>
+                        <span>Recovery Key</span>
+                    </button>
+                    <button type="button" class="recovery-method-btn" data-method="backup-code">
+                        <span class="method-icon">🎫</span>
+                        <span>Backup Code</span>
+                    </button>
+                    <button type="button" class="recovery-method-btn" data-method="secret-question">
+                        <span class="method-icon">❓</span>
+                        <span>Secret Question</span>
+                    </button>
+                    <button type="button" class="recovery-method-btn" data-method="recovery-file">
+                        <span class="method-icon">💾</span>
+                        <span>Recovery File</span>
+                    </button>
+                </div>
+
+                <!-- Recovery Key Method -->
+                <form id="recovery-key-form" class="recovery-method-form">
+                    <div class="input-group">
+                        <label for="recovery-key-input">Recovery Key</label>
+                        <input type="password" id="recovery-key-input" placeholder="Enter your recovery key"
+                            autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
+                </form>
+
+                <!-- Backup Code Method -->
+                <form id="backup-code-form" class="recovery-method-form hidden">
+                    <div class="input-group">
+                        <label for="backup-code-input">Backup Code</label>
+                        <input type="text" id="backup-code-input" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off">
+                        <p class="hint">Enter one of your 10 backup codes</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
+                </form>
+
+                <!-- Secret Question Method -->
+                <form id="secret-question-form" class="recovery-method-form hidden">
+                    <div class="input-group">
+                        <label id="secret-question-display">Loading question...</label>
+                        <input type="text" id="secret-answer-input" placeholder="Your answer" autocomplete="off">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
+                </form>
+
+                <!-- Recovery File Method -->
+                <form id="recovery-file-form" class="recovery-method-form hidden">
+                    <div class="input-group">
+                        <label for="recovery-file-input">Upload Recovery File</label>
+                        <input type="file" id="recovery-file-input" accept=".json">
+                        <p class="hint">Select the recovery file you downloaded earlier</p>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
+                </form>
+
+                <button type="button" class="btn btn-text" id="btn-back-from-recovery">← Back to Login</button>
             </div>
         </div>
     </div>
@@ -124,7 +206,8 @@
             </div>
 
             <div class="nav-items">
-                <button class="nav-item active" data-view="all" title="All Notes" data-i18n-title="navAll" aria-label="All Notes">
+                <button class="nav-item active" data-view="all" title="All Notes" data-i18n-title="navAll"
+                    aria-label="All Notes">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
                             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -138,11 +221,38 @@
                             stroke-linejoin="round" />
                     </svg>
                 </button>
-                <button class="nav-item" data-view="favorites" title="Favorites" data-i18n-title="navFavorites" aria-label="Favorites">
+                <button class="nav-item" data-view="dashboard" title="Dashboard" data-i18n-title="navDashboard"
+                    aria-label="Dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" data-view="favorites" title="Favorites" data-i18n-title="navFavorites"
+                    aria-label="Favorites">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <polygon
                             points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
                             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" data-view="templates" title="Templates" data-i18n-title="navTemplates"
+                    aria-label="Templates">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M8 13h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M8 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M10 9h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
                     </svg>
                 </button>
                 <button class="nav-item" data-view="trash" title="Trash" data-i18n-title="navTrash" aria-label="Trash">
@@ -161,7 +271,27 @@
             </div>
 
             <div class="sidebar-bottom">
-                <button class="nav-item" id="btn-lock" title="Lock Vault" data-i18n-title="lockVault" aria-label="Lock Vault">
+                <div id="sync-status-indicator" class="sync-status-item" title="Connecting...">
+                    <span class="sync-dot status-offline"></span>
+                    <span class="sync-label" data-i18n="statusOffline">Offline</span>
+                </div>
+                <button class="nav-item" id="btn-settings" title="Settings" data-i18n-title="settings"
+                    aria-label="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" id="btn-tags-manager" title="Manage Tags" aria-label="Manage Tags">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" id="btn-lock" title="Lock Vault" data-i18n-title="lockVault"
+                    aria-label="Lock Vault">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"
                             stroke-linecap="round" stroke-linejoin="round" />
@@ -180,11 +310,13 @@
             </button>
             <div class="topbar-actions">
                 <button class="nav-pill" data-view="all" title="Notes" data-i18n="mobileNotes">Notes</button>
-                <button class="nav-pill" data-view="favorites" title="Favorites" data-i18n="mobileFavorites">Favorites</button>
+                <button class="nav-pill" data-view="favorites" title="Favorites"
+                    data-i18n="mobileFavorites">Favorites</button>
                 <button class="nav-pill" data-view="trash" title="Trash" data-i18n="mobileTrash">Trash</button>
             </div>
             <div class="topbar-utilities">
-                <button id="mobile-new-note" class="btn-icon-primary" title="New note" data-i18n-title="newNoteTooltip">+</button>
+                <button id="mobile-new-note" class="btn-icon-primary" title="New note"
+                    data-i18n-title="newNoteTooltip">+</button>
                 <button id="mobile-lock" class="btn-icon ghost" title="Lock">🔒</button>
             </div>
         </div>
@@ -196,12 +328,14 @@
                     <h2 data-i18n="listTitle">My Notes</h2>
                     <button id="btn-toggle-compact" class="btn btn-text compact-toggle">Compact</button>
                 </div>
-                <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)" data-i18n-title="newNoteTooltip">+</button>
+                <button id="btn-new-note" class="btn-icon-primary" title="New Note (N)"
+                    data-i18n-title="newNoteTooltip">+</button>
             </div>
 
             <!-- v2.0 QUICK DROP ZONE -->
             <div id="quick-drop-zone" class="quick-drop collapsed">
-                <input type="text" placeholder="Quick Drop... (Enter to stash)" id="quick-drop-input" data-i18n-placeholder="quickDropPlaceholder">
+                <input type="text" placeholder="Quick Drop... (Enter to stash)" id="quick-drop-input"
+                    data-i18n-placeholder="quickDropPlaceholder">
             </div>
 
             <div class="search-container">
@@ -219,7 +353,8 @@
                 <div class="meta-inputs">
                     <input type="text" id="note-folder" placeholder="Folder..." list="folder-suggestions"
                         class="meta-input" data-i18n-placeholder="folderPlaceholder">
-                    <input type="text" id="note-tags" placeholder="#tags..." class="meta-input" data-i18n-placeholder="tagsPlaceholder">
+                    <input type="text" id="note-tags" placeholder="#tags..." class="meta-input"
+                        data-i18n-placeholder="tagsPlaceholder">
                     <datalist id="folder-suggestions"></datalist>
                 </div>
                 <div class="status-actions">
@@ -229,18 +364,113 @@
                 </div>
 
                 <div class="editor-actions">
-                    <!-- v2.0 ONE TAP COPY -->
-                    <button class="btn-tool" id="btn-copy-title" title="Copy Title" data-i18n-title="copyTitle">T</button>
-                    <button class="btn-tool" id="btn-copy-body" title="Copy Content" data-i18n-title="copyBody">C</button>
+                    <button class="btn-tool" id="btn-md-bold" title="Bold"><strong>B</strong></button>
+                    <button class="btn-tool" id="btn-md-italic" title="Italic"><em>I</em></button>
+                    <button class="btn-tool" id="btn-md-list" title="List">&#8226;</button>
+                    <button class="btn-tool" id="btn-md-check" title="Checkbox">&#9745;</button>
                     <div class="divider-v"></div>
-                    <button class="btn-tool" id="btn-pin-note" title="Pin Note" data-i18n-title="pinNote">&#9733;</button>
-                    <button class="btn-tool danger" id="btn-delete" title="Delete" data-i18n-title="delete">&#128465;</button>
+                    <!-- v2.0 ACTIONS -->
+                    <button class="btn-tool" id="btn-insert-template" title="Insert Template">&#10010;T</button>
+                    <button class="btn-tool" id="btn-duplicate" title="Duplicate Note">&#x2398;</button>
+                    <button class="btn-tool" id="btn-download" title="Download Text">&#x2193;</button>
+                    <button class="btn-tool" id="btn-history" title="View History">&#128339;</button>
+                    <button class="btn-tool" id="btn-toggle-readonly" title="Toggle Read-Only">&#128274;</button>
+                    <div class="divider-v"></div>
+                    <button class="btn-tool" id="btn-pin-note" title="Pin Note"
+                        data-i18n-title="pinNote">&#9733;</button>
+                    <button class="btn-tool danger" id="btn-delete" title="Delete"
+                        data-i18n-title="delete">&#128465;</button>
+                    <span id="word-count-badge" class="count-badge">0 w</span>
                 </div>
             </div>
 
             <div class="editor-canvas">
-                <input type="text" id="note-title" placeholder="Untitled Note" class="editor-input-title" data-i18n-placeholder="noteTitlePlaceholder">
-                <textarea id="note-content" placeholder="Start typing..." class="editor-input-body" data-i18n-placeholder="noteBodyPlaceholder"></textarea>
+                <input type="text" id="note-title" placeholder="Untitled Note" class="editor-input-title"
+                    data-i18n-placeholder="noteTitlePlaceholder">
+                <textarea id="note-content" placeholder="Start typing..." class="editor-input-body"
+                    data-i18n-placeholder="noteBodyPlaceholder"></textarea>
+            </div>
+        </section>
+
+        <!-- DASHBOARD PANEL -->
+        <section class="dashboard-panel hidden">
+            <div class="dashboard-header">
+                <h1>Dashboard</h1>
+                <p class="subtitle">Your productivity at a glance</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <!-- Stats Cards -->
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">📝</div>
+                    <div class="card-content">
+                        <h3 id="stat-total-notes">0</h3>
+                        <p>Total Notes</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">⭐</div>
+                    <div class="card-content">
+                        <h3 id="stat-favorites">0</h3>
+                        <p>Favorites</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">📁</div>
+                    <div class="card-content">
+                        <h3 id="stat-folders">0</h3>
+                        <p>Folders</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">🏷️</div>
+                    <div class="card-content">
+                        <h3 id="stat-tags">0</h3>
+                        <p>Tags</p>
+                    </div>
+                </div>
+
+                <!-- Recent Notes -->
+                <div class="dashboard-section glass-panel">
+                    <h2>Recent Notes</h2>
+                    <div id="dashboard-recent-notes" class="dashboard-list">
+                        <!-- Injected dynamically -->
+                    </div>
+                </div>
+
+                <!-- Top Tags -->
+                <div class="dashboard-section glass-panel">
+                    <h2>Popular Tags</h2>
+                    <div id="dashboard-top-tags" class="tag-cloud">
+                        <!-- Injected dynamically -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-section glass-panel">
+                    <h2>Quick Actions</h2>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" data-action="new-note">
+                            <span>➕</span>
+                            <span>New Note</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="new-template">
+                            <span>📋</span>
+                            <span>New Template</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-favorites">
+                            <span>⭐</span>
+                            <span>Favorites</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-trash">
+                            <span>🗑️</span>
+                            <span>Trash</span>
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -252,12 +482,203 @@
     <div id="recovery-key-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
             <h2 data-i18n="recoveryTitle">Save Your Recovery Key</h2>
-            <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it somewhere safe. You will need it if you forget your PIN.</p>
+            <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it
+                somewhere safe. You will need it if you forget your PIN.</p>
             <div class="recovery-key-container">
                 <pre id="recovery-key-display"></pre>
                 <button id="copy-recovery-key" class="btn btn-secondary" data-i18n="recoveryCopy">Copy</button>
             </div>
-            <button id="close-recovery-modal" class="btn btn-primary btn-block" data-i18n="recoveryClose">I have saved my key. Continue.</button>
+            <button id="close-recovery-modal" class="btn btn-primary btn-block" data-i18n="recoveryClose">I have saved
+                my key. Continue.</button>
+        </div>
+    </div>
+
+    <!-- HISTORY MODAL -->
+    <div id="history-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel note-history-modal">
+            <div class="modal-header">
+                <h2>Note History</h2>
+                <button id="close-history-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div id="history-list" class="history-list scroll-container">
+                <!-- Versions injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- TEMPLATE MODAL -->
+    <div id="template-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel note-history-modal"> <!-- reusing style -->
+            <div class="modal-header">
+                <h2>Insert Template</h2>
+                <button id="close-template-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div id="template-list" class="history-list scroll-container">
+                <!-- Templates injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel settings-modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings-modal" class="btn-icon ghost">×</button>
+            </div>
+
+            <!-- Settings Tabs -->
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="recovery">🔐 Recovery</button>
+                <button class="settings-tab" data-tab="notifications">🔔 Notifications</button>
+                <button class="settings-tab" data-tab="general">⚙️ General</button>
+            </div>
+
+            <!-- Recovery Tab -->
+            <div class="settings-content" id="settings-recovery">
+                <h3>Account Recovery Options</h3>
+                <p class="hint">Choose one or more recovery methods. You control your data—no mandatory email or phone
+                    required.</p>
+
+                <!-- Active Recovery Methods -->
+                <div class="recovery-methods-list">
+                    <h4>Active Recovery Methods</h4>
+                    <div id="active-recovery-methods">
+                        <div class="recovery-method-item active">
+                            <div class="method-info">
+                                <span class="method-icon">🔑</span>
+                                <div>
+                                    <strong>Recovery Key</strong>
+                                    <p>Created on vault setup</p>
+                                </div>
+                            </div>
+                            <span class="badge success">Active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add New Recovery Method -->
+                <div class="recovery-actions">
+                    <h4>Add Recovery Method</h4>
+
+                    <div class="recovery-action-card">
+                        <div class="action-header">
+                            <span class="action-icon">🎫</span>
+                            <div>
+                                <strong>Backup Codes</strong>
+                                <p>10 single-use codes for emergency access</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" id="btn-generate-backup-codes">Generate Codes</button>
+                    </div>
+
+                    <div class="recovery-action-card">
+                        <div class="action-header">
+                            <span class="action-icon">💾</span>
+                            <div>
+                                <strong>Recovery File</strong>
+                                <p>Download encrypted backup of your vault key</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" id="btn-download-recovery-file">Download File</button>
+                    </div>
+
+                    <div class="recovery-action-card">
+                        <div class="action-header">
+                            <span class="action-icon">❓</span>
+                            <div>
+                                <strong>Secret Question</strong>
+                                <p>Set a personal question only you can answer</p>
+                            </div>
+                        </div>
+                        <button class="btn btn-secondary" id="btn-setup-secret-question">Setup Question</button>
+                    </div>
+                </div>
+
+                <!-- Test Recovery -->
+                <div class="recovery-test">
+                    <button class="btn btn-text" id="btn-test-recovery">🧪 Test Recovery Flow</button>
+                </div>
+            </div>
+
+            <!-- Notifications Tab -->
+            <div class="settings-content hidden" id="settings-notifications">
+                <h3>Notification Preferences</h3>
+                <p class="hint">Coming soon: Customize your notification settings</p>
+            </div>
+
+            <!-- General Tab -->
+            <div class="settings-content hidden" id="settings-general">
+                <h3>General Settings</h3>
+                <p class="hint">Coming soon: Theme, language, and other preferences</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- BACKUP CODES MODAL -->
+    <div id="backup-codes-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Your Backup Codes</h2>
+                <button id="close-backup-codes-modal" class="btn-icon ghost">×</button>
+            </div>
+            <p class="warning-text">⚠️ Save these codes in a safe place. Each code can only be used once.</p>
+            <div class="backup-codes-container">
+                <div id="backup-codes-display" class="backup-codes-grid">
+                    <!-- Codes injected here -->
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="copy-backup-codes" class="btn btn-secondary">📋 Copy All</button>
+                <button id="download-backup-codes" class="btn btn-secondary">💾 Download</button>
+                <button id="confirm-backup-codes" class="btn btn-primary">✓ I've Saved Them</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECRET QUESTION MODAL -->
+    <div id="secret-question-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Setup Secret Question</h2>
+                <button id="close-secret-question-modal" class="btn-icon ghost">×</button>
+            </div>
+            <p class="hint">Choose a question only you can answer. This will help you recover your account.</p>
+            <div class="form-group">
+                <label for="secret-question-input">Your Question</label>
+                <input type="text" id="secret-question-input" placeholder="e.g., What was your first pet's name?"
+                    class="input-field">
+            </div>
+            <div class="form-group">
+                <label for="setup-secret-answer-input">Your Answer</label>
+                <input type="text" id="setup-secret-answer-input" placeholder="Answer (case-sensitive)"
+                    class="input-field">
+            </div>
+            <div class="form-group">
+                <label for="secret-answer-confirm">Confirm Answer</label>
+                <input type="text" id="secret-answer-confirm" placeholder="Re-enter your answer" class="input-field">
+            </div>
+            <div class="modal-actions">
+                <button id="cancel-secret-question" class="btn btn-text">Cancel</button>
+                <button id="save-secret-question" class="btn btn-primary">Save Question</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAGS MANAGER MODAL -->
+    <div id="tags-manager-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel settings-modal">
+            <div class="modal-header">
+                <h2>🏷️ Tags Manager</h2>
+                <button id="close-tags-manager" class="btn-icon ghost">×</button>
+            </div>
+            <p class="hint">Manage colors for your tags. Changes apply to all notes.</p>
+
+            <div class="tags-manager-content">
+                <div id="tags-list" class="tags-list">
+                    <!-- Tags injected here -->
+                </div>
+            </div>
         </div>
     </div>
 

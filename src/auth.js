@@ -46,6 +46,26 @@ class AuthService {
     return this.uid;
   }
 
+  _getOfflineUid() {
+    const cached = localStorage.getItem(this.offlineUidKey);
+    if (cached) return cached;
+    const uid = `offline-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(this.offlineUidKey, uid);
+    return uid;
+  }
+
+  async restoreSession() {
+    await this.ready;
+    const restored = await vaultService.tryRestoreSession();
+    if (restored) {
+      this._bindActivityWatchers();
+      this._handleActivity();
+      bus.emit('auth:unlock');
+      return true;
+    }
+    return false;
+  }
+
   async createVault(username, pin) {
     await this.ready;
     const recoveryKey = await vaultService.createNewVault({
@@ -53,6 +73,7 @@ class AuthService {
       username,
       pin
     });
+    await vaultService.saveSession();
     this._bindActivityWatchers();
     this._handleActivity();
     bus.emit('auth:unlock');
@@ -65,6 +86,7 @@ class AuthService {
       uid: this.uid,
       pin
     });
+    await vaultService.saveSession();
     this._bindActivityWatchers();
     this._handleActivity();
     bus.emit('auth:unlock');
@@ -76,6 +98,7 @@ class AuthService {
       uid: this.uid,
       recoveryKey
     });
+    await vaultService.saveSession();
     this._bindActivityWatchers();
     this._handleActivity();
     bus.emit('auth:unlock');
@@ -87,6 +110,7 @@ class AuthService {
   }
 
   forceLogout(reason = 'manual') {
+    vaultService.clearSession();
     vaultService.lock();
     this._clearActivityWatchers();
     bus.emit('auth:locked', reason);
@@ -106,14 +130,6 @@ class AuthService {
   _clearActivityWatchers() {
     this.activityEvents.forEach(ev => document.removeEventListener(ev, this.activityHandler));
     clearTimeout(this.idleTimer);
-  }
-
-  _getOfflineUid() {
-    const cached = localStorage.getItem(this.offlineUidKey);
-    if (cached) return cached;
-    const uid = `offline-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(this.offlineUidKey, uid);
-    return uid;
   }
 }
 

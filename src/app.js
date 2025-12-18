@@ -32,6 +32,15 @@ async function init() {
     try {
         const uid = await authService.init();
         await vaultService.init(uid);
+
+        // Try to restore session first (Refresh Persistence)
+        const sessionRestored = await authService.restoreSession();
+        if (sessionRestored) {
+            console.log('Session restored');
+            // Session restored -> auth:unlock event will fire and handle UI
+            return;
+        }
+
         const hasVault = await vaultService.hasExistingVault();
         uiService.showScreen('auth');
         if (hasVault) {

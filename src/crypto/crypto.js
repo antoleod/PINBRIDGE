@@ -44,6 +44,16 @@ class CryptoService {
         );
     }
 
+    async importRawKey(rawBuffer) {
+        return crypto.subtle.importKey(
+            'raw',
+            rawBuffer,
+            { name: 'AES-GCM' },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    }
+
     async exportKeyBytes(key) {
         const raw = await crypto.subtle.exportKey('raw', key);
         return new Uint8Array(raw);

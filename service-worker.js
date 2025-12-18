@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinbridge-v4';
+const CACHE_NAME = 'pinbridge-v5';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -16,7 +16,10 @@ const ASSETS_TO_CACHE = [
     './src/modules/notes/notes.js',
     './src/modules/search/search.js',
     './src/modules/settings/settings.js',
-    './src/ui/ui.js'
+    './src/ui/ui.js',
+    './crypto.js',
+    './db.js',
+    './helpers.js'
 ];
 
 const ICONS_CACHE = [

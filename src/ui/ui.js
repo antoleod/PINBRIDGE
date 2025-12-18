@@ -2,12 +2,14 @@
 import { bus } from '../core/bus.js';
 import { Utils } from '../utils/helpers.js';
 import { authService } from '../auth.js';
-import { notesService } from '../modules/notes/notes.js';
+import { notesService, TAG_COLORS } from '../modules/notes/notes.js';
 import { searchService } from '../modules/search/search.js';
 import { settingsService } from '../modules/settings/settings.js';
 import { i18n } from '../core/i18n.js';
 import { vaultService } from '../vault.js';
 import { storageService } from '../storage/db.js';
+import { recoveryService } from '../modules/recovery/recovery.js';
+import { cryptoService } from '../crypto/crypto.js';
 
 class UIService {
     constructor() {
@@ -19,16 +21,18 @@ class UIService {
         this.quickDropZone = null;
         this.activeNoteId = null;
         this.currentView = 'all';
-        this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') !== 'false';
+        this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') === 'true';
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
         this.saveTimeout = null;
+        this.isReadOnly = false; // Read-only mode state
     }
 
     _cacheDomElements() {
         this.screens = {
             loading: document.getElementById('loading-screen'),
             auth: document.getElementById('auth-screen'),
-            vault: document.getElementById('vault-screen')
+            vault: document.getElementById('vault-screen'),
+            dashboard: document.getElementById('dashboard-screen') // Added dashboard screen
         };
 
         this.forms = {
@@ -154,6 +158,15 @@ class UIService {
             this.applyTranslations();
             this.createCommandPalette();
         });
+
+        window.addEventListener('beforeunload', (e) => {
+            // Check if save button is enabled (unsaved changes)
+            const saveBtn = document.getElementById('btn-save-note');
+            if (saveBtn && !saveBtn.disabled) {
+                e.preventDefault();
+                e.returnValue = ''; // Standard for showing alert
+            }
+        });
     }
 
     addAuthEventListeners() {
@@ -190,6 +203,186 @@ class UIService {
             this.showToast(i18n.t('toastResetDone'), 'info');
             location.reload();
         });
+
+        // Account Recovery
+        document.getElementById('btn-account-recovery')?.addEventListener('click', () => this.showRecoveryForm());
+        document.getElementById('btn-back-from-recovery')?.addEventListener('click', () => this.showLoginForm());
+
+        // Recovery Method Selector
+        document.querySelectorAll('.recovery-method-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const method = e.currentTarget.dataset.method;
+                this.selectRecoveryMethod(method);
+            });
+        });
+
+        // Recovery Forms
+        document.getElementById('recovery-key-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleRecoveryKeySubmit();
+        });
+
+        document.getElementById('backup-code-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleBackupCodeSubmit();
+        });
+
+        document.getElementById('secret-question-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleSecretQuestionSubmit();
+        });
+
+        document.getElementById('recovery-file-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.handleRecoveryFileSubmit();
+        });
+    }
+
+    showRecoveryForm() {
+        this.forms.choice?.classList.add('hidden');
+        this.forms.login?.classList.add('hidden');
+        this.forms.setup?.classList.add('hidden');
+        document.getElementById('auth-recovery')?.classList.remove('hidden');
+
+        // Load secret question if available
+        this.loadSecretQuestion();
+    }
+
+    async loadSecretQuestion() {
+        try {
+            const secretData = await storageService.getRecoveryMethod('secret_question');
+            if (secretData && secretData.question) {
+                document.getElementById('secret-question-display').textContent = secretData.question;
+            } else {
+                document.getElementById('secret-question-display').textContent = 'No secret question configured';
+            }
+        } catch (err) {
+            console.error('Failed to load secret question', err);
+        }
+    }
+
+    selectRecoveryMethod(method) {
+        // Update buttons
+        document.querySelectorAll('.recovery-method-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.method === method);
+        });
+
+        // Update forms
+        document.querySelectorAll('.recovery-method-form').forEach(form => {
+            form.classList.add('hidden');
+        });
+        document.getElementById(`${method}-form`)?.classList.remove('hidden');
+    }
+
+    async handleRecoveryKeySubmit() {
+        const recoveryKey = document.getElementById('recovery-key-input').value.trim();
+        if (!recoveryKey) {
+            this.showToast('Please enter your recovery key', 'error');
+            return;
+        }
+
+        try {
+            await authService.unlockWithRecovery(recoveryKey);
+            this.showToast('Account recovered successfully!', 'success');
+        } catch (err) {
+            console.error('Recovery key failed', err);
+            this.showToast('Invalid recovery key', 'error');
+        }
+    }
+
+    async handleBackupCodeSubmit() {
+        const code = document.getElementById('backup-code-input').value.trim().toUpperCase();
+        if (!code) {
+            this.showToast('Please enter a backup code', 'error');
+            return;
+        }
+
+        try {
+            const isValid = await recoveryService.verifyBackupCode(code);
+            if (!isValid) {
+                this.showToast('Invalid or already used backup code', 'error');
+                return;
+            }
+
+            // Code is valid, now we need to unlock the vault
+            // For this, we need to get the recovery key from storage
+            const meta = await storageService.getCryptoMeta();
+            if (!meta || !meta.wrappedRecoveryKey) {
+                this.showToast('No recovery data found', 'error');
+                return;
+            }
+
+            // Unlock with recovery key
+            const recoveryKey = await cryptoService.unwrapKey(
+                Utils.base64ToBuffer(meta.wrappedRecoveryKey),
+                code // Use backup code as password
+            );
+
+            await authService.unlockWithRecovery(Utils.bufferToBase64(await crypto.subtle.exportKey('raw', recoveryKey)));
+            this.showToast('Account recovered successfully!', 'success');
+        } catch (err) {
+            console.error('Backup code recovery failed', err);
+            this.showToast('Recovery failed. Please try another method.', 'error');
+        }
+    }
+
+    async handleSecretQuestionSubmit() {
+        const answer = document.getElementById('secret-answer-input').value;
+        if (!answer) {
+            this.showToast('Please enter your answer', 'error');
+            return;
+        }
+
+        try {
+            const isValid = await recoveryService.verifySecretAnswer(answer);
+            if (!isValid) {
+                this.showToast('Incorrect answer', 'error');
+                return;
+            }
+
+            // Answer is correct, proceed with recovery
+            const meta = await storageService.getCryptoMeta();
+            if (!meta || !meta.wrappedRecoveryKey) {
+                this.showToast('No recovery data found', 'error');
+                return;
+            }
+
+            // Derive key from answer and unwrap recovery key
+            const answerKey = await cryptoService.deriveKey(answer, meta.salt);
+            const recoveryKey = await cryptoService.unwrapKey(
+                Utils.base64ToBuffer(meta.wrappedRecoveryKey),
+                answerKey
+            );
+
+            await authService.unlockWithRecovery(Utils.bufferToBase64(await crypto.subtle.exportKey('raw', recoveryKey)));
+            this.showToast('Account recovered successfully!', 'success');
+        } catch (err) {
+            console.error('Secret question recovery failed', err);
+            this.showToast('Recovery failed. Please check your answer.', 'error');
+        }
+    }
+
+    async handleRecoveryFileSubmit() {
+        const fileInput = document.getElementById('recovery-file-input');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            this.showToast('Please select a recovery file', 'error');
+            return;
+        }
+
+        try {
+            const vaultKey = await recoveryService.importRecoveryFile(file);
+
+            // Use the imported vault key to unlock
+            const keyBase64 = Utils.bufferToBase64(await crypto.subtle.exportKey('raw', vaultKey));
+            await authService.unlockWithRecovery(keyBase64);
+
+            this.showToast('Account recovered successfully!', 'success');
+        } catch (err) {
+            console.error('Recovery file import failed', err);
+            this.showToast('Invalid recovery file', 'error');
+        }
     }
 
     showAuthChoice() {
@@ -381,21 +574,588 @@ class UIService {
     }
 
     addEditorEventListeners() {
-        this.inputs.noteTitle?.addEventListener('input', () => { this.scheduleAutoSave(); this.refreshSaveButtonState(); });
-        this.inputs.noteContent?.addEventListener('input', () => { this.scheduleAutoSave(); this.refreshSaveButtonState(); });
+        this.inputs.noteTitle?.addEventListener('input', () => {
+            this.scheduleAutoSave();
+            this.refreshSaveButtonState();
+        });
+
+        this.inputs.noteContent?.addEventListener('input', () => {
+            this.scheduleAutoSave();
+            this.refreshSaveButtonState();
+            this.updateWordCount();
+        });
+
         this.inputs.noteFolder?.addEventListener('input', () => this.scheduleAutoSave());
         this.inputs.noteTags?.addEventListener('input', () => this.scheduleAutoSave());
 
         document.getElementById('btn-delete')?.addEventListener('click', () => this.handleDelete());
         document.getElementById('btn-save-note')?.addEventListener('click', async () => {
-            const success = await this.persistNote(true);
-            if (success) this.showToast(i18n.t('toastNoteSaved'), 'success');
+            try {
+                const success = await this.persistNote(true);
+                if (success) this.showToast(i18n.t('toastNoteSaved'), 'success');
+            } catch (err) {
+                console.error('Save failed', err);
+                this.showToast(i18n.t('toastVaultLoadFailed', { error: 'Save Error' }), 'error');
+            }
         });
         document.getElementById('btn-toggle-autosave')?.addEventListener('click', () => this.toggleAutoSave());
 
-        document.getElementById('btn-copy-title')?.addEventListener('click', (e) => this.copyToClipboard(this.inputs.noteTitle?.value, e.target));
-        document.getElementById('btn-copy-body')?.addEventListener('click', (e) => this.copyToClipboard(this.inputs.noteContent?.value, e.target));
+        // Formatting & Tools
+        document.getElementById('btn-md-bold')?.addEventListener('click', () => this.insertMarkdown('**', '**'));
+        document.getElementById('btn-md-italic')?.addEventListener('click', () => this.insertMarkdown('_', '_'));
+        document.getElementById('btn-md-list')?.addEventListener('click', () => this.insertMarkdown('\n- ', ''));
+        document.getElementById('btn-md-check')?.addEventListener('click', () => this.insertMarkdown('\n- [ ] ', ''));
+
+        document.getElementById('btn-duplicate')?.addEventListener('click', () => this.handleDuplicate());
+        document.getElementById('btn-download')?.addEventListener('click', () => this.handleDownload());
         document.getElementById('btn-pin-note')?.addEventListener('click', () => this.handlePinNote());
+
+        // History
+        document.getElementById('btn-history')?.addEventListener('click', () => this.showHistoryModal());
+        document.getElementById('close-history-modal')?.addEventListener('click', () => {
+            document.getElementById('history-modal').classList.add('hidden');
+        });
+
+        // Templates
+        document.getElementById('btn-insert-template')?.addEventListener('click', () => this.showTemplateModal());
+        document.getElementById('close-template-modal')?.addEventListener('click', () => {
+            document.getElementById('template-modal').classList.add('hidden');
+        });
+
+        // Read-Only Mode
+        document.getElementById('btn-toggle-readonly')?.addEventListener('click', () => this.toggleReadOnly());
+
+        // Dashboard Quick Actions
+        document.querySelectorAll('.quick-action-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const action = e.currentTarget.dataset.action;
+                if (action === 'new-note') {
+                    this.currentView = 'all';
+                    document.querySelector('[data-view="all"]')?.click();
+                    this.handleNewNote();
+                } else if (action === 'new-template') {
+                    this.currentView = 'templates';
+                    document.querySelector('[data-view="templates"]')?.click();
+                    this.handleNewNote();
+                } else if (action === 'view-favorites') {
+                    document.querySelector('[data-view="favorites"]')?.click();
+                } else if (action === 'view-trash') {
+                    document.querySelector('[data-view="trash"]')?.click();
+                }
+            });
+        });
+
+        // Settings Modal
+        document.getElementById('btn-settings')?.addEventListener('click', () => this.openSettingsModal());
+        document.getElementById('close-settings-modal')?.addEventListener('click', () => {
+            document.getElementById('settings-modal').classList.add('hidden');
+        });
+
+        // Settings Tabs
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const tabName = e.target.dataset.tab;
+                this.switchSettingsTab(tabName);
+            });
+        });
+
+        // Recovery Actions
+        document.getElementById('btn-generate-backup-codes')?.addEventListener('click', () => this.generateBackupCodes());
+        document.getElementById('btn-download-recovery-file')?.addEventListener('click', () => this.downloadRecoveryFile());
+        document.getElementById('btn-setup-secret-question')?.addEventListener('click', () => this.openSecretQuestionModal());
+
+        // Backup Codes Modal
+        document.getElementById('close-backup-codes-modal')?.addEventListener('click', () => {
+            document.getElementById('backup-codes-modal').classList.add('hidden');
+        });
+        document.getElementById('copy-backup-codes')?.addEventListener('click', () => this.copyBackupCodes());
+        document.getElementById('download-backup-codes')?.addEventListener('click', () => this.downloadBackupCodes());
+        document.getElementById('confirm-backup-codes')?.addEventListener('click', () => {
+            document.getElementById('backup-codes-modal').classList.add('hidden');
+            this.showToast('Backup codes saved successfully', 'success');
+            this.renderActiveRecoveryMethods();
+        });
+
+        // Secret Question Modal
+        document.getElementById('close-secret-question-modal')?.addEventListener('click', () => {
+            document.getElementById('secret-question-modal').classList.add('hidden');
+        });
+        document.getElementById('cancel-secret-question')?.addEventListener('click', () => {
+            document.getElementById('secret-question-modal').classList.add('hidden');
+        });
+        document.getElementById('save-secret-question')?.addEventListener('click', () => this.saveSecretQuestion());
+
+        // Tags Manager
+        document.getElementById('btn-tags-manager')?.addEventListener('click', () => this.openTagsManager());
+        document.getElementById('close-tags-manager')?.addEventListener('click', () => {
+            document.getElementById('tags-manager-modal').classList.add('hidden');
+        });
+    }
+
+    async openSettingsModal() {
+        const modal = document.getElementById('settings-modal');
+        modal.classList.remove('hidden');
+        await this.renderActiveRecoveryMethods();
+    }
+
+    switchSettingsTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.settings-tab').forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        // Update content panels
+        document.querySelectorAll('.settings-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+        document.getElementById(`settings-${tabName}`)?.classList.remove('hidden');
+    }
+
+    async renderActiveRecoveryMethods() {
+        const container = document.getElementById('active-recovery-methods');
+        const methods = await recoveryService.getActiveRecoveryMethods();
+
+        // Always show recovery key (created on vault setup)
+        let html = `
+            <div class="recovery-method-item active">
+                <div class="method-info">
+                    <span class="method-icon">🔑</span>
+                    <div>
+                        <strong>Recovery Key</strong>
+                        <p>Created on vault setup</p>
+                    </div>
+                </div>
+                <span class="badge success">Active</span>
+            </div>
+        `;
+
+        // Add other methods
+        methods.forEach(method => {
+            html += `
+                <div class="recovery-method-item active">
+                    <div class="method-info">
+                        <span class="method-icon">${method.icon}</span>
+                        <div>
+                            <strong>${method.name}</strong>
+                            <p>${method.status}</p>
+                        </div>
+                    </div>
+                    <span class="badge success">Active</span>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    }
+
+    async generateBackupCodes() {
+        try {
+            const codes = await recoveryService.generateBackupCodes();
+
+            // Show codes in modal
+            const modal = document.getElementById('backup-codes-modal');
+            const display = document.getElementById('backup-codes-display');
+
+            display.innerHTML = codes.map(code =>
+                `<div class="backup-code-item">${code}</div>`
+            ).join('');
+
+            modal.classList.remove('hidden');
+        } catch (err) {
+            console.error('Failed to generate backup codes', err);
+            this.showToast('Failed to generate backup codes', 'error');
+        }
+    }
+
+    copyBackupCodes() {
+        const codes = Array.from(document.querySelectorAll('.backup-code-item'))
+            .map(el => el.textContent)
+            .join('\n');
+
+        navigator.clipboard.writeText(codes).then(() => {
+            this.showToast('Backup codes copied to clipboard', 'success');
+        });
+    }
+
+    downloadBackupCodes() {
+        const codes = Array.from(document.querySelectorAll('.backup-code-item'))
+            .map(el => el.textContent)
+            .join('\n');
+
+        const blob = new Blob([`PINBRIDGE Backup Codes\nGenerated: ${new Date().toLocaleString()}\n\n${codes}\n\nKeep these codes safe. Each can only be used once.`],
+            { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pinbridge-backup-codes-${Date.now()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+
+        this.showToast('Backup codes downloaded', 'success');
+    }
+
+    async downloadRecoveryFile() {
+        try {
+            const vaultKey = vaultService.dataKey;
+            if (!vaultKey) {
+                this.showToast('No vault key available', 'error');
+                return;
+            }
+
+            const blob = await recoveryService.generateRecoveryFile(vaultKey);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `pinbridge-recovery-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            this.showToast('Recovery file downloaded', 'success');
+            await this.renderActiveRecoveryMethods();
+        } catch (err) {
+            console.error('Failed to download recovery file', err);
+            this.showToast('Failed to download recovery file', 'error');
+        }
+    }
+
+    openSecretQuestionModal() {
+        const modal = document.getElementById('secret-question-modal');
+        modal.classList.remove('hidden');
+
+        // Clear inputs
+        document.getElementById('secret-question-input').value = '';
+        document.getElementById('setup-secret-answer-input').value = '';
+        document.getElementById('secret-answer-confirm').value = '';
+    }
+
+    async saveSecretQuestion() {
+        const question = document.getElementById('secret-question-input').value.trim();
+        const answer = document.getElementById('setup-secret-answer-input').value;
+        const confirm = document.getElementById('secret-answer-confirm').value;
+
+        if (!question || !answer) {
+            this.showToast('Please fill in all fields', 'error');
+            return;
+        }
+
+        if (answer !== confirm) {
+            this.showToast('Answers do not match', 'error');
+            return;
+        }
+
+        try {
+            await recoveryService.setupSecretQuestion(question, answer);
+            document.getElementById('secret-question-modal').classList.add('hidden');
+            this.showToast('Secret question saved successfully', 'success');
+            await this.renderActiveRecoveryMethods();
+        } catch (err) {
+            console.error('Failed to save secret question', err);
+            this.showToast('Failed to save secret question', 'error');
+        }
+    }
+
+    async openTagsManager() {
+        const modal = document.getElementById('tags-manager-modal');
+        modal.classList.remove('hidden');
+        await this.renderTagsManager();
+    }
+
+    async renderTagsManager() {
+        const container = document.getElementById('tags-list');
+        const tags = notesService.getAllTags();
+
+        if (tags.length === 0) {
+            container.innerHTML = '<p class="hint center">No tags yet. Use #hashtags in your notes!</p>';
+            return;
+        }
+
+        container.innerHTML = tags.map(tag => `
+            <div class="tag-manager-item">
+                <div class="tag-manager-info">
+                    <div class="tag-color-preview" style="background-color: ${TAG_COLORS[tag.color]}"></div>
+                    <div class="tag-manager-details">
+                        <strong>#${tag.name}</strong>
+                        <span>${tag.count} note${tag.count !== 1 ? 's' : ''}</span>
+                    </div>
+                </div>
+                <div class="tag-color-picker" data-tag="${tag.name}">
+                    ${Object.keys(TAG_COLORS).map(colorName => `
+                        <div class="color-option ${tag.color === colorName ? 'active' : ''}" 
+                             data-color="${colorName}" 
+                             style="background-color: ${TAG_COLORS[colorName]}"
+                             title="${colorName}"></div>
+                    `).join('')}
+                </div>
+            </div>
+        `).join('');
+
+        // Add click listeners to color options
+        document.querySelectorAll('.color-option').forEach(option => {
+            option.addEventListener('click', async (e) => {
+                const color = e.target.dataset.color;
+                const picker = e.target.closest('.tag-color-picker');
+                const tagName = picker.dataset.tag;
+
+                // Update UI immediately
+                picker.querySelectorAll('.color-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                e.target.classList.add('active');
+
+                // Update preview
+                const preview = picker.closest('.tag-manager-item').querySelector('.tag-color-preview');
+                preview.style.backgroundColor = TAG_COLORS[color];
+
+                // Update in backend
+                await notesService.updateTagColor(tagName, color);
+
+                // Refresh note list to show new colors
+                this.renderCurrentView();
+
+                this.showToast(`Tag color updated to ${color}`, 'success');
+            });
+        });
+    }
+
+    toggleReadOnly() {
+        this.isReadOnly = !this.isReadOnly;
+        const btn = document.getElementById('btn-toggle-readonly');
+        const title = this.inputs.noteTitle;
+        const content = this.inputs.noteContent;
+        const folder = this.inputs.noteFolder;
+        const tags = this.inputs.noteTags;
+
+        if (this.isReadOnly) {
+            title.readOnly = true;
+            content.readOnly = true;
+            folder.readOnly = true;
+            tags.readOnly = true;
+            btn.style.color = 'var(--brand-primary)';
+            btn.title = 'Unlock (Read-Only Active)';
+            this.showToast('Read-Only Mode Activated', 'info');
+        } else {
+            title.readOnly = false;
+            content.readOnly = false;
+            folder.readOnly = false;
+            tags.readOnly = false;
+            btn.style.color = '';
+            btn.title = 'Toggle Read-Only';
+            this.showToast('Edit Mode Activated', 'success');
+        }
+    }
+
+    renderDashboard() {
+        const notes = notesService.notes.filter(n => !n.trash && !n.isTemplate);
+
+        // Stats
+        document.getElementById('stat-total-notes').innerText = notes.length;
+        document.getElementById('stat-favorites').innerText = notes.filter(n => n.pinned).length;
+
+        const folders = new Set(notes.filter(n => n.folder).map(n => n.folder));
+        document.getElementById('stat-folders').innerText = folders.size;
+
+        const allTags = notes.flatMap(n => n.tags || []);
+        const uniqueTags = new Set(allTags);
+        document.getElementById('stat-tags').innerText = uniqueTags.size;
+
+        // Recent Notes (last 5)
+        const recentNotes = [...notes].sort((a, b) => b.updated - a.updated).slice(0, 5);
+        const recentContainer = document.getElementById('dashboard-recent-notes');
+        recentContainer.innerHTML = '';
+
+        if (recentNotes.length === 0) {
+            recentContainer.innerHTML = '<p class="hint center">No notes yet. Create your first note!</p>';
+        } else {
+            recentNotes.forEach(note => {
+                const el = document.createElement('div');
+                el.className = 'dashboard-note-item';
+                el.innerHTML = `
+                    <div class="note-info">
+                        <strong>${Utils.escapeHtml(note.title || 'Untitled')}</strong>
+                        <span class="note-date">${new Date(note.updated).toLocaleDateString()}</span>
+                    </div>
+                `;
+                el.onclick = () => {
+                    this.currentView = 'all';
+                    document.querySelector('[data-view="all"]')?.click();
+                    setTimeout(() => this.selectNote(note), 100);
+                };
+                recentContainer.appendChild(el);
+            });
+        }
+
+        // Top Tags (by frequency)
+        const tagFreq = {};
+        allTags.forEach(tag => {
+            tagFreq[tag] = (tagFreq[tag] || 0) + 1;
+        });
+
+        const topTags = Object.entries(tagFreq)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+
+        const tagsContainer = document.getElementById('dashboard-top-tags');
+        tagsContainer.innerHTML = '';
+
+        if (topTags.length === 0) {
+            tagsContainer.innerHTML = '<p class="hint center">No tags yet. Use #hashtags in your notes!</p>';
+        } else {
+            topTags.forEach(([tag, count]) => {
+                const el = document.createElement('span');
+                el.className = 'tag-badge';
+                el.innerText = `#${tag} (${count})`;
+                el.onclick = () => {
+                    // Search for this tag
+                    this.currentView = 'all';
+                    document.querySelector('[data-view="all"]')?.click();
+                    setTimeout(() => {
+                        document.getElementById('search-input').value = `#${tag}`;
+                        document.getElementById('search-input').dispatchEvent(new Event('input'));
+                    }, 100);
+                };
+                tagsContainer.appendChild(el);
+            });
+        }
+    }
+
+    async showTemplateModal() {
+        if (!this.activeNoteId && this.currentView !== 'all') return; // Should be editable
+        const modal = document.getElementById('template-modal');
+        const list = document.getElementById('template-list');
+        modal.classList.remove('hidden');
+
+        const templates = notesService.notes.filter(n => n.isTemplate && !n.trash);
+        list.innerHTML = '';
+
+        if (templates.length === 0) {
+            list.innerHTML = '<p class="hint center">No templates found. Create a note in "Templates" view.</p>';
+            return;
+        }
+
+        templates.forEach(t => {
+            const el = document.createElement('div');
+            el.className = 'history-item'; // Reuse style
+            el.innerHTML = `
+                <div class="history-meta">
+                    <strong>${Utils.escapeHtml(t.title || 'Untitled')}</strong>
+                    <div class="history-preview">${Utils.escapeHtml((t.body || '').substring(0, 60))}...</div>
+                </div>
+                <button class="btn btn-secondary btn-sm">Insert</button>
+            `;
+            el.querySelector('button').onclick = () => {
+                this.insertMarkdown(t.body || '', '');
+                document.getElementById('template-modal').classList.add('hidden');
+                this.showToast('Template inserted', 'success');
+            };
+            list.appendChild(el);
+        });
+    }
+
+    async showHistoryModal() {
+        if (!this.activeNoteId) return;
+        const modal = document.getElementById('history-modal');
+        const list = document.getElementById('history-list');
+        list.innerHTML = '<div class="loader-pulse"></div>'; // Loading state
+        modal.classList.remove('hidden');
+
+        const history = await notesService.getHistory(this.activeNoteId);
+        list.innerHTML = '';
+
+        if (!history || history.length === 0) {
+            list.innerHTML = '<p class="hint center">No history available for this note.</p>';
+            return;
+        }
+
+        // Sort desc
+        history.sort((a, b) => b.timestamp - a.timestamp);
+
+        history.forEach(ver => {
+            const el = document.createElement('div');
+            el.className = 'history-item';
+            const date = new Date(ver.timestamp).toLocaleString();
+
+            el.innerHTML = `
+                <div class="history-meta">
+                    <div class="history-date">${date}</div>
+                    <div class="history-preview">${Utils.escapeHtml((ver.body || '').substring(0, 50))}...</div>
+                </div>
+                <button class="btn btn-secondary btn-sm">Restore</button>
+            `;
+
+            el.querySelector('button').onclick = async () => {
+                if (confirm('Restore this version? Current content will be saved as a new history entry.')) {
+                    await notesService.restoreVersion(this.activeNoteId, ver.versionId);
+
+                    // Reload UI
+                    const note = notesService.notes.find(n => n.id === this.activeNoteId);
+                    if (note) {
+                        this.selectNote(note);
+                        this.showToast('Version restored', 'success');
+                        modal.classList.add('hidden');
+                    }
+                }
+            };
+            list.appendChild(el);
+        });
+    }
+
+    insertMarkdown(prefix, suffix) {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const selected = text.substring(start, end);
+
+        const before = text.substring(0, start);
+        const after = text.substring(end);
+
+        textarea.value = before + prefix + selected + suffix + after;
+        textarea.selectionStart = start + prefix.length;
+        textarea.selectionEnd = Math.max(start + prefix.length, end + prefix.length + selected.length);
+        textarea.focus();
+
+        // Trigger save
+        textarea.dispatchEvent(new Event('input'));
+    }
+
+    async handleDuplicate() {
+        if (!this.activeNoteId) return;
+        // Force save current first
+        await this.persistNote(true);
+        const note = notesService.notes.find(n => n.id === this.activeNoteId);
+        if (!note) return;
+
+        const newTitle = `${note.title} (Copy)`;
+        const newBody = note.body;
+
+        const id = await notesService.createNote(newTitle, newBody, note.folder, note.tags, { isTemplate: note.isTemplate });
+        this.renderCurrentView();
+
+        // Select new copy
+        const newNote = notesService.notes.find(n => n.id === id);
+        if (newNote) this.selectNote(newNote);
+        this.showToast('Note duplicated', 'success');
+    }
+
+    handleDownload() {
+        if (!this.activeNoteId) return;
+        const title = this.inputs.noteTitle.value || 'Untitled';
+        const body = this.inputs.noteContent.value || '';
+        const blob = new Blob([`${title}\n\n${body}`], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    updateWordCount() {
+        const text = this.inputs.noteContent?.value || '';
+        const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+        const badge = document.getElementById('word-count-badge');
+        if (badge) badge.innerText = `${words} w`;
     }
 
     addKeyboardShortcuts() {
@@ -426,12 +1186,35 @@ class UIService {
 
     async handleNewNote() {
         if (!this.ensureAuthenticated()) return;
+
+        // 1. Force save current note if active
+        if (this.activeNoteId) {
+            await this.persistNote(true);
+        }
+
         if (this.currentView === 'trash') {
             this.currentView = 'all';
             document.querySelector('[data-view="all"]')?.click();
         }
-        const id = await notesService.createNote("", "", "", [], { persist: false });
-        this.selectNote({ id, title: "", body: "", trash: false, folder: "", tags: [] });
+
+        const isTemplateView = this.currentView === 'templates';
+
+        // 2 Create new empty note (non-persisted until typed in)
+        const id = await notesService.createNote("", "", "", [], { persist: false, isTemplate: isTemplateView });
+
+        // 3. Render view to show legacy note updates and prep list
+        this.renderCurrentView();
+
+        // 4. Select the new note (which is now in memory notes list)
+        // We need to fetch the full object from notesService to be safe
+        const newNote = notesService.notes.find(n => n.id === id);
+        if (newNote) {
+            this.selectNote(newNote);
+        } else {
+            // Fallback
+            this.selectNote({ id, title: "", body: "", trash: false, folder: "", tags: [], isTemplate: isTemplateView });
+        }
+
         this.inputs.noteTitle?.focus();
     }
 
@@ -480,21 +1263,40 @@ class UIService {
     }
 
     renderCurrentView(notesOverride) {
-        const notes = notesOverride || notesService.notes;
-        const filtered = this.getFilteredNotes(notes);
-        this.renderFolders();
-        this.updateDeleteButtonContext();
-        this.renderNoteList(filtered);
+        const editorPanel = document.querySelector('.editor-panel');
+        const dashboardPanel = document.querySelector('.dashboard-panel');
+
+        if (this.currentView === 'dashboard') {
+            // Show dashboard, hide editor
+            editorPanel?.classList.add('hidden');
+            dashboardPanel?.classList.remove('hidden');
+            this.renderDashboard();
+        } else {
+            // Show editor, hide dashboard
+            editorPanel?.classList.remove('hidden');
+            dashboardPanel?.classList.add('hidden');
+
+            const notes = notesOverride || notesService.notes;
+            const filtered = this.getFilteredNotes(notes);
+            this.renderFolders();
+            this.updateDeleteButtonContext();
+            this.renderNoteList(filtered);
+        }
     }
 
     getFilteredNotes(notes = notesService.notes) {
         if (this.currentView === 'trash') return notes.filter(n => n.trash);
-        if (this.currentView === 'all') return notes.filter(n => !n.trash);
-        if (this.currentView?.startsWith('folder:')) {
-            const folderName = this.currentView.split(':')[1];
-            return notes.filter(n => !n.trash && n.folder === folderName);
+        if (this.currentView === 'templates') return notes.filter(n => n.isTemplate && !n.trash);
+
+        // Normal views should EXCLUDE templates
+        let filtered = notes.filter(n => !n.trash && !n.isTemplate);
+
+        if (this.currentView === 'favorites') return filtered.filter(n => n.pinned);
+        if (this.currentView.startsWith('folder:')) {
+            const folder = this.currentView.split('folder:')[1];
+            return filtered.filter(n => n.folder === folder);
         }
-        return notes;
+        return filtered; // 'all' view
     }
 
     renderNoteList(notes) {
@@ -586,6 +1388,7 @@ class UIService {
         if (newActiveEl) newActiveEl.classList.add('active');
 
         this.refreshSaveButtonState();
+        this.updateWordCount();
     }
 
     renderFolders() {
@@ -652,25 +1455,26 @@ class UIService {
         const folder = (this.inputs.noteFolder?.value || '').trim();
         const tags = (this.inputs.noteTags?.value || '').split(',').map(t => t.trim()).filter(t => t);
 
-        if (!force && !this.autoSaveEnabled) {
-            this.setStatus(i18n.t('statusManual'));
-            return false;
-        }
-
         if (!title.trim() && !body.trim()) {
             this.showToast(i18n.t('toastNoteEmpty'), 'error');
             this.refreshSaveButtonState();
             return false;
         }
+
+        if (!force && !this.autoSaveEnabled) {
+            this.setStatus(i18n.t('statusManual'));
+            return false;
+        }
+
         if (title.trim().toLowerCase() === 'untitled note' && !body.trim()) {
             this.showToast(i18n.t('toastNotePlaceholderBlocked'), 'error');
             this.refreshSaveButtonState();
             return false;
         }
 
-        this.setStatus(i18n.t('statusSaving'));
+        this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
         await notesService.updateNote(this.activeNoteId, title, body, folder, tags);
-        this.setStatus(i18n.t('statusSaved'));
+        this.setStatus(i18n.t('statusSaved') + (folder ? ` (${folder})` : ''));
         this.renderFolders();
         this.refreshSaveButtonState();
         this.updateActiveListItem(note);
@@ -680,7 +1484,8 @@ class UIService {
     scheduleAutoSave() {
         if (!this.activeNoteId || !this.autoSaveEnabled) return;
         clearTimeout(this.saveTimeout);
-        this.setStatus(i18n.t('statusSaving'));
+        const folder = (this.inputs.noteFolder?.value || '').trim();
+        this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
         this.saveTimeout = setTimeout(() => this.persistNote(), 500);
     }
 
