@@ -1,15 +1,30 @@
 // src/ui/ui.js
 import { bus } from '../core/bus.js';
 import { Utils } from '../utils/helpers.js';
-import { authService } from '../modules/auth/auth.js';
-import { storageService } from '../storage/db.js';
+import { authService } from '../auth.js';
 import { notesService } from '../modules/notes/notes.js';
 import { searchService } from '../modules/search/search.js';
 import { settingsService } from '../modules/settings/settings.js';
 import { i18n } from '../core/i18n.js';
+import { vaultService } from '../vault.js';
+import { storageService } from '../storage/db.js';
 
 class UIService {
     constructor() {
+        this.screens = {};
+        this.forms = {};
+        this.inputs = {};
+        this.recoveryModal = {};
+        this.mobile = {};
+        this.quickDropZone = null;
+        this.activeNoteId = null;
+        this.currentView = 'all';
+        this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') !== 'false';
+        this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
+        this.saveTimeout = null;
+    }
+
+    _cacheDomElements() {
         this.screens = {
             loading: document.getElementById('loading-screen'),
             auth: document.getElementById('auth-screen'),
@@ -35,7 +50,6 @@ class UIService {
             setupUsername: document.getElementById('setup-username'),
             setupPin: document.getElementById('setup-pin'),
             setupPinConfirm: document.getElementById('setup-pin-confirm'),
-            loginUsername: document.getElementById('login-username'),
             loginPin: document.getElementById('login-pin'),
             loginRecovery: document.getElementById('login-recovery'),
             noteTitle: document.getElementById('note-title'),
@@ -62,15 +76,10 @@ class UIService {
             btnNew: document.getElementById('mobile-new-note'),
             btnLock: document.getElementById('mobile-lock')
         };
-
-        this.activeNoteId = null;
-        this.currentView = 'all';
-        this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') !== 'false';
-        this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
-        this.saveTimeout = null;
     }
 
     init() {
+        this._cacheDomElements();
         this.setupLanguageSelector();
         this.applyTranslations();
         this.createCommandPalette();
@@ -169,6 +178,11 @@ class UIService {
         this.forms.btnResetLocal?.addEventListener('click', async () => {
             const confirmed = confirm(i18n.t('confirmResetLocal'));
             if (!confirmed) return;
+            try {
+                await vaultService.fileRecoveryResetRequest();
+            } catch (e) {
+                console.warn('Recovery request failed', e);
+            }
             await storageService.resetAll();
             authService.forceLogout('manual');
             this.showToast(i18n.t('toastResetDone'), 'info');
@@ -193,7 +207,7 @@ class UIService {
         this.forms.choice?.classList.add('hidden');
         this.forms.setup?.classList.add('hidden');
         this.forms.login?.classList.remove('hidden');
-        this.inputs.loginUsername?.focus();
+        this.inputs.loginPin?.focus();
     }
 
     async handleSetupSubmit(e) {
@@ -216,7 +230,7 @@ class UIService {
         }
 
         try {
-            const hasVault = await authService.hasVault();
+            const hasVault = await vaultService.hasExistingVault();
             if (hasVault) {
                 const confirmReset = confirm(i18n.t('settingsResetConfirm'));
                 if (!confirmReset) {
@@ -226,10 +240,9 @@ class UIService {
                 await storageService.resetAll();
             }
 
-            const recoveryKey = await authService.initializeNewVault(username, p1);
+            const recoveryKey = await authService.createVault(username, p1);
             this.showRecoveryKeyModal(recoveryKey, async () => {
-                await authService.markRecoveryKeyShown();
-                await authService.login(username, p1);
+                await storageService.setMeta('vault_username', username);
                 this.showToast(i18n.t('toastWelcomeBack'), 'success');
             });
         } catch (err) {
@@ -239,30 +252,22 @@ class UIService {
 
     async handleLoginSubmit(e) {
         e.preventDefault();
-        const username = (this.inputs.loginUsername?.value || '').trim();
         const pin = (this.inputs.loginPin?.value || '').trim();
         const recovery = (this.inputs.loginRecovery?.value || '').trim();
 
-        if (!username) {
-            this.showToast(i18n.t('authErrorUsernameRequired'), 'error');
-            return;
-        }
         if (!pin && !recovery) {
-            this.showToast(i18n.t('authErrorEmptyFields'), 'error');
+            this.showToast(i18n.t('authErrorPinRequired'), 'error');
             return;
         }
 
         try {
-            let success = false;
             if (recovery) {
-                success = await authService.recover(username, recovery);
+                await authService.unlockWithRecovery(recovery);
             } else {
-                success = await authService.login(username, pin);
+                await authService.unlockWithPin(pin);
             }
 
-            if (!success) throw new Error('INVALID_PIN');
-
-            const welcomeName = await storageService.getMeta('vault_username');
+            const welcomeName = vaultService.meta?.username || await storageService.getMeta('vault_username');
             const greeting = welcomeName ? i18n.t('toastWelcomeNamed', { name: welcomeName }) : i18n.t('toastWelcomeBack');
             this.showToast(recovery ? i18n.t('toastRecoveryUnlocked') : greeting, 'success');
         } catch (err) {
@@ -271,7 +276,7 @@ class UIService {
             if (this.inputs.loginRecovery) this.inputs.loginRecovery.value = '';
 
             const code = err?.message || err;
-            if (code === 'VAULT_METADATA_MISSING') {
+            if (code === 'VAULT_METADATA_MISSING' || code === 'NO_VAULT') {
                 this.showSetupForm();
                 this.inputs.setupUsername?.focus();
             }
@@ -284,6 +289,7 @@ class UIService {
             case 'INVALID_USER':
                 return i18n.t('authErrorInvalid');
             case 'VAULT_METADATA_MISSING':
+            case 'NO_VAULT':
                 return i18n.t('authErrorMissingVault');
             case 'VAULT_CORRUPT':
                 return i18n.t('authErrorCorrupt');
@@ -299,6 +305,7 @@ class UIService {
     }
 
     handleLockedSession(reason) {
+        vaultService.lock();
         this.showScreen('auth');
         this.showLoginForm();
         notesService.notes = [];
@@ -587,9 +594,6 @@ class UIService {
     showRecoveryKeyModal(key, onContinue) {
         this.recoveryModal.keyDisplay.innerText = key;
         this.recoveryModal.overlay.classList.remove('hidden');
-        authService.markRecoveryKeyShown().catch(() => {
-            console.warn('Could not persist recoveryKeyShown flag');
-        });
 
         this.recoveryModal.copyBtn.onclick = () => {
             this.copyToClipboard(key, this.recoveryModal.copyBtn);
@@ -784,7 +788,7 @@ class UIService {
     }
 
     ensureAuthenticated() {
-        if (authService.isAuthenticated) return true;
+        if (vaultService.isUnlocked()) return true;
         this.showScreen('auth');
         this.showToast(i18n.t('authRequired'), 'error');
         return false;

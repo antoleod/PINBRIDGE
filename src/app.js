@@ -2,13 +2,13 @@
  * Main Application Entry Point
  */
 
-import { storageService } from './storage/db.js';
-import { authService } from './modules/auth/auth.js';
+import { authService } from './auth.js';
 import { notesService } from './modules/notes/notes.js';
 import { searchService } from './modules/search/search.js';
 import { uiService } from './ui/ui.js';
 import { bus } from './core/bus.js';
 import { i18n } from './core/i18n.js';
+import { vaultService } from './vault.js';
 
 // --- INIT ---
 async function init() {
@@ -30,27 +30,18 @@ async function init() {
     uiService.init();
 
     try {
-        await storageService.init('pinbridge_db');
-        const hasVault = await authService.hasVault();
-        const sessionActive = hasVault && authService.restoreSession();
-
-        if (hasVault && sessionActive) {
-            // If a session is active, go directly to the vault.
-            console.log("Active session found. Unlocking vault...");
-            uiService.showToast(i18n.t("toastSessionRestored"), "info");
-            bus.emit('auth:unlock');
+        const uid = await authService.init();
+        await vaultService.init(uid);
+        const hasVault = await vaultService.hasExistingVault();
+        uiService.showScreen('auth');
+        if (hasVault) {
+            uiService.showLoginForm();
         } else {
-            // Otherwise, show the auth screen.
-            uiService.showScreen('auth');
-            if (hasVault) {
-                uiService.showLoginForm();
-            } else {
-                uiService.showAuthChoice();
-            }
+            uiService.showAuthChoice();
         }
     } catch (e) {
         console.error("Critical Initialization Error", e);
-        uiService.showToast(i18n.t('toastVaultLoadFailed', { error: 'init storage' }), "error");
+        uiService.showToast(i18n.t('toastVaultLoadFailed', { error: 'init' }), "error");
     }
 }
 
@@ -73,5 +64,16 @@ bus.on('auth:locked', (reason) => {
     uiService.handleLockedSession(reason);
 });
 
+bus.on('vault:remote-update', async () => {
+    const notes = await notesService.loadAll();
+    searchService.buildIndex(notes);
+    uiService.showToast('Your vault was updated from another device.', 'info');
+    uiService.renderCurrentView(notes);
+});
+
+bus.on('sync:disabled', () => {
+    uiService.showToast('Sync unavailable. Working in offline-only mode.', 'info');
+});
+
 // Start the application
-init();
+window.addEventListener('DOMContentLoaded', init);

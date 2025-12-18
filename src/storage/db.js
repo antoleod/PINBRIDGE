@@ -3,7 +3,7 @@
  * Wrapper for IndexedDB.
  */
 
-const DB_VERSION = 2; // Bump version for schema upgrade
+const DB_VERSION = 3; // bump for secure storage
 const STORE_META = 'meta';
 const STORE_VAULT = 'vault';
 const STORE_VERSIONS = 'versions';
@@ -146,6 +146,16 @@ class StorageService {
         return await this.getAll(STORE_META);
     }
 
+    async saveCryptoMeta(meta) {
+        await this.put(STORE_META, { key: 'crypto_meta', value: meta });
+        await this.put(STORE_META, { key: 'app_initialized', value: true });
+    }
+
+    async getCryptoMeta() {
+        const result = await this.get(STORE_META, 'crypto_meta');
+        return result ? result.value : null;
+    }
+
     /**
      * Vault Operations (Plain text notes)
      */
@@ -153,6 +163,17 @@ class StorageService {
         // noteObj should have { id, iv, content, created, updated, trash, etc }
         // CONTENT IS ENCRYPTED HERE
         await this.put(STORE_VAULT, noteObj);
+    }
+
+    async saveEncryptedVault(record) {
+        // clear legacy records to avoid plaintext leakage
+        await this.clearStore(STORE_VAULT);
+        await this.put(STORE_VAULT, { id: 'vault', ...record });
+    }
+
+    async getEncryptedVault() {
+        const result = await this.get(STORE_VAULT, 'vault');
+        return result || null;
     }
 
     async getNotes() {

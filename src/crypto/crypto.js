@@ -1,62 +1,118 @@
-/**
- * PINBRIDGE Crypto Service
- * Simplified for PIN hashing and authentication.
- * 
- * SECURITY MODEL:
- * 1. A salted hash of the user's PIN is stored.
- * 2. Login works by re-computing the hash with the same salt and comparing.
- */
-
 import { Utils } from '../utils/helpers.js';
 
 const CONFIG = {
-    PBKDF2_ITERATIONS: 100000,
+    PBKDF2_ITERATIONS: 120000,
     HASH: 'SHA-256',
+    KEY_LENGTH: 256,
+    GCM_IV_BYTES: 12
 };
 
 class CryptoService {
-    constructor() {
-        // No more in-memory master key. Session state is handled by authService.
-    }
-
-    /**
-     * Generates a new random Salt for PBKDF2
-     */
     generateSalt() {
-        return window.crypto.getRandomValues(new Uint8Array(16));
+        return crypto.getRandomValues(new Uint8Array(16));
     }
 
-    /**
-     * Derives a key from a PIN using PBKDF2 for password hashing.
-     * The output is a hex string representation of the hash.
-     * @param {string} pin The user's PIN.
-     * @param {Uint8Array} salt The salt to use.
-     * @returns {Promise<string>} The derived hash as a hex string.
-     */
-    async hashPin(pin, salt) {
-        const pinBuffer = Utils.strToBuffer(pin);
-
-        const importedKey = await window.crypto.subtle.importKey(
+    async deriveKeyFromSecret(secret, salt) {
+        const secretBuffer = Utils.strToBuffer(secret);
+        const baseKey = await crypto.subtle.importKey(
             'raw',
-            pinBuffer,
-            'PBKDF2',
+            secretBuffer,
+            { name: 'PBKDF2' },
             false,
-            ['deriveBits']
+            ['deriveKey']
         );
 
-        // Derive a 256-bit hash.
-        const derivedKeyBuffer = await window.crypto.subtle.deriveBits(
+        return crypto.subtle.deriveKey(
             {
                 name: 'PBKDF2',
-                salt: salt,
+                salt,
                 iterations: CONFIG.PBKDF2_ITERATIONS,
                 hash: CONFIG.HASH
             },
-            importedKey,
-            256 
+            baseKey,
+            { name: 'AES-GCM', length: CONFIG.KEY_LENGTH },
+            false,
+            ['encrypt', 'decrypt']
         );
-        
-        return Utils.bufferToHex(new Uint8Array(derivedKeyBuffer));
+    }
+
+    async generateDataKey() {
+        return crypto.subtle.generateKey(
+            { name: 'AES-GCM', length: CONFIG.KEY_LENGTH },
+            true,
+            ['encrypt', 'decrypt']
+        );
+    }
+
+    async exportKeyBytes(key) {
+        const raw = await crypto.subtle.exportKey('raw', key);
+        return new Uint8Array(raw);
+    }
+
+    async wrapKey(dataKey, wrappingKey) {
+        const iv = crypto.getRandomValues(new Uint8Array(CONFIG.GCM_IV_BYTES));
+        const raw = await this.exportKeyBytes(dataKey);
+        const cipherBuffer = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            wrappingKey,
+            raw
+        );
+        const payload = new Uint8Array(iv.byteLength + cipherBuffer.byteLength);
+        payload.set(iv, 0);
+        payload.set(new Uint8Array(cipherBuffer), iv.byteLength);
+        return Utils.bufferToBase64(payload);
+    }
+
+    async unwrapKey(wrappedBase64, wrappingKey) {
+        const payload = Utils.base64ToBuffer(wrappedBase64);
+        const iv = payload.slice(0, CONFIG.GCM_IV_BYTES);
+        const ciphertext = payload.slice(CONFIG.GCM_IV_BYTES);
+        const rawKey = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv },
+            wrappingKey,
+            ciphertext
+        );
+        return crypto.subtle.importKey(
+            'raw',
+            rawKey,
+            { name: 'AES-GCM' },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    }
+
+    async encryptObject(obj, key) {
+        const iv = crypto.getRandomValues(new Uint8Array(CONFIG.GCM_IV_BYTES));
+        const plaintext = Utils.strToBuffer(JSON.stringify(obj));
+        const cipherBuffer = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            plaintext
+        );
+        const payload = new Uint8Array(iv.byteLength + cipherBuffer.byteLength);
+        payload.set(iv, 0);
+        payload.set(new Uint8Array(cipherBuffer), iv.byteLength);
+        return Utils.bufferToBase64(payload);
+    }
+
+    async decryptObject(payloadBase64, key) {
+        const payload = Utils.base64ToBuffer(payloadBase64);
+        const iv = payload.slice(0, CONFIG.GCM_IV_BYTES);
+        const ciphertext = payload.slice(CONFIG.GCM_IV_BYTES);
+        const plainBuffer = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            ciphertext
+        );
+        const json = Utils.bufferToStr(new Uint8Array(plainBuffer));
+        return JSON.parse(json);
+    }
+
+    wipeBytes(arr) {
+        if (!arr) return;
+        for (let i = 0; i < arr.length; i += 1) {
+            arr[i] = 0;
+        }
     }
 }
 

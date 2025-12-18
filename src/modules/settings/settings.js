@@ -3,29 +3,17 @@
  * Focused on portability and explicit reset controls.
  */
 
-import { notesService } from '../notes/notes.js';
 import { storageService } from '../../storage/db.js';
-import { authService } from '../auth/auth.js';
-import { syncService } from '../sync/sync.js';
+import { authService } from '../../auth.js';
 import { i18n } from '../../core/i18n.js';
+import { vaultService } from '../../vault.js';
+import { syncService } from '../../sync.js';
 
 export const settingsService = {
     async exportJSON() {
-        const notes = await notesService.loadAll();
-        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(notes, null, 2));
+        const backup = await this.buildBackupPayload();
+        const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(backup, null, 2));
         this.downloadFile(dataStr, `pinbridge_backup_${new Date().toISOString().slice(0, 10)}.json`);
-    },
-
-    async exportCSV() {
-        const notes = await notesService.loadAll();
-        let csvContent = 'data:text/csv;charset=utf-8,ID,Title,Body,Folder,Tags,Created,Updated\n';
-        notes.forEach(n => {
-            const title = (n.title || '').replace(/"/g, '""');
-            const body = (n.body || '').replace(/"/g, '""');
-            const row = `"${n.id}","${title}","${body}","${n.folder || ''}","${(n.tags || []).join(' ')}","${n.created || ''}","${n.updated || ''}"`;
-            csvContent += row + '\n';
-        });
-        this.downloadFile(csvContent, 'pinbridge_notes.csv');
     },
 
     downloadFile(dataUrl, filename) {
@@ -42,24 +30,7 @@ export const settingsService = {
         if (!input) return;
         try {
             const parsed = JSON.parse(input);
-            if (!Array.isArray(parsed)) throw new Error(i18n.t('settingsImportInvalid'));
-            await storageService.resetAll();
-            for (const note of parsed) {
-                const record = {
-                    id: note.id,
-                    data: JSON.stringify({
-                        title: note.title || '',
-                        body: note.body || '',
-                        folder: note.folder || '',
-                        tags: note.tags || []
-                    }),
-                    created: note.created || Date.now(),
-                    updated: note.updated || Date.now(),
-                    trash: !!note.trash,
-                    pinned: !!note.pinned
-                };
-                await storageService.saveNote(record);
-            }
+            await this.restoreBackup(parsed);
             alert(i18n.t('settingsImportSuccess'));
             location.reload();
         } catch (e) {
@@ -68,9 +39,8 @@ export const settingsService = {
     },
 
     async copyBackup() {
-        const notes = await notesService.loadAll();
-        const payload = JSON.stringify(notes);
-        await navigator.clipboard.writeText(payload);
+        const backup = await this.buildBackupPayload();
+        await navigator.clipboard.writeText(JSON.stringify(backup));
         alert(i18n.t('backupCopied'));
     },
 
@@ -78,7 +48,10 @@ export const settingsService = {
         const confirmed = confirm(i18n.t('settingsResetConfirm'));
         if (!confirmed) return;
         await storageService.resetAll();
-        authService.logout();
+        vaultService.meta = null;
+        vaultService.vault = { notes: [], meta: {} };
+        vaultService.localUpdatedAt = null;
+        authService.forceLogout('manual');
         location.reload();
     },
 
@@ -92,15 +65,10 @@ export const settingsService = {
                 <p class="hint">${i18n.t('settingsHint')}</p>
                 <div class="settings-grid">
                     <button id="btn-export-json" class="btn btn-secondary">${i18n.t('settingsExportJson')}</button>
-                    <button id="btn-export-csv" class="btn btn-secondary">${i18n.t('settingsExportCsv')}</button>
                 </div>
                 <div class="settings-grid" style="margin-top:0.5rem">
                     <button id="btn-import-json" class="btn btn-secondary">${i18n.t('settingsImportJson')}</button>
                     <button id="btn-copy-backup" class="btn btn-secondary">${i18n.t('settingsCopyBackup')}</button>
-                </div>
-                <div class="settings-grid" style="margin-top:0.5rem">
-                    <button id="btn-sync-export" class="btn btn-primary">${i18n.t('settingsSyncExport')}</button>
-                    <button id="btn-sync-import" class="btn btn-primary">${i18n.t('settingsSyncImport')}</button>
                 </div>
                 <p class="hint">${i18n.t('settingsSyncHint')}</p>
                 <div class="divider"></div>
@@ -115,17 +83,31 @@ export const settingsService = {
         document.body.appendChild(overlay);
 
         document.getElementById('btn-export-json').onclick = () => this.exportJSON();
-        document.getElementById('btn-export-csv').onclick = () => this.exportCSV();
         document.getElementById('btn-import-json').onclick = () => this.importJSON();
-        document.getElementById('btn-copy-backup').onclick = () => syncService.copyBackupToClipboard();
-        document.getElementById('btn-sync-export').onclick = () => syncService.exportBackup();
-        document.getElementById('btn-sync-import').onclick = () => syncService.importBackup();
+        document.getElementById('btn-copy-backup').onclick = () => this.copyBackup();
         document.getElementById('btn-reset-vault').onclick = () => this.resetVault();
 
         overlay.onclick = (e) => {
             if (e.target === overlay || e.target.id === 'btn-close-settings') overlay.remove();
         };
     }
+};
+
+settingsService.buildBackupPayload = async function () {
+    const meta = await storageService.getCryptoMeta();
+    const vault = await storageService.getEncryptedVault();
+    if (!meta || !vault) throw new Error('NO_VAULT');
+    return { meta, vault, exportedAt: new Date().toISOString() };
+};
+
+settingsService.restoreBackup = async function (payload) {
+    if (!payload || !payload.meta || !payload.vault) throw new Error('Invalid backup');
+    await storageService.resetAll();
+    await storageService.saveCryptoMeta(payload.meta);
+    await storageService.saveEncryptedVault(payload.vault);
+    await syncService.pushMeta(authService.getUid(), payload.meta);
+    await syncService.pushVault(authService.getUid(), payload.vault);
+    vaultService.lock();
 };
 
 export const SettingsService = settingsService;

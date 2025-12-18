@@ -1,19 +1,21 @@
-const CACHE_NAME = 'pinbridge-v3';
+const CACHE_NAME = 'pinbridge-v4';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
     './src/styles.css',
     './src/app.js',
+    './src/firebase.js',
+    './src/auth.js',
+    './src/vault.js',
+    './src/sync.js',
     './src/core/bus.js',
     './src/crypto/crypto.js',
     './src/storage/db.js',
     './src/utils/helpers.js',
-    './src/modules/auth/auth.js',
     './src/modules/notes/notes.js',
     './src/modules/search/search.js',
     './src/modules/settings/settings.js',
-    './src/modules/sync/sync.js',
     './src/ui/ui.js'
 ];
 

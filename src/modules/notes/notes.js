@@ -4,55 +4,20 @@
  * (Formerly VaultService)
  */
 
-import { storageService } from '../../storage/db.js';
 import { Utils } from '../../utils/helpers.js';
 import { bus } from '../../core/bus.js';
+import { vaultService } from '../../vault.js';
 
 class NotesService {
     constructor() {
-        this.notes = []; // In-memory cache of notes for UI/search
+        this.notes = [];
     }
 
     /**
      * Load all notes from IndexedDB and parse them into memory.
      */
     async loadAll() {
-        this.notes = [];
-        // We assume authService has already authenticated the user.
-        const storedNotes = await storageService.getNotes();
-
-        for (const storedNote of storedNotes) {
-            try {
-                // New behavior: data is a JSON string, not an encrypted blob.
-                const noteData = JSON.parse(storedNote.data);
-
-                this.notes.push({
-                    id: storedNote.id,
-                    title: noteData.title || '',
-                    body: noteData.body || '',
-                    folder: noteData.folder || "",
-                    tags: noteData.tags || [],
-                    created: storedNote.created || storedNote.updated || Date.now(),
-                    updated: storedNote.updated || storedNote.created || Date.now(),
-                    trash: storedNote.trash || false,
-                    pinned: storedNote.pinned || false
-                });
-            } catch (e) {
-                // This will catch errors from trying to parse old, encrypted data.
-                console.error(`Failed to parse note ${storedNote.id}. It might be from a previous encrypted version.`, e);
-                this.notes.push({
-                    id: storedNote.id,
-                    title: "Legacy note (unreadable)",
-                    body: "This note comes from an older encrypted version and cannot be opened now.",
-                    created: storedNote.created || storedNote.updated || Date.now(),
-                    updated: storedNote.updated || Date.now(),
-                    trash: false,
-                    pinned: false,
-                    error: true
-                });
-            }
-        }
-
+        this.notes = vaultService.getNotes().map(n => ({ ...n }));
         this.sortNotes();
         bus.emit('notes:loaded', this.notes);
         return this.notes;
@@ -79,7 +44,8 @@ class NotesService {
         const { persist = true } = options;
         const contentPresent = (note.title || '').trim() || (note.body || '').trim();
         if (persist && contentPresent) {
-            await this.persistNote(note);
+            const persisted = await this.persistNote(note);
+            if (persisted) Object.assign(note, persisted);
         }
         this.notes.push(note);
         this.sortNotes();
@@ -128,6 +94,7 @@ class NotesService {
         note.trash = true;
         note.updated = Date.now();
         await this.persistNote(note);
+        this.sortNotes();
         bus.emit('notes:updated', this.notes);
     }
 
@@ -149,8 +116,9 @@ class NotesService {
      * Permanently delete a note.
      */
     async deleteNote(id) {
-        await storageService.deleteNote(id);
         this.notes = this.notes.filter(n => n.id !== id);
+        await vaultService.replaceNotes(this.notes);
+        this.sortNotes();
         bus.emit('notes:updated', this.notes);
     }
 
@@ -171,30 +139,16 @@ class NotesService {
             console.warn(`Skipping placeholder note persistence for ${note.id}`);
             return;
         }
-        const payload = {
-            title: note.title,
-            body: note.body,
-            folder: note.folder,
-            tags: note.tags
-        };
-        
-        // New behavior: Store data as a plain JSON string. No encryption.
-        const noteData = JSON.stringify(payload);
-
-        const record = {
-            id: note.id,
-            data: noteData,
-            created: note.created,
-            updated: bumpUpdated ? Date.now() : note.updated,
-            trash: !!note.trash,
-            pinned: !!note.pinned
-        };
-
+        const updatedNote = { ...note };
         if (bumpUpdated) {
-            note.updated = record.updated;
+            updatedNote.updated = Date.now();
         }
-
-        await storageService.saveNote(record);
+        await vaultService.upsertNote(updatedNote);
+        const localIndex = this.notes.findIndex(n => n.id === note.id);
+        if (localIndex >= 0) {
+            this.notes[localIndex] = updatedNote;
+        }
+        return updatedNote;
     }
 
     /**
