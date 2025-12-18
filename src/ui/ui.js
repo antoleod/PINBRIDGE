@@ -233,10 +233,21 @@ class UIService {
         toast.className = `toast toast-${type}`;
         toast.innerText = message;
         host.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add('visible'));
+        
+        // Trigger animation
+        requestAnimationFrame(() => {
+            toast.classList.add('visible');
+        });
+        
+        // Auto remove after delay
         setTimeout(() => {
             toast.classList.remove('visible');
-            setTimeout(() => toast.remove(), 300);
+            setTimeout(() => {
+                toast.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                toast.style.transform = 'translateX(100px) scale(0.9)';
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 50);
         }, 3000);
     }
 
@@ -924,14 +935,80 @@ class UIService {
 
     addKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            if (e.key.toLowerCase() === 'f' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+            // Don't trigger shortcuts when typing in inputs
+            if (['INPUT', 'TEXTAREA'].includes(e.target.tagName) && !e.ctrlKey && !e.metaKey) {
+                return;
+            }
+
+            // Focus mode
+            if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.metaKey) {
                 e.preventDefault();
                 this.toggleFocusMode();
             }
-            if (e.key === 'Escape' && this.isFocusMode) {
-                this.toggleFocusMode(false);
+            
+            // Escape to exit focus mode or close modals
+            if (e.key === 'Escape') {
+                if (this.isFocusMode) {
+                    this.toggleFocusMode(false);
+                } else {
+                    // Close any open modals
+                    document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(modal => {
+                        modal.classList.add('hidden');
+                    });
+                    document.getElementById('notes-settings-menu')?.classList.add('hidden');
+                }
+            }
+
+            // New note (N)
+            if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                this.handleNewNote();
+            }
+
+            // Search (Ctrl/Cmd + K or /)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('search-input')?.focus();
+            }
+            if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+                e.preventDefault();
+                document.getElementById('search-input')?.focus();
+            }
+
+            // Save (Ctrl/Cmd + S)
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                const saveBtn = document.getElementById('btn-save-note');
+                if (saveBtn && !saveBtn.disabled) {
+                    saveBtn.click();
+                }
+            }
+
+            // Delete note (Delete or Backspace when note selected)
+            if ((e.key === 'Delete' || e.key === 'Backspace') && this.activeNoteId && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+                e.preventDefault();
+                this.handleDelete();
+            }
+
+            // Navigate notes with arrow keys
+            if (['ArrowUp', 'ArrowDown'].includes(e.key) && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+                e.preventDefault();
+                this.navigateNotes(e.key === 'ArrowDown' ? 1 : -1);
             }
         });
+    }
+
+    navigateNotes(direction) {
+        const notes = this.getFilteredNotes();
+        if (!notes.length) return;
+
+        const currentIndex = notes.findIndex(n => n.id === this.activeNoteId);
+        let newIndex = currentIndex + direction;
+
+        if (newIndex < 0) newIndex = notes.length - 1;
+        if (newIndex >= notes.length) newIndex = 0;
+
+        this.selectNote(notes[newIndex]);
     }
 
     async openSettingsModal() {
@@ -1837,6 +1914,15 @@ class UIService {
 
     async handleNewNote() {
         if (!this.ensureAuthenticated()) return;
+        
+        // Animate button click
+        const btn = document.getElementById('btn-new-note');
+        if (btn) {
+            btn.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                btn.style.transform = '';
+            }, 150);
+        }
 
         // 1. Force save current note if active
         if (this.activeNoteId) {
@@ -1942,7 +2028,10 @@ class UIService {
             dashboardPanel?.classList.remove('hidden');
             this.renderDashboard();
         } else {
-            // Show editor, hide dashboard
+            // Show editor, hide dashboard with animation
+            if (editorPanel?.classList.contains('hidden')) {
+                editorPanel.style.animation = 'slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            }
             editorPanel?.classList.remove('hidden');
             dashboardPanel?.classList.add('hidden');
 
@@ -2000,10 +2089,20 @@ class UIService {
         });
     }
 
-    renderNoteList(notes) {
+    renderNoteList(notes, showSkeleton = false) {
         const listEl = document.getElementById('notes-list');
         if (!listEl) return;
         listEl.innerHTML = '';
+
+        if (showSkeleton) {
+            // Show skeleton loaders
+            for (let i = 0; i < 5; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'skeleton-loader';
+                listEl.appendChild(skeleton);
+            }
+            return;
+        }
 
         if (!notes.length) {
             listEl.innerHTML = `<div class="empty-list-placeholder">${i18n.t('emptyList')}</div>`;
@@ -2097,6 +2196,11 @@ class UIService {
             }
 
             listEl.appendChild(div);
+            
+            // Initialize feather icons for this note
+            if (typeof feather !== 'undefined') {
+                feather.replace();
+            }
         });
     }
 
@@ -2115,9 +2219,29 @@ class UIService {
     }
 
     selectNote(note) {
+        // Animate selection change
+        const prevActive = document.querySelector('.note-item.active');
+        if (prevActive) {
+            prevActive.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+        }
+
         this.activeNoteId = note.id;
-        if (this.inputs.noteTitle) this.inputs.noteTitle.value = note.title;
-        if (this.inputs.noteContent) this.inputs.noteContent.value = note.body;
+        if (this.inputs.noteTitle) {
+            this.inputs.noteTitle.value = note.title;
+            // Animate title input
+            this.inputs.noteTitle.style.animation = 'fadeIn 0.3s ease';
+            setTimeout(() => {
+                if (this.inputs.noteTitle) this.inputs.noteTitle.style.animation = '';
+            }, 300);
+        }
+        if (this.inputs.noteContent) {
+            this.inputs.noteContent.value = note.body;
+            // Animate content input
+            this.inputs.noteContent.style.animation = 'fadeIn 0.3s ease';
+            setTimeout(() => {
+                if (this.inputs.noteContent) this.inputs.noteContent.style.animation = '';
+            }, 300);
+        }
         if (this.inputs.noteFolder) this.inputs.noteFolder.value = note.folder || '';
         if (this.inputs.noteTags) this.inputs.noteTags.value = note.tags ? note.tags.join(', ') : '';
 
@@ -2125,7 +2249,11 @@ class UIService {
 
         document.querySelectorAll('.note-item.active').forEach(el => el.classList.remove('active'));
         const newActiveEl = document.querySelector(`.note-item[data-id="${note.id}"]`);
-        if (newActiveEl) newActiveEl.classList.add('active');
+        if (newActiveEl) {
+            newActiveEl.classList.add('active');
+            // Scroll into view smoothly
+            newActiveEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
 
         this.refreshSaveButtonState();
         this.updateWordCount();

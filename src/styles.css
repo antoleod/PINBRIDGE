@@ -124,6 +124,68 @@ body {
     }
 }
 
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
 @keyframes authFloat {
     0% {
         transform: translateY(0px) scale(0.995);
@@ -1490,6 +1552,7 @@ button.btn:active {
     display: flex;
     flex-direction: column;
     min-height: 40vh;
+    animation: slideInLeft 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .list-header {
@@ -1507,21 +1570,58 @@ button.btn:active {
     gap: 0.5rem;
 }
 
+.search-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 0.75rem;
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+    pointer-events: none;
+    z-index: 1;
+}
+
 .search-input-minimal {
     flex: 1;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 8px;
-    padding: 0.6rem 1rem;
+    padding: 0.6rem 1rem 0.6rem 2.5rem;
     font-size: 0.9rem;
     color: var(--text-primary);
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .search-input-minimal:focus {
     outline: none;
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.12);
+    transform: scale(1.02);
+}
+
+.search-input-minimal:focus + .search-hint {
+    opacity: 0;
+}
+
+.search-hint {
+    position: absolute;
+    right: 0.75rem;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    pointer-events: none;
+    opacity: 0.6;
+    transition: opacity 0.2s;
 }
 
 .btn-icon-minimal {
@@ -1569,7 +1669,11 @@ button.btn:active {
 .btn-new-minimal:hover {
     background: var(--brand-primary);
     opacity: 0.9;
-    transform: scale(1.05);
+    transform: scale(1.05) rotate(90deg);
+}
+
+.btn-new-minimal:active {
+    transform: scale(0.95) rotate(90deg);
 }
 
 .notes-settings-menu {
@@ -1580,6 +1684,12 @@ button.btn:active {
     flex-direction: column;
     gap: 0.75rem;
     backdrop-filter: blur(20px);
+    animation: fadeInUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: top;
+}
+
+.notes-settings-menu.hidden {
+    display: none;
 }
 
 .settings-menu-item {
@@ -1729,6 +1839,26 @@ button.btn:active {
     flex: 1;
     overflow-y: auto;
     padding: 0.75rem;
+    scroll-behavior: smooth;
+}
+
+/* Smooth scrollbar styling */
+.scroll-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.scroll-container::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scroll-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+.scroll-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .note-item {
@@ -1738,16 +1868,27 @@ button.btn:active {
     margin-bottom: 0.5rem;
     border: 1px solid transparent;
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: fadeInUp 0.3s ease backwards;
+    opacity: 0;
 }
+
+.note-item:nth-child(1) { animation-delay: 0.05s; }
+.note-item:nth-child(2) { animation-delay: 0.1s; }
+.note-item:nth-child(3) { animation-delay: 0.15s; }
+.note-item:nth-child(4) { animation-delay: 0.2s; }
+.note-item:nth-child(5) { animation-delay: 0.25s; }
+.note-item:nth-child(n+6) { animation-delay: 0.3s; }
 
 .note-item:hover {
     background: rgba(255, 255, 255, 0.04);
+    transform: translateX(4px);
 }
 
 .note-item.active {
     background: rgba(59, 130, 246, 0.1);
     border-color: rgba(59, 130, 246, 0.3);
+    transform: translateX(4px);
 }
 
 .note-item h4 {
@@ -1794,16 +1935,39 @@ button.btn:active {
     align-items: center;
     justify-content: center;
     padding: 0;
-    transition: all 0.15s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.note-action-icon::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    background: currentColor;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .note-action-icon:hover {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.note-action-icon:active {
+    transform: scale(0.95);
 }
 
 .note-action-icon.active {
     color: var(--brand-primary);
+}
+
+.note-action-icon.active::before {
+    opacity: 0.1;
+    transform: scale(1);
 }
 
 .note-action-icon svg {
@@ -1815,6 +1979,34 @@ button.btn:active {
 .note-action-icon.active svg {
     fill: currentColor;
 }
+
+/* Empty state */
+.empty-list-placeholder {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    animation: fadeIn 0.5s ease;
+}
+
+/* Skeleton Loader */
+.skeleton-loader {
+    background: linear-gradient(90deg, 
+        rgba(255, 255, 255, 0.05) 0%, 
+        rgba(255, 255, 255, 0.1) 50%, 
+        rgba(255, 255, 255, 0.05) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 8px;
+    height: 60px;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-loader:nth-child(1) { animation-delay: 0s; }
+.skeleton-loader:nth-child(2) { animation-delay: 0.1s; }
+.skeleton-loader:nth-child(3) { animation-delay: 0.2s; }
+.skeleton-loader:nth-child(4) { animation-delay: 0.3s; }
+.skeleton-loader:nth-child(5) { animation-delay: 0.4s; }
 
 .note-preview {
     margin: 0;
@@ -1910,6 +2102,7 @@ body.compact-notes .note-item p {
     background: transparent;
     position: relative;
     min-height: 50vh;
+    animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .editor-toolbar-minimal {
@@ -1934,7 +2127,7 @@ body.compact-notes .note-item p {
     padding: 0.5rem 0.75rem;
     font-size: 0.85rem;
     color: var(--text-primary);
-    transition: all 0.2s;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex: 1;
     max-width: 200px;
 }
@@ -1943,6 +2136,7 @@ body.compact-notes .note-item p {
     outline: none;
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.12);
+    transform: scale(1.02);
 }
 
 .editor-actions-minimal {
@@ -2107,17 +2301,24 @@ body.compact-notes .note-item p {
     padding: 0;
     margin-bottom: 1rem;
     font-family: var(--font-primary);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .editor-input-title:focus {
     outline: none;
     box-shadow: none;
     border: none;
+    transform: translateY(-2px);
 }
 
 .editor-input-title::placeholder {
     color: var(--text-secondary);
     opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.editor-input-title:focus::placeholder {
+    opacity: 0.3;
 }
 
 .editor-input-body {
@@ -2130,6 +2331,7 @@ body.compact-notes .note-item p {
     line-height: 1.6;
     color: var(--text-primary);
     padding: 0;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .editor-input-body:focus {
@@ -2139,6 +2341,11 @@ body.compact-notes .note-item p {
 .editor-input-body::placeholder {
     color: var(--text-secondary);
     opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.editor-input-body:focus::placeholder {
+    opacity: 0.3;
 }
 
 /* Command Palette */
@@ -2215,13 +2422,14 @@ body.compact-notes .note-item p {
     border-radius: var(--radius-sm);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
     opacity: 0;
-    transform: translateY(10px);
-    transition: opacity 0.2s ease, transform 0.2s ease;
+    transform: translateX(100px) scale(0.9);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideInRight 0.4s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
 .toast.visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0) scale(1);
 }
 
 .toast-success {

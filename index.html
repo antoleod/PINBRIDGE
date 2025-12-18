@@ -412,8 +412,12 @@
         <!-- LIST PANEL -->
         <section class="list-panel">
                 <div class="list-header">
-                    <input type="text" id="search-input" placeholder="Search..." class="search-input-minimal"
-                        data-i18n-placeholder="searchPlaceholder">
+                    <div class="search-wrapper">
+                        <i data-feather="search" class="search-icon"></i>
+                        <input type="text" id="search-input" placeholder="Search..." class="search-input-minimal"
+                            data-i18n-placeholder="searchPlaceholder">
+                        <kbd class="search-hint">/</kbd>
+                    </div>
                     <div class="list-header-actions">
                         <button id="btn-notes-settings" class="btn-icon-minimal" title="Notes Settings">
                             <i data-feather="settings"></i>

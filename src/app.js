@@ -95,6 +95,9 @@ bus.on('auth:unlock', async () => {
     console.log('auth:unlock event fired');
     uiService.showScreen('vault');
     
+    // Show skeleton loaders while loading
+    uiService.renderNoteList([], true);
+    
     // Small delay to ensure vault is fully initialized
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -112,6 +115,8 @@ bus.on('auth:unlock', async () => {
         
         if (notes && Array.isArray(notes)) {
             searchService.buildIndex(notes);
+            // Small delay for smooth transition from skeleton
+            await new Promise(resolve => setTimeout(resolve, 300));
             uiService.renderCurrentView(notes);
             
             // Initialize feather icons after rendering
