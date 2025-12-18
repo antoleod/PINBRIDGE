@@ -114,16 +114,59 @@
                     <p class="hint center" data-i18n="loginHint">If you do not have a vault, create one below.</p>
                 </form>
             </div>
-
             <div class="auth-actions">
                 <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile" aria-label="Open settings">
                     ⚙️ Open settings
                 </button>
             </div>
+        </div>
+    </div>
 
-            <!-- ACCOUNT RECOVERY FORM -->
-            <div id="auth-recovery" class="auth-form hidden">
-                <h2>Account Recovery</h2>
+        <!-- SETTINGS MODAL -->
+    <div id="auth-settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
+        <div class="modal-content glass-panel settings-panel">
+            <div class="settings-panel-header">
+                <div>
+                    <p class="eyebrow">Vault Safety</p>
+                    <h2 id="settings-modal-title">Account & Recovery</h2>
+                    <p class="settings-panel-subtitle">Use alternative sign-in flows or reset this device safely.</p>
+                </div>
+                <button class="btn-icon ghost" id="btn-close-settings" aria-label="Close settings">×</button>
+            </div>
+            <div class="settings-actions">
+                <button type="button" class="settings-action" id="btn-account-recovery">
+                    <span class="settings-action-icon">🔐</span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Account Recovery</span>
+                        <span class="settings-action-desc">Regain access to your vault using a recovery method.</span>
+                    </div>
+                </button>
+                <button type="button" class="settings-action" id="btn-forgot-modal">
+                    <span class="settings-action-icon">🗝️</span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Use Recovery Key</span>
+                        <span class="settings-action-desc">Unlock with the recovery key you were shown during setup.</span>
+                    </div>
+                </button>
+                <button type="button" class="settings-action" id="btn-sync-modal">
+                    <span class="settings-action-icon">🔄</span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Sync with another device</span>
+                        <span class="settings-action-desc">Share encrypted data with another authorized PINBRIDGE client.</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACCOUNT RECOVERY MODAL -->
+    <div id="recovery-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="recovery-modal-title">
+        <div class="modal-content glass-panel settings-panel">
+            <div class="modal-header">
+                <h2 id="recovery-modal-title">Account Recovery</h2>
+                <button id="close-auth-recovery-modal" class="btn-icon ghost" aria-label="Close recovery modal">×</button>
+            </div>
+            <div id="auth-recovery" class="auth-form">
                 <p class="hint">Choose a recovery method to regain access to your vault.</p>
 
                 <div class="recovery-method-selector">
@@ -185,50 +228,6 @@
                 </form>
 
                 <button type="button" class="btn btn-text" id="btn-back-from-recovery">← Back to Login</button>
-            </div>
-        </div>
-    </div>
-
-        <!-- SETTINGS MODAL -->
-    <div id="auth-settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="settings-modal-title">
-        <div class="modal-content glass-panel settings-panel">
-            <div class="settings-panel-header">
-                <div>
-                    <p class="eyebrow">Vault Safety</p>
-                    <h2 id="settings-modal-title">Account & Recovery</h2>
-                    <p class="settings-panel-subtitle">Use alternative sign-in flows or reset this device safely.</p>
-                </div>
-                <button class="btn-icon ghost" id="btn-close-settings" aria-label="Close settings">×</button>
-            </div>
-            <div class="settings-actions">
-                <button type="button" class="settings-action" id="btn-account-recovery">
-                    <span class="settings-action-icon">🔐</span>
-                    <div class="settings-action-content">
-                        <span class="settings-action-title">Account Recovery</span>
-                        <span class="settings-action-desc">Regain access to your vault using a recovery method.</span>
-                    </div>
-                </button>
-                <button type="button" class="settings-action" id="btn-forgot-modal">
-                    <span class="settings-action-icon">🗝️</span>
-                    <div class="settings-action-content">
-                        <span class="settings-action-title">Use Recovery Key</span>
-                        <span class="settings-action-desc">Unlock with the recovery key you were shown during setup.</span>
-                    </div>
-                </button>
-                <button type="button" class="settings-action" id="btn-sync-modal">
-                    <span class="settings-action-icon">🔄</span>
-                    <div class="settings-action-content">
-                        <span class="settings-action-title">Sync with another device</span>
-                        <span class="settings-action-desc">Share encrypted data with another authorized PINBRIDGE client.</span>
-                    </div>
-                </button>
-                <button type="button" class="settings-action settings-action-danger" id="btn-reset-local-modal">
-                    <span class="settings-action-icon">⚠️</span>
-                    <div class="settings-action-content">
-                        <span class="settings-action-title">Reset local vault</span>
-                        <span class="settings-action-desc">Wipe this device’s vault and start again (offline only).</span>
-                    </div>
-                </button>
             </div>
         </div>
     </div>

@@ -69,7 +69,9 @@ class UIService {
             overlay: document.getElementById('recovery-key-modal'),
             keyDisplay: document.getElementById('recovery-key-display'),
             copyBtn: document.getElementById('copy-recovery-key'),
-            closeBtn: document.getElementById('close-recovery-modal')
+            closeBtn: document.getElementById('close-recovery-modal'), // This is for the key display modal
+            authRecoveryOverlay: document.getElementById('recovery-modal'), // New modal for account recovery forms
+            authRecoveryCloseBtn: document.getElementById('close-auth-recovery-modal') // Close button for the new modal
         };
 
         this.settingsModal = {
@@ -237,7 +239,16 @@ class UIService {
         });
 
         // Account Recovery
-        document.getElementById('btn-account-recovery')?.addEventListener('click', () => this.showRecoveryForm());
+        document.getElementById('btn-account-recovery')?.addEventListener('click', () => this.showAuthRecoveryModal());
+        this.recoveryModal.authRecoveryCloseBtn?.addEventListener('click', () => this.hideAuthRecoveryModal());
+        this.recoveryModal.authRecoveryOverlay?.addEventListener('click', (e) => {
+            if (e.target === this.recoveryModal.authRecoveryOverlay) this.hideAuthRecoveryModal();
+        });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.recoveryModal.authRecoveryOverlay && !this.recoveryModal.authRecoveryOverlay.classList.contains('hidden')) {
+                this.hideAuthRecoveryModal();
+            }
+        });
         document.getElementById('btn-back-from-recovery')?.addEventListener('click', () => this.showLoginForm());
 
         // Recovery Method Selector
@@ -270,14 +281,22 @@ class UIService {
         });
     }
 
-    showRecoveryForm() {
+    showAuthRecoveryModal() {
         // Hide other auth views
         this.forms.choice?.classList.add('hidden');
         this.forms.login?.classList.add('hidden');
         this.forms.setup?.classList.add('hidden');
-        document.getElementById('auth-recovery')?.classList.remove('hidden');
+        // The auth-recovery div is now inside the modal, so we show the modal overlay
+        this.recoveryModal.authRecoveryOverlay?.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
 
         // Load secret question if available
+        this.loadSecretQuestion();
+    }
+
+    hideAuthRecoveryModal() {
+        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden');
+        document.body.style.overflow = ''; // Restore scrolling
         this.loadSecretQuestion();
     }
 
@@ -435,12 +454,14 @@ class UIService {
         this.forms.choice?.classList.remove('hidden');
         this.forms.setup?.classList.add('hidden');
         this.forms.login?.classList.add('hidden');
+        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden'); // Hide new modal
     }
 
     showSetupForm() {
         this.forms.choice?.classList.add('hidden');
         this.forms.login?.classList.add('hidden');
         this.forms.setup?.classList.remove('hidden');
+        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden'); // Hide new modal
         this.inputs.setupUsername?.focus();
     }
 
@@ -448,6 +469,7 @@ class UIService {
         this.forms.choice?.classList.add('hidden');
         this.forms.setup?.classList.add('hidden');
         this.forms.login?.classList.remove('hidden');
+        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden'); // Hide new modal
         this.inputs.loginPin?.focus();
     }
 
