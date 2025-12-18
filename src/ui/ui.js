@@ -73,6 +73,14 @@ class UIService {
             closeBtn: document.getElementById('close-recovery-modal')
         };
 
+        this.settingsModal = {
+            overlay: document.getElementById('settings-modal'),
+            closeBtn: document.getElementById('btn-close-settings'),
+            forgotBtn: document.getElementById('btn-forgot-modal'),
+            syncBtn: document.getElementById('btn-sync-modal'),
+            resetBtn: document.getElementById('btn-reset-local-modal')
+        };
+
         const topbar = document.getElementById('mobile-topbar');
         this.mobile = {
             topbar,
@@ -188,6 +196,34 @@ class UIService {
 
         this.forms.btnSync?.addEventListener('click', () => {
             settingsService.renderSettingsModal();
+        });
+
+        // Settings modal
+        document.getElementById('btn-settings-desktop')?.addEventListener('click', () => this.showSettingsModal());
+        this.settingsModal.closeBtn?.addEventListener('click', () => this.hideSettingsModal());
+        this.settingsModal.overlay?.addEventListener('click', (e) => {
+            if (e.target === this.settingsModal.overlay) this.hideSettingsModal();
+        });
+
+        this.settingsModal.forgotBtn?.addEventListener('click', () => {
+            this.hideSettingsModal();
+            this.showLoginForm();
+            this.inputs.loginRecovery?.focus();
+            this.inputs.loginRecovery?.classList.add('input-focus-hint');
+            setTimeout(() => this.inputs.loginRecovery?.classList.remove('input-focus-hint'), 1200);
+            this.showToast(i18n.t('toastRecoveryHint'), 'info');
+        });
+
+        this.settingsModal.syncBtn?.addEventListener('click', () => {
+            this.hideSettingsModal();
+            settingsService.renderSettingsModal();
+        });
+
+        this.settingsModal.resetBtn?.addEventListener('click', () => {
+            this.hideSettingsModal();
+            if (confirm(i18n.t('confirmResetLocal'))) {
+                this.handleResetLocal();
+            }
         });
 
         this.forms.btnResetLocal?.addEventListener('click', async () => {
@@ -571,6 +607,16 @@ class UIService {
             backdrop.addEventListener('click', () => this.toggleMobileSidebar());
         }
         backdrop.classList.toggle('visible', isOpen);
+    }
+
+    showSettingsModal() {
+        this.settingsModal.overlay?.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    hideSettingsModal() {
+        this.settingsModal.overlay?.classList.add('hidden');
+        document.body.style.overflow = '';
     }
 
     addEditorEventListeners() {
@@ -1321,8 +1367,19 @@ class UIService {
             div.innerHTML = `
                 <div class="note-top">
                     <h4>${Utils.escapeHtml(note.title) || i18n.t('noteTitlePlaceholder')}${badges.join(' ')}</h4>
-                    <div class="note-actions">
-                        <button class="note-action" data-action="pin" title="${i18n.t('pinNote')}">&#9733;</button>
+                     <div class="note-actions">
+                        <button class="note-action" data-action="history" title="View History">
+                            <svg viewBox="0 0 24 24" class="icon-small"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+                        </button>
+                        <button class="note-action" data-action="duplicate" title="Duplicate Note">
+                            <svg viewBox="0 0 24 24" class="icon-small"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                        </button>
+                        <button class="note-action" data-action="archive" title="Archive Note">
+                            <svg viewBox="0 0 24 24" class="icon-small"><polyline points="21 8 21 21 3 21 3 8"></polyline><rect x="1" y="3" width="22" height="5"></rect><line x1="10" y1="12" x2="14" y2="12"></line></svg>
+                        </button>
+                        <button class="note-action" data-action="pin" title="${i18n.t('pinNote')}">
+                            <svg viewBox="0 0 24 24" class="icon-small"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                        </button>
                         <button class="note-action" data-action="trash" title="${note.trash ? i18n.t('deleteForever') : i18n.t('delete')}">&#128465;</button>
                     </div>
                 </div>
@@ -1338,19 +1395,33 @@ class UIService {
                 btn.onclick = async (e) => {
                     e.stopPropagation();
                     const action = btn.dataset.action;
-                    if (action === 'pin') {
-                        await notesService.togglePin(note.id);
-                        this.renderCurrentView();
-                    }
-                    if (action === 'trash') {
-                        if (note.trash) {
-                            await notesService.deleteNote(note.id);
-                        } else {
-                            await notesService.moveToTrash(note.id);
-                        }
-                        this.activeNoteId = null;
-                        this.clearEditor();
-                        this.renderCurrentView();
+                    switch (action) {
+                        case 'pin':
+                            await notesService.togglePin(note.id);
+                            this.renderCurrentView();
+                            break;
+                        case 'trash':
+                            if (note.trash) {
+                                await notesService.deleteNote(note.id);
+                            } else {
+                                await notesService.moveToTrash(note.id);
+                            }
+                            this.activeNoteId = null;
+                            this.clearEditor();
+                            this.renderCurrentView();
+                            break;
+                        case 'duplicate':
+                            this.selectNote(note); // Select it first
+                            await this.handleDuplicate();
+                            break;
+                        case 'history':
+                            this.selectNote(note); // Select it first
+                            await this.showHistoryModal();
+                            break;
+                        case 'archive':
+                            // Placeholder for archive functionality
+                            this.showToast(`Archive function for "${note.title}" not yet implemented.`, 'info');
+                            break;
                     }
                 };
             });

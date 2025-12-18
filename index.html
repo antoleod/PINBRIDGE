@@ -31,6 +31,21 @@
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="screen hidden auth-hero">
+        <!-- DESKTOP HEADER -->
+        <header class="auth-header desktop-only">
+            <div class="auth-header-content">
+                <div class="header-logo">
+                    <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
+                    <span class="header-title">PINBRIDGE</span>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-settings" id="btn-settings-desktop" title="Settings">
+                        <span class="settings-icon">⚙️</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
         <div class="auth-card glass-panel auth-stack">
             <div class="auth-card-header">
                 <div class="auth-brand">
@@ -38,7 +53,8 @@
                         <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo" class="app-logo">
                     </div>
                     <h1 class="brand-title">PINBRIDGE</h1>
-                    <p class="subtitle" id="brand-subtitle" data-i18n="tagline">Secure. Offline. Private.</p>
+                    <p class="subtitle" id="brand-subtitle" data-i18n="tagline">Your data, secured offline and in-sync.</p>
+                    <p class="subtitle-explanation" data-i18n="taglineExplanation">Work seamlessly offline. Your vault automatically syncs with end-to-end encryption when you're back online.</p>
                 </div>
                 <div class="lang-switcher">
                     <label for="language-select" data-i18n="languageLabel">Language</label>
@@ -116,15 +132,6 @@
                 <button type="button" class="btn btn-secondary ghost" id="btn-show-login"
                     data-i18n="actionExistingVault">I already have a Vault</button>
             </div>
-            <div class="auth-actions">
-                <button type="button" class="btn btn-text" id="btn-forgot" data-i18n="actionUseRecovery">Use Recovery
-                    Key</button>
-                <button type="button" class="btn btn-text" id="btn-account-recovery">🔐 Account Recovery</button>
-                <button type="button" class="btn btn-text" id="btn-reset-local" data-i18n="actionReset">Reset
-                    local</button>
-                <button type="button" class="btn btn-text" id="btn-sync" data-i18n="actionSync">Sync with another
-                    device</button>
-            </div>
 
             <!-- ACCOUNT RECOVERY FORM -->
             <div id="auth-recovery" class="auth-form hidden">
@@ -190,6 +197,50 @@
                 </form>
 
                 <button type="button" class="btn btn-text" id="btn-back-from-recovery">← Back to Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content settings-modal">
+            <div class="modal-header">
+                <h2>Settings & Account</h2>
+                <button class="modal-close" id="btn-close-settings">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>🔐 Account & Recovery</h3>
+                    <ul class="settings-list">
+                        <li>
+                            <button type="button" class="settings-item" id="btn-forgot-modal">
+                                <span class="action-icon">🗝️</span>
+                                <div class="settings-item-content">
+                                    <span class="settings-item-title">Use Recovery Key</span>
+                                    <span class="settings-item-desc">Restore access without exposing your data</span>
+                                </div>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="settings-item" id="btn-sync-modal">
+                                <span class="action-icon">🔁</span>
+                                <div class="settings-item-content">
+                                    <span class="settings-item-title">Sync with another device</span>
+                                    <span class="settings-item-desc">End-to-end encrypted via Firebase</span>
+                                </div>
+                            </button>
+                        </li>
+                        <li>
+                            <button type="button" class="settings-item danger" id="btn-reset-local-modal">
+                                <span class="action-icon">⚠️</span>
+                                <div class="settings-item-content">
+                                    <span class="settings-item-title">Reset local vault</span>
+                                    <span class="settings-item-desc">Deletes local data — confirmation required</span>
+                                </div>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>

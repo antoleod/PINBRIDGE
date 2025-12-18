@@ -51,8 +51,9 @@ body {
     background-color: var(--bg-base);
     color: var(--text-primary);
     font-family: var(--font-sans);
-    height: 100vh;
-    overflow: hidden;
+    min-height: 100vh;
+    overflow-x: hidden;
+    overflow-y: auto;
     -webkit-font-smoothing: antialiased;
     /* Animated Deep Background */
     background: radial-gradient(circle at top left, #1c1c21, #09090b);
@@ -148,14 +149,14 @@ body {
 .auth-stack {
     width: min(520px, 92vw);
     text-align: center;
-    padding: 2.5rem 2.75rem;
+    padding: 2.25rem 2.5rem;
     border-radius: 22px;
     background: linear-gradient(160deg, rgba(31, 41, 55, 0.92), rgba(21, 30, 42, 0.92));
     border: 1px solid rgba(255, 255, 255, 0.07);
     box-shadow: 0 22px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem;
     animation: fadeIn 0.6s ease, authFloat 6s ease-in-out infinite;
 }
 
@@ -168,8 +169,8 @@ body {
 }
 
 .logo-ring {
-    width: 120px;
-    height: 120px;
+    width: 96px;
+    height: 96px;
     border-radius: 50%;
     background: radial-gradient(circle at 30% 30%, rgba(0, 255, 156, 0.3), rgba(59, 130, 246, 0.25));
     display: grid;
@@ -180,30 +181,214 @@ body {
 
 .auth-card .brand-title,
 .auth-stack .brand-title {
-    font-size: 2.5rem;
+    font-size: 2rem;
     margin: 0;
 }
 
 .form-title {
-    margin: 0 0 1.5rem;
+    margin: 0 0 1.25rem;
     font-size: 1.4rem;
-}
-
-.auth-toggle {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-}
-
-.auth-actions {
-    margin-top: 0.5rem;
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.5rem;
 }
 
 .auth-actions .btn-text {
     width: 100%;
+}
+
+/* Desktop Header */
+.auth-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: rgba(9, 9, 11, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-subtle);
+    z-index: 100;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.auth-header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.header-logo img {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+}
+
+.header-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.btn-settings {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 1.2rem;
+}
+
+.btn-settings:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--border-active);
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.modal-overlay:not(.hidden) {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal-content {
+    background: var(--bg-surface);
+    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: scale(0.9) translateY(20px);
+    transition: all 0.3s ease;
+}
+
+.modal-overlay:not(.hidden) .modal-content {
+    transform: scale(1) translateY(0);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.settings-section h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.settings-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.settings-list li {
+    margin-bottom: 0.5rem;
+}
+
+.settings-item {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 1rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: left;
+}
+
+.settings-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--border-active);
+}
+
+.settings-item.danger:hover {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: var(--text-danger);
+}
+
+.settings-item-content {
+    flex: 1;
+}
+
+.settings-item-title {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.settings-item-desc {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
 .auth-card-header {
@@ -236,12 +421,25 @@ body {
     min-width: 160px;
 }
 
-.auth-choice {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    animation: fadeIn 0.4s ease;
+/* --- Auth Form Transitions --- */
+/* This targets all the swappable views inside the auth card */
+#auth-choice,
+#auth-setup,
+#auth-login,
+#auth-recovery {
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out;
 }
+
+/* When a form is not active, it's invisible and shifted down */
+#auth-choice.hidden,
+#auth-setup.hidden,
+#auth-login.hidden,
+#auth-recovery.hidden {
+    opacity: 0;
+    transform: translateY(10px);
+    pointer-events: none; /* Prevent interaction with hidden forms */
+}
+
 
 .auth-choice-actions {
     display: grid;
@@ -298,7 +496,7 @@ body {
 .subtitle {
     margin-top: 0.5rem;
     color: var(--text-secondary);
-    margin-bottom: 3rem;
+    margin-bottom: 1.5rem;
 }
 
 .lede {
@@ -331,7 +529,7 @@ body {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
+    gap: 0.5rem;
     margin-bottom: 1rem;
 }
 
@@ -343,7 +541,13 @@ body {
 
 .input-group {
     text-align: left;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+.auth-toggle {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
 }
 
 .input-group label {
@@ -355,7 +559,7 @@ body {
 
 /* Glossy Inputs */
 input {
-    width: 100%;
+    width: 100%; 
     padding: 1rem;
     background: rgba(0, 0, 0, 0.35);
     border: 1px solid rgba(255, 255, 255, 0.12);
@@ -368,8 +572,8 @@ input {
 }
 
 input:focus {
-    border-color: var(--brand-primary);
-    background: rgba(0, 0, 0, 0.6);
+    border-color: var(--brand-primary); 
+    background: rgba(10, 10, 15, 0.5);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4), inset 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
@@ -383,7 +587,7 @@ button.btn {
     border-radius: var(--radius-sm);
     border: none;
     font-weight: 700;
-    cursor: pointer;
+    cursor: pointer; 
     font-size: 1.1rem;
     transition: transform 0.1s;
 }
@@ -402,7 +606,7 @@ button.btn:active {
 .btn-text {
     background: none;
     color: var(--text-secondary);
-    margin-top: 1rem;
+    margin-top: 0.5rem;
     font-size: 0.85rem;
     transition: color 0.2s ease;
 }
@@ -758,6 +962,13 @@ button.btn:active {
     width: 36px;
     height: 36px;
     border-radius: 10px;
+}
+
+.topbar-logo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
 }
 
 .topbar-actions {
@@ -1128,8 +1339,12 @@ button.btn:active {
 }
 
 .note-item.active {
-    background: rgba(59, 130, 246, 0.1);
+    background: rgba(59, 130, 246, 0.15);
     border-color: var(--brand-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--brand-primary);
+    /* Prevent hover effect on active item */
+    pointer-events: none;
 }
 
 .note-item h4 {
@@ -1162,14 +1377,38 @@ button.btn:active {
 }
 
 .note-action:hover {
-    background: rgba(255, 255, 255, 0.12);
-    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
 }
 
 .note-action.active {
     color: var(--brand-primary);
     border-color: var(--brand-primary);
-    background: rgba(59, 130, 246, 0.12);
+    background-color: rgba(59, 130, 246, 0.15);
+}
+
+.note-action[data-action="history"]:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.note-action[data-action="archive-note"]:hover {
+    background-color: rgba(251, 191, 36, 0.12); /* --text-warning */
+}
+
+.note-action[data-action="delete-note"]:hover {
+    background: rgba(248, 113, 113, 0.15); /* --text-danger */
+    color: var(--text-danger);
+}
+
+.note-action .icon-small {
+    display: block;
+    width: 14px;
+    height: 14px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
 
 .note-badge {
@@ -2008,6 +2247,15 @@ input[type="file"]::file-selector-button {
         min-height: 100vh;
     }
 
+    /* Ensure auth screen content is centered on mobile */
+    #auth-screen.auth-hero {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 1rem;
+    }
+
     .input-row {
         grid-template-columns: 1fr;
     }
@@ -2067,10 +2315,12 @@ input[type="file"]::file-selector-button {
     .list-panel {
         width: 100%;
         border-right: none;
+        text-align: left; /* Ensure content is left-aligned */
     }
 
     .list-header {
         padding: 1rem;
+        text-align: left;
     }
 
     .list-header h2 {
@@ -2080,6 +2330,7 @@ input[type="file"]::file-selector-button {
     .editor-panel {
         width: 100%;
         min-height: 60vh;
+        text-align: left;
     }
 
     .editor-toolbar {
@@ -2087,6 +2338,7 @@ input[type="file"]::file-selector-button {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+        text-align: left;
     }
 
     .meta-inputs {
@@ -2157,6 +2409,191 @@ input[type="file"]::file-selector-button {
     /* Ensure quick-drop input is thumb-reachable */
     #quick-drop-input {
         height: 48px;
+    }
+}
+
+/* Tablet and medium screens (768px to 1024px) */
+@media (max-width: 1024px) and (min-width: 768px) {
+    .sidebar {
+        width: 60px;
+    }
+
+    .list-panel {
+        width: 280px;
+    }
+
+    .editor-toolbar {
+        padding: 1rem 1.5rem;
+    }
+
+    .editor-canvas {
+        padding: 1.5rem;
+    }
+
+    .auth-stack {
+        width: min(480px, 90vw);
+        padding: 2rem;
+    }
+
+    .logo-ring {
+        width: 88px;
+        height: 88px;
+    }
+
+    .auth-card .brand-title,
+    .auth-stack .brand-title {
+        font-size: 1.8rem;
+    }
+
+    /* Adjust auth choice actions for tablets */
+    .auth-choice-actions {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .auth-choice-actions .btn {
+        min-height: 48px;
+    }
+
+    /* Adjust button sizes for tablets */
+    .btn-icon-primary,
+    .btn-icon {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+
+    /* Better touch targets for tablets */
+    .nav-pill {
+        padding: 0.6rem 1rem;
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-tool {
+        min-width: 44px;
+        min-height: 44px;
+    }
+
+    /* Improve readability on tablets */
+    .note-item h4 {
+        font-size: 1.1rem;
+    }
+
+    .note-item p {
+        font-size: 0.9rem;
+    }
+
+    /* Dashboard adjustments for tablets */
+    .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+    }
+
+    .dashboard-panel {
+        padding: 1.5rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+}
+
+/* Large tablets and small laptops (1024px to 1200px) */
+@media (max-width: 1200px) and (min-width: 1024px) {
+    .sidebar {
+        width: 65px;
+    }
+
+    .list-panel {
+        width: 300px;
+    }
+
+    .editor-toolbar {
+        padding: 1rem 1.75rem;
+    }
+
+    .editor-canvas {
+        padding: 1.75rem;
+    }
+}
+
+/* Extra large screens (1440px+) */
+@media (min-width: 1440px) {
+    .sidebar {
+        width: 80px;
+    }
+
+    .list-panel {
+        width: 360px;
+    }
+
+    .editor-toolbar {
+        padding: 1.25rem 2.5rem;
+    }
+
+    .editor-canvas {
+        padding: 2.5rem;
+    }
+
+    .auth-stack {
+        width: min(560px, 85vw);
+        padding: 2.5rem 3rem;
+    }
+
+    .logo-ring {
+        width: 104px;
+        height: 104px;
+    }
+
+    .auth-card .brand-title,
+    .auth-stack .brand-title {
+        font-size: 2.2rem;
+    }
+
+    .dashboard-panel {
+        padding: 2.5rem;
+    }
+
+    .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+    }
+
+    .dashboard-card {
+        padding: 2rem;
+    }
+
+    .dashboard-section {
+        padding: 2rem;
+    }
+}
+
+/* Ultra-wide screens (1920px+) */
+@media (min-width: 1920px) {
+    .sidebar {
+        width: 90px;
+    }
+
+    .list-panel {
+        width: 400px;
+    }
+
+    .editor-panel {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .auth-stack {
+        width: min(600px, 80vw);
+        padding: 3rem 3.5rem;
+    }
+
+    .dashboard-panel {
+        max-width: 1400px;
+        margin: 0 auto;
     }
 }
 
@@ -2251,5 +2688,129 @@ input[type="file"]::file-selector-button {
     /* Editor title smaller */
     .editor-input-title {
         font-size: 1.5rem;
+    }
+
+    /* Mobile topbar adjustments */
+    .mobile-topbar {
+        padding: 0.75rem;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .topbar-logo {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 1;
+    }
+
+    .topbar-logo img {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .topbar-actions {
+        flex: 1;
+        justify-content: center;
+        gap: 0.25rem;
+    }
+
+    .nav-pill {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        min-width: 60px;
+        text-align: center;
+    }
+
+    /* Dashboard adjustments for small screens */
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .dashboard-card {
+        padding: 1rem;
+    }
+
+    .dashboard-section {
+        padding: 1rem;
+    }
+}
+
+/* Landscape phones and small tablets */
+@media (max-width: 767px) and (orientation: landscape) {
+    .auth-stack {
+        padding: 1.25rem;
+        width: min(450px, 95vw);
+    }
+
+    .logo-ring {
+        width: 72px;
+        height: 72px;
+    }
+
+    .logo-ring .app-logo {
+        width: 40px;
+        height: 40px;
+    }
+
+    .auth-card .brand-title,
+    .auth-stack .brand-title {
+        font-size: 1.5rem;
+    }
+
+    .editor-input-title {
+        font-size: 1.4rem;
+    }
+
+    .editor-input-body {
+        min-height: 150px;
+    }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .logo-ring {
+        border-width: 0.5px;
+    }
+
+    .glass-panel {
+        border-width: 0.5px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .sidebar,
+    .mobile-topbar,
+    .editor-toolbar {
+        display: none !important;
+    }
+
+    .list-panel,
+    .editor-panel {
+        width: 50% !important;
+        border: none !important;
+    }
+
+    .note-item {
+        break-inside: avoid;
+        border: 1px solid #ccc !important;
+        background: white !important;
+        color: black !important;
+    }
+
+    .editor-input-title {
+        color: black !important;
+        border-bottom: 1px solid #ccc;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .editor-input-body {
+        color: black !important;
+        white-space: pre-wrap;
     }
 }
