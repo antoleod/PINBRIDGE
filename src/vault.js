@@ -93,6 +93,9 @@ class VaultService {
       this.meta = remoteMeta;
       await storageService.saveCryptoMeta(remoteMeta);
     }
+    if (!this.meta) {
+      throw new Error('NO_VAULT');
+    }
     try {
       const salt = Utils.base64ToBuffer(this.meta.keySalt);
       const pinKey = await cryptoService.deriveKeyFromSecret(pin, salt);

@@ -49,7 +49,7 @@ class CryptoService {
             'raw',
             rawBuffer,
             { name: 'AES-GCM' },
-            false,
+            true,
             ['encrypt', 'decrypt']
         );
     }
@@ -86,7 +86,7 @@ class CryptoService {
             'raw',
             rawKey,
             { name: 'AES-GCM' },
-            false,
+            true,
             ['encrypt', 'decrypt']
         );
     }

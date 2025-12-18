@@ -75,7 +75,8 @@ class UIService {
         }
 
         try {
-            await authService.register(username, pin);
+            const recoveryKey = await authService.register(username, pin);
+            this.showRecoveryKeyModal(recoveryKey);
         } catch (err) {
             this.showToast(this.resolveAuthErrorMessage(err?.message || err), 'error');
         }
