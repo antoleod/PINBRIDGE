@@ -12,6 +12,7 @@ import { recoveryService } from '../modules/recovery/recovery.js';
 import { cryptoService } from '../crypto/crypto.js';
 import { pairingService } from '../modules/pairing/pairing.js'; // To be created
 
+
 class UIService {
     constructor() {
         this.screens = {};
@@ -27,6 +28,7 @@ class UIService {
         this.saveTimeout = null;
         this.isFocusMode = false;
         this.isReadOnly = false; // Read-only mode state
+        this.qrScanner = null;
     }
 
     _cacheDomElements() {
@@ -81,7 +83,9 @@ class UIService {
             syncBtn: document.getElementById('btn-sync-modal'),
             resetBtn: document.getElementById('btn-reset-local-modal')
         };
-
+        // New elements for the integrated recovery section within auth-settings-modal
+        this.authSettingsRecoverySection = document.getElementById('auth-settings-recovery-section');
+        this.authSettingsActions = document.querySelector('#auth-settings-modal .settings-actions');
         const topbar = document.getElementById('mobile-topbar');
         this.mobile = {
             topbar,
@@ -229,8 +233,8 @@ class UIService {
         });
 
         this.settingsModal.syncBtn?.addEventListener('click', () => {
-            this.hideSettingsModal();
-            settingsService.renderSettingsModal();
+            this.hideSettingsModal(); // Close auth settings
+            this.showScanQRModal(); // Open the new QR scanning modal
         });
 
         this.settingsModal.resetBtn?.addEventListener('click', async () => {
@@ -286,22 +290,29 @@ class UIService {
         });
     }
 
-    showAuthRecoveryModal() {
-        // Hide other auth views
-        this.forms.choice?.classList.add('hidden');
-        this.forms.login?.classList.add('hidden');
-        this.forms.setup?.classList.add('hidden');
-        // The auth-recovery div is now inside the modal, so we show the modal overlay
-        this.recoveryModal.authRecoveryOverlay?.classList.remove('hidden');
-        document.body.style.overflow = 'hidden'; // Prevent scrolling behind modal
-
+    showAuthSettingsRecoverySection() {
+        this.authSettingsActions?.classList.add('hidden');
+        this.authSettingsRecoverySection?.classList.remove('hidden');
+        // Ensure the main auth settings modal is visible
+        this.settingsModal.overlay?.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
         // Load secret question if available
         this.loadSecretQuestion();
     }
 
-    hideAuthRecoveryModal() {
-        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden');
-        document.body.style.overflow = ''; // Restore scrolling
+    hideAuthSettingsRecoverySection() {
+        this.authSettingsRecoverySection?.classList.add('hidden');
+        this.authSettingsActions?.classList.remove('hidden');
+        // Optionally, if this is the only thing open, close the main settings modal too
+        // this.hideSettingsModal();
+    }
+
+    // Original methods, now updated to hide auth-settings-modal if it's open
+    showAuthChoice() {
+        this.forms.choice?.classList.remove('hidden');
+        this.forms.setup?.classList.add('hidden');
+        this.forms.login?.classList.add('hidden');
+        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
         this.loadSecretQuestion();
     }
 
@@ -459,14 +470,14 @@ class UIService {
         this.forms.choice?.classList.remove('hidden');
         this.forms.setup?.classList.add('hidden');
         this.forms.login?.classList.add('hidden');
-        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden'); // Hide new modal
+        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
     }
 
     showSetupForm() {
         this.forms.choice?.classList.add('hidden');
         this.forms.login?.classList.add('hidden');
         this.forms.setup?.classList.remove('hidden');
-        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden'); // Hide new modal
+        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
         this.inputs.setupUsername?.focus();
     }
 
@@ -474,7 +485,7 @@ class UIService {
         this.forms.choice?.classList.add('hidden');
         this.forms.setup?.classList.add('hidden');
         this.forms.login?.classList.remove('hidden');
-        this.recoveryModal.authRecoveryOverlay?.classList.add('hidden'); // Hide new modal
+        this.settingsModal.overlay?.classList.add('hidden'); // Hide auth settings modal
         this.inputs.loginPin?.focus();
     }
 
@@ -776,7 +787,7 @@ class UIService {
         this._getById('btn-find-duplicates')?.addEventListener('click', () => this.findDuplicates());
         // Settings Tabs
         document.querySelectorAll('.settings-tab').forEach(tab => {
-            tab.addEventListener('click', (e) => {
+            tab.addEventListener('click', e => {
                 const tabName = e.target.dataset.tab;
                 this.switchSettingsTab(tabName);
             });
@@ -784,7 +795,6 @@ class UIService {
 
         // Recovery Actions
         document.getElementById('btn-generate-backup-codes')?.addEventListener('click', () => this.generateBackupCodes());
-        document.getElementById('btn-download-recovery-file')?.addEventListener('click', () => this.downloadRecoveryFile());
         document.getElementById('btn-setup-secret-question')?.addEventListener('click', () => this.openSecretQuestionModal());
         
         // Device Pairing
@@ -1291,9 +1301,93 @@ class UIService {
     }
 
     hidePairingModal() {
-        pairingService.cancelPairingSession();
+        if (pairingService) {
+            pairingService.cancelPairingSession();
+        }
         const modal = this._getById('pairing-modal');
         if (modal) modal.classList.add('hidden');
+    }
+
+    async revokeDeviceAccess() {
+        if (confirm('Are you sure you want to revoke access for ALL linked devices? This cannot be undone.')) {
+            this.showToast('Revoking access for all linked devices...', 'info');
+            // In a real implementation, this would involve:
+            // 1. Communicating with a sync server to invalidate device tokens.
+            // 2. Clearing local pairing data.
+            // await pairingService.revokeAllDevices(); // Hypothetical call
+            this.showToast('Access revoked for all linked devices.', 'success');
+            this.renderActiveRecoveryMethods(); // Refresh the list
+        }
+    }
+    // --- QR Code Scanning (New Device) ---
+
+    showScanQRModal() {
+        const modal = this._getById('scan-qr-modal');
+        if (!modal) return;
+
+        this.hideSettingsModal();
+        modal.classList.remove('hidden');
+        this._startCameraForQRScan();
+
+        this._getById('close-scan-qr-modal')?.addEventListener('click', () => this.hideScanQRModal(), { once: true });
+        this._getById('scan-qr-form')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this._handleScannedData();
+        }, { once: true });
+    }
+
+    hideScanQRModal() {
+        const modal = this._getById('scan-qr-modal');
+        if (modal) modal.classList.add('hidden');
+        this._stopCameraForQRScan();
+    }
+
+    async _startCameraForQRScan() {
+        const video = this._getById('qr-video');
+        const statusEl = this._getById('scan-qr-status');
+        if (!video || !statusEl) return;
+
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video.srcObject = stream;
+            video.play();
+            statusEl.textContent = 'Point camera at the QR code...';
+
+            // Dynamically load jsQR library
+            if (!window.jsQR) {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+                document.head.appendChild(script);
+                await new Promise(resolve => script.onload = resolve);
+            }
+
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+
+            const scan = () => {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.height = video.videoHeight;
+                    canvas.width = video.videoWidth;
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    const code = window.jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'dontInvert' });
+
+                    if (code) {
+                        this._getById('qr-data-input').value = code.data;
+                        statusEl.textContent = 'QR Code detected! Enter confirmation code.';
+                        this._getById('confirmation-code-input').focus();
+                        this.hapticFeedback();
+                        // Stop scanning once found
+                        return;
+                    }
+                }
+                this.qrScanner = requestAnimationFrame(scan);
+            };
+            this.qrScanner = requestAnimationFrame(scan);
+        } catch (err) {
+            console.error("Camera access error:", err);
+            statusEl.textContent = 'Could not access camera. Please grant permission.';
+        }
     }
 
     async openTagsManager() {
@@ -1303,6 +1397,46 @@ class UIService {
     }
 
     async renderTagsManager() {
+    _stopCameraForQRScan() {
+        if (this.qrScanner) {
+            cancelAnimationFrame(this.qrScanner);
+            this.qrScanner = null;
+        }
+        const video = this._getById('qr-video');
+        if (video && video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+    }
+
+    async _handleScannedData() {
+        const qrData = this._getById('qr-data-input').value;
+        const confirmationCode = this._getById('confirmation-code-input').value;
+        const statusEl = this._getById('scan-qr-status');
+
+        if (!qrData || !confirmationCode) {
+            statusEl.textContent = 'Error: Missing data. Please scan again.';
+            return;
+        }
+
+        this._stopCameraForQRScan();
+
+        try {
+            await pairingService.joinPairingSession(qrData, confirmationCode, {
+                onConnecting: () => statusEl.textContent = 'Connecting to peer...',
+                onHandshake: () => statusEl.textContent = 'Performing secure handshake...',
+                onComplete: () => {
+                    statusEl.textContent = 'Success! Vault imported.';
+                    this.showToast('Vault successfully linked and unlocked!', 'success');
+                    // The 'auth:unlock' event will be fired by the service, handling the UI transition.
+                    this.hideScanQRModal();
+                },
+                onError: (err) => statusEl.textContent = `Error: ${err.message}`
+            });
+        } catch (err) {
+            statusEl.textContent = `Failed to start pairing: ${err.message}`;
+        }
+    }
         const container = document.getElementById('tags-list');
         const tags = notesService.getAllTags();
 

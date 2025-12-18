@@ -118,6 +118,64 @@ class PairingService {
         };
     }
 
+    async joinPairingSession(qrData, confirmationCode, callbacks) {
+        if (this.state !== 'idle') {
+            throw new Error('A pairing session is already in progress.');
+        }
+
+        this.state = 'starting';
+        this.callbacks = callbacks;
+        this.confirmationCode = confirmationCode;
+
+        try {
+            const payload = JSON.parse(qrData);
+            if (!payload.pairingId || !payload.server) {
+                throw new Error('Invalid QR code data.');
+            }
+            this.pairingId = payload.pairingId;
+
+            this.callbacks.onConnecting?.();
+            this._connectToSignalingServer(false); // false = not initiator
+
+        } catch (err) {
+            this.state = 'error';
+            this.callbacks.onError?.(err);
+            throw err;
+        }
+    }
+
+    _connectToSignalingServer(isInitiator = true) {
+        this.ws = new WebSocket(SIGNALING_SERVER_URL);
+
+        this.ws.onopen = () => {
+            this.ws.send(JSON.stringify({ type: 'subscribe', channel: this.pairingId }));
+            if (isInitiator) {
+                this.state = 'waiting';
+            } else {
+                // New device immediately sends a join message
+                this.ws.send(JSON.stringify({ type: 'peer-joined', channel: this.pairingId }));
+                this.state = 'handshake';
+                this.callbacks.onHandshake?.();
+                this._sendSpakeMessage(); // Start the handshake
+            }
+        };
+
+        this.ws.onmessage = (event) => this._handleSignalingMessage(event.data, isInitiator);
+
+        this.ws.onerror = (err) => {
+            this.state = 'error';
+            this.callbacks.onError?.(new Error('Signaling server connection failed.'));
+            console.error('WebSocket Error:', err);
+        };
+
+        this.ws.onclose = () => {
+            if (this.state !== 'complete' && this.state !== 'idle') {
+                this.state = 'error';
+                this.callbacks.onError?.(new Error('Connection to server lost.'));
+            }
+        };
+    }
+
     async _handleSignalingMessage(data) {
         const msg = JSON.parse(data);
 
@@ -130,10 +188,10 @@ class PairingService {
 
             case 'spake-message':
                 if (this.state === 'handshake') {
-                    // We are the initiator, receiving the first message.
+                    // We are the INITIATOR, receiving the peer's message.
                     const { sharedKey } = await SPAKE2.computeSharedKey(this.confirmationCode, true, msg.payload);
                     this.sharedKey = sharedKey;
-
+                    this.state = 'verifying';
                     // Now, send the vault key encrypted with the new shared key.
                     await this._sendVaultKey();
                 }
@@ -141,11 +199,13 @@ class PairingService {
 
             case 'encrypted-data':
                 if (this.state === 'verifying') {
+                    // We are the NEW DEVICE, receiving the encrypted vault.
                     try {
                         const decrypted = await cryptoService.decryptObject(msg.payload, this.sharedKey);
                         if (decrypted.vaultKey) {
-                            // We are the new device, receiving the vault key.
-                            await vaultService.importVaultFromKey(decrypted.vaultKey);
+                            // Use the recovery key to unlock/import the vault.
+                            // This will trigger the 'auth:unlock' event globally.
+                            await authService.unlockWithRecovery(decrypted.vaultKey);
                             this.state = 'complete';
                             this.callbacks.onComplete?.();
                             this.cancelPairingSession();
@@ -157,6 +217,21 @@ class PairingService {
                 }
                 break;
         }
+    }
+
+    async _sendSpakeMessage() {
+        // This is called by the NEW DEVICE to start the key exchange.
+        const { myMessage, context } = await SPAKE2.computeSharedKey(this.confirmationCode, false, null);
+        this.spakeContext = context;
+
+        this.ws.send(JSON.stringify({
+            type: 'spake-message',
+            channel: this.pairingId,
+            payload: myMessage
+        }));
+
+        // Now we wait for the encrypted vault data in response.
+        this.state = 'verifying';
     }
 
     async _sendVaultKey() {

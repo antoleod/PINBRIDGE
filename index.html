@@ -567,23 +567,118 @@
                 <h2>Settings</h2>
                 <button id="close-settings-modal" class="btn-icon ghost">×</button>
             </div>
-            <div class="settings-content">
+            <div class="settings-tabs">
+                <button class="settings-tab active" data-tab="general">General</button>
+                <button class="settings-tab" data-tab="security">Security</button>
+                <button class="settings-tab" data-tab="tools">Tools</button>
+            </div>
+            <div id="settings-general" class="settings-content">
+                <h3>General Settings</h3>
                 <h4>Theme</h4>
                 <div id="theme-switcher" class="settings-grid">
-                    <!-- Theme options will be injected here -->
+                    <!-- Theme options are injected here -->
                 </div>
                 <div class="divider"></div>
                 <h4>Sync</h4>
                 <div class="settings-item">
                     <div class="settings-item-content">
                         <span class="settings-item-title">Cloud Sync</span>
-                        <span class="settings-item-desc">Securely sync your encrypted vault across devices. Disabled by default.</span>
+                        <span class="settings-item-desc">Securely sync your encrypted vault across devices.</span>
                     </div>
                     <div class="toggle-switch">
                         <input type="checkbox" id="toggle-sync-enabled" class="toggle-input">
                         <label for="toggle-sync-enabled" class="toggle-label"></label>
                     </div>
                 </div>
+            </div>
+            <div id="settings-security" class="settings-content hidden">
+                <h3>Security & Recovery</h3>
+                <h4>Active Recovery Methods</h4>
+                <div id="active-recovery-methods" class="recovery-methods-list">
+                    <!-- Active methods are rendered here -->
+                </div>
+
+                <h4>Recovery Actions</h4>
+                <div class="recovery-actions">
+                    <div class="recovery-action-card">
+                        <div class="action-header">
+                            <span class="action-icon">🎫</span>
+                            <div>
+                                <strong>Backup Codes</strong>
+                                <p>Generate one-time codes to use if you lose your PIN.</p>
+                            </div>
+                        </div>
+                        <button id="btn-generate-backup-codes" class="btn btn-secondary">Generate</button>
+                    </div>
+                    <div class="recovery-action-card">
+                        <div class="action-header">
+                            <span class="action-icon">❓</span>
+                            <div>
+                                <strong>Secret Question</strong>
+                                <p>Set up a question only you can answer.</p>
+                            </div>
+                        </div>
+                        <button id="btn-setup-secret-question" class="btn btn-secondary">Set Up</button>
+                    </div>
+                    <div class="recovery-action-card">
+                        <div class="action-header">
+                            <span class="action-icon">💾</span>
+                            <div>
+                                <strong>Recovery File</strong>
+                                <p>Generate an encrypted file to recover your vault on a new device.</p>
+                            </div>
+                        </div>
+                        <button id="btn-generate-recovery-file" class="btn btn-secondary">Generate</button>
+                    </div>
+                    <div class="recovery-action-card">
+                        <button id="btn-link-device" class="btn btn-secondary">Link New Device</button>
+                        <div class="action-header">
+                            <span class="action-icon">📱</span>
+                            <div>
+                                <strong>Link New Device</strong>
+                                <p>Securely sync your vault to another device using a QR code.</p>
+                            </div>
+                        </div>
+                        <button id="btn-link-device" class="btn btn-secondary">Link</button>
+                    </div>
+                </div>
+            </div>
+            <div id="settings-tools" class="settings-content hidden">
+                <h3>Tools</h3>
+                <h4>Password Generator</h4>
+                <div class="generated-password-container">
+                    <input type="text" id="generated-password-display" class="input-field" readonly placeholder="Your new password will appear here...">
+                    <button id="btn-copy-password" class="btn btn-secondary">📋</button>
+                </div>
+                <div class="password-options-grid">
+                    <!-- Password options will be added here later -->
+                </div>
+                <button id="btn-generate-password" class="btn btn-primary" style="margin-top: 1rem;">Generate New Password</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCAN QR MODAL (for new device) -->
+    <div id="scan-qr-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Link Device by Scanning</h2>
+                <button id="close-scan-qr-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div class="pairing-content">
+                <div class="qr-scanner-container">
+                    <video id="qr-video" playsinline></video>
+                    <div class="qr-scanner-overlay"></div>
+                </div>
+                <p id="scan-qr-status" class="pairing-status-text">Requesting camera access...</p>
+                <form id="scan-qr-form">
+                    <input type="hidden" id="qr-data-input">
+                    <div class="form-group">
+                        <label for="confirmation-code-input">Confirmation Code</label>
+                        <input type="text" id="confirmation-code-input" class="input-field" placeholder="Enter code from other device" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Confirm & Link</button>
+                </form>
             </div>
         </div>
     </div>
@@ -654,6 +749,67 @@
             </div>
         </div>
     </div>
+
+    <!-- GENERATE RECOVERY FILE MODAL -->
+    <div id="generate-file-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Generate Recovery File</h2>
+                <button id="close-generate-file-modal" class="btn-icon ghost">×</button>
+            </div>
+            <p class="warning-text">This file is another key to your vault. Keep it safe and separate from your main
+                device.</p>
+            <form id="generate-file-form">
+                <div class="form-group">
+                    <label for="generate-file-username">Username</label>
+                    <input type="text" id="generate-file-username" placeholder="Your vault username"
+                        class="input-field" required>
+                    <p class="hint">Must match the username of the vault you are recovering.</p>
+                </div>
+                <div class="form-group">
+                    <label for="generate-file-code">Recovery Code (4+ digits)</label>
+                    <input type="password" id="generate-file-code" placeholder="Create a short, memorable code"
+                        class="input-field" required minlength="4">
+                    <p class="hint">You will need this code AND the file to recover your account.</p>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" id="cancel-generate-file" class="btn btn-text">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Generate and Download</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAIRING MODAL -->
+    <div id="pairing-modal" class="modal-overlay hidden">
+        <!-- ... content for pairing modal ... -->
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Link New Device</h2>
+                <button id="close-pairing-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div class="pairing-content">
+                <p class="hint">Scan the QR code with your new device to securely transfer your vault. The devices must be on the same network.</p>
+                <div class="pairing-display">
+                    <div id="pairing-qr-code" class="pairing-qr">
+                        <!-- QR Code will be injected here -->
+                    </div>
+                    <div class="pairing-details">
+                        <p>Or, enter this confirmation code on the other device:</p>
+                        <div id="pairing-confirmation-code" class="pairing-code-display">
+                            ------
+                        </div>
+                    </div>
+                </div>
+                <div id="pairing-status" class="pairing-status-text">
+                    Generating secure session...
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
 
     <script type="module" src="src/app.js"></script>
 </body>

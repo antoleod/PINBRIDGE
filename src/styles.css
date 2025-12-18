@@ -2464,6 +2464,22 @@ input[type="file"]::file-selector-button {
     color: #6b7280;
 }
 
+/* Added for Revoke Device Access button */
+.recovery-action-card .btn-secondary.danger {
+    background: rgba(248, 113, 113, 0.15);
+    border-color: rgba(248, 113, 113, 0.4);
+    color: var(--text-danger);
+}
+
+.recovery-action-card .btn-secondary.danger:hover {
+    background: rgba(248, 113, 113, 0.25);
+    border-color: var(--text-danger);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+}
+
+
+
 /* Password Generator Styles */
 .generated-password-container {
     display: flex;
@@ -2511,6 +2527,48 @@ input[type="file"]::file-selector-button {
 .toggle-option input[type="checkbox"] {
     width: 18px;
     height: 18px;
+}
+
+/* QR Scanner Modal Styles */
+.qr-scanner-container {
+    position: relative;
+    width: 100%;
+    max-width: 320px;
+    margin: 0 auto 1rem;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 2px solid var(--border-subtle);
+}
+
+#qr-video {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.qr-scanner-overlay {
+    position: absolute;
+    inset: 0;
+    box-shadow: inset 0 0 0 4px var(--brand-primary);
+    border-radius: var(--radius-md);
+    opacity: 0.6;
+}
+
+/* Add a simple animation for the scanner line */
+.qr-scanner-overlay::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--brand-primary), transparent);
+    animation: scan-line 3s infinite ease-in-out;
+}
+
+@keyframes scan-line {
+    0%, 100% { top: 10%; }
+    50% { top: 90%; }
 }
 
 /* Responsive tweaks */
