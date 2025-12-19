@@ -25,6 +25,7 @@ class UIService {
         this.currentView = 'all';
         this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') === 'true';
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
+        this.footerAutoHide = localStorage.getItem('pinbridge.footer_autohide') === 'true';
         this.saveTimeout = null;
         this.isFocusMode = false;
         this.isReadOnly = false; // Read-only mode state
@@ -184,6 +185,7 @@ class UIService {
         this.refreshSaveButtonState();
         this.refreshUsernameRecommendation();
         this.setupMobileUX();
+        this.renderMarkdownToolbar();
         this.setupSmartSuggestions();
         this.setupSecurityFeatures();
         this.setStatus(i18n.t('statusReady'));
@@ -199,6 +201,43 @@ class UIService {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
+    }
+
+    renderMarkdownToolbar() {
+        const editorPanel = document.querySelector('.editor-panel');
+        if (!editorPanel || document.querySelector('.markdown-toolbar')) return;
+
+        const toolbar = document.createElement('div');
+        toolbar.className = 'markdown-toolbar';
+        
+        const tools = [
+            { icon: 'bold', action: () => this.insertMarkdown('**', '**'), title: 'Bold' },
+            { icon: 'italic', action: () => this.insertMarkdown('_', '_'), title: 'Italic' },
+            { icon: 'list', action: () => this.insertMarkdown('\n- ', ''), title: 'List' },
+            { icon: 'check-square', action: () => this.insertMarkdown('\n- [ ] ', ''), title: 'Task' },
+            { icon: 'code', action: () => this.insertMarkdown('`', '`'), title: 'Code' },
+            { icon: 'hash', action: () => this.insertMarkdown('\n# ', ''), title: 'Heading' },
+            { icon: 'link', action: () => this.insertMarkdown('', ''), title: 'Link' }
+        ];
+
+        tools.forEach(t => {
+            const btn = document.createElement('button');
+            btn.className = 'btn-md-tool';
+            btn.innerHTML = `<i data-feather="${t.icon}"></i>`;
+            btn.title = t.title;
+            btn.onclick = (e) => {
+                e.preventDefault();
+                t.action();
+            };
+            toolbar.appendChild(btn);
+        });
+
+        // Insert after the minimal toolbar
+        const topBar = editorPanel.querySelector('.editor-toolbar-minimal');
+        if (topBar) {
+            topBar.parentNode.insertBefore(toolbar, topBar.nextSibling);
+        }
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     setupSmartSuggestions() {
@@ -230,6 +269,7 @@ class UIService {
             toolbar.insertBefore(btn, toolbar.firstChild);
         }
 
+        if (typeof feather !== 'undefined') feather.replace();
         document.getElementById('close-suggestions')?.addEventListener('click', () => this.toggleSmartSuggestions(false));
     }
 
@@ -268,6 +308,8 @@ class UIService {
         if (!document.getElementById('mobile-footer')) {
             this.renderMobileFooter();
         }
+        
+        this.setupFooterAutoHide();
 
         // Handle resize events to reset layout
         window.addEventListener('resize', () => {
@@ -280,15 +322,41 @@ class UIService {
         });
     }
 
+    setupFooterAutoHide() {
+        const scrollContainers = [
+            document.querySelector('.editor-canvas'),
+            document.getElementById('notes-list')?.parentElement,
+            document.querySelector('.dashboard-panel')
+        ];
+
+        scrollContainers.forEach(container => {
+            if (!container) return;
+            let lastScroll = 0;
+            container.addEventListener('scroll', () => {
+                if (!this.footerAutoHide) return;
+                const current = container.scrollTop;
+                const footer = document.getElementById('mobile-footer');
+                
+                if (current > lastScroll && current > 50) {
+                    footer?.classList.add('footer-hidden');
+                } else {
+                    footer?.classList.remove('footer-hidden');
+                }
+                lastScroll = current;
+            }, { passive: true });
+        });
+    }
+
     renderMobileFooter() {
         const footer = document.createElement('nav');
         footer.id = 'mobile-footer';
         footer.className = 'mobile-footer glass-panel';
         
         const items = [
+            { id: 'nav-dash', icon: 'grid', label: 'Dash', view: 'dashboard' },
             { id: 'nav-all', icon: 'file-text', label: 'Notes', view: 'all' },
-            { id: 'nav-favorites', icon: 'star', label: 'Favorites', view: 'favorites' },
-            { id: 'nav-trash', icon: 'trash-2', label: 'Trash', view: 'trash' },
+            { id: 'nav-fav', icon: 'star', label: 'Favs', view: 'favorites' },
+            { id: 'nav-tmpl', icon: 'copy', label: 'Tmpl', view: 'templates' },
             { id: 'nav-settings', icon: 'settings', label: 'Settings', action: 'settings' }
         ];
 
@@ -1066,6 +1134,7 @@ class UIService {
 
         // Settings Modal
         document.getElementById('btn-settings')?.addEventListener('click', () => this.openSettingsModal());
+        document.getElementById('btn-vault-settings')?.addEventListener('click', () => this.openSettingsModal());
         document.getElementById('close-settings-modal')?.addEventListener('click', () => {
             document.getElementById('settings-modal').classList.add('hidden');
         });
@@ -1542,6 +1611,17 @@ class UIService {
                             <option value="lg">Large</option>
                         </select>
                     </div>
+                    
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Auto-hide Footer</span>
+                            <span class="settings-item-desc">Hide navigation on scroll (Mobile)</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="setting-footer-autohide" class="toggle-input">
+                            <label for="setting-footer-autohide" class="toggle-label"></label>
+                        </div>
+                    </div>
 
                     <h3>Security</h3>
                     <div class="settings-item">
@@ -1587,6 +1667,10 @@ class UIService {
             this._bindSetting('setting-smart-lists', 'pinbridge.smart_lists', 'checkbox');
             this._bindSetting('setting-font-size', 'pinbridge.ui_font_size', 'value', (val) => {
                 document.documentElement.style.setProperty('--font-size-base', val === 'lg' ? '18px' : val === 'sm' ? '14px' : '16px');
+            });
+            this._bindSetting('setting-footer-autohide', 'pinbridge.footer_autohide', 'checkbox', (val) => {
+                this.footerAutoHide = val;
+                document.getElementById('mobile-footer')?.classList.remove('footer-hidden'); // Reset
             });
             
             // Timeout logic would go here (updating authService)
@@ -2682,19 +2766,19 @@ class UIService {
 
         // 2 Create new empty note (non-persisted until typed in)
         const id = await notesService.createNote("", "", "", [], { persist: false, isTemplate: isTemplateView });
-
-        // 3. Render view to show legacy note updates and prep list
-        this.renderCurrentView();
-
-        // 4. Select the new note (which is now in memory notes list)
-        // We need to fetch the full object from notesService to be safe
+        
+        // Ensure the new note has a timestamp for sorting
         const newNote = notesService.notes.find(n => n.id === id);
         if (newNote) {
+            newNote.updated = Date.now(); // Force top sort
             this.selectNote(newNote);
         } else {
             // Fallback
-            this.selectNote({ id, title: "", body: "", trash: false, folder: "", tags: [], isTemplate: isTemplateView });
+            this.selectNote({ id, title: "", body: "", trash: false, folder: "", tags: [], isTemplate: isTemplateView, updated: Date.now() });
         }
+
+        // 3. Render view to show legacy note updates and prep list
+        this.renderCurrentView();
 
         this.inputs.noteTitle?.focus();
     }
@@ -3332,11 +3416,14 @@ class UIService {
 
         this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
         await notesService.updateNote(this.activeNoteId, title, body, folder, tags);
+        const updatedNote = notesService.notes.find(n => n.id === this.activeNoteId);
         this.setStatus(i18n.t('statusSaved') + (folder ? ` (${folder})` : ''));
         this.renderFolders();
         this.refreshSaveButtonState();
         this.updateActiveListItem(note);
         this.renderNoteMeta(note); // Update display
+        this.updateActiveListItem(updatedNote);
+        this.renderNoteMeta(updatedNote); // Update display
         return true;
     }
 

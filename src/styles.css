@@ -386,12 +386,6 @@ body {
     display: none;
 }
 
-@media (min-width: 900px) {
-    .auth-header.desktop-only {
-        display: flex;
-    }
-}
-
 .auth-settings-mobile {
     display: none;
     flex-direction: column;
@@ -4032,6 +4026,39 @@ input[type="file"]::file-selector-button {
     0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); }
     70% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
     100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
+}
+
+/* Markdown Toolbar */
+.markdown-toolbar {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.5rem 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.btn-md-tool {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-md-tool:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+}
+
+.btn-md-tool svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* High DPI displays */
