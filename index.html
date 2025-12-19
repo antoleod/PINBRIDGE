@@ -50,12 +50,14 @@
                 <div id="auth-choice" class="auth-choice-panel glass-panel hidden">
                     <div class="auth-choice-meta">
                         <p class="eyebrow" data-i18n="authChoiceTitle">Select an option to continue</p>
-                        <p class="hint" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.</p>
+                        <p class="hint" data-i18n="authChoice">Welcome to PINBRIDGE. Choose how you want to continue.
+                        </p>
                     </div>
                     <div class="auth-choice-actions">
                         <button type="button" class="btn btn-primary" id="btn-auth-choice-create">
                             <span data-i18n="actionCreateVault">Create New Vault</span>
-                            <small data-i18n="authChoiceCreateHint">Set a username and PIN to start a secure vault.</small>
+                            <small data-i18n="authChoiceCreateHint">Set a username and PIN to start a secure
+                                vault.</small>
                         </button>
                         <button type="button" class="btn btn-secondary" id="btn-auth-choice-existing">
                             <span data-i18n="actionExistingVault">I already have a Vault</span>
@@ -68,14 +70,14 @@
                     <form id="login-form">
                         <div class="input-group">
                             <label for="login-username" class="visually-hidden">Username</label>
-                            <input type="text" id="login-username" autocomplete="username"
-                                placeholder="Username" data-i18n-placeholder="usernamePlaceholder">
+                            <input type="text" id="login-username" autocomplete="username" placeholder="Username"
+                                data-i18n-placeholder="usernamePlaceholder">
                         </div>
                         <div class="input-group">
                             <div class="input-wrapper">
                                 <label for="login-pin" class="visually-hidden">PIN</label>
-                                <input type="password" id="login-pin" autocomplete="current-password"
-                                    placeholder="PIN" data-i18n-placeholder="pinPlaceholder">
+                                <input type="password" id="login-pin" autocomplete="current-password" placeholder="PIN"
+                                    data-i18n-placeholder="pinPlaceholder">
                                 <button type="button" class="btn-toggle-visibility" data-target="login-pin"
                                     aria-label="Show PIN" title="Show PIN">
                                     <!-- Icon will be injected by JS -->
@@ -86,7 +88,7 @@
                             data-i18n="loginSubmit">Unlock</button>
                     </form>
                     <p class="hint center" style="margin-top: 1rem; font-size: 0.85rem;">
-                        Don't have a vault? 
+                        Don't have a vault?
                         <button type="button" class="btn-link" id="btn-switch-to-register">
                             Create one
                         </button>
@@ -98,15 +100,16 @@
                     <form id="register-form">
                         <div class="input-group">
                             <label for="register-username" class="visually-hidden">Username</label>
-                            <input type="text" id="register-username" autocomplete="username"
-                                placeholder="Username" data-i18n-placeholder="usernamePlaceholder" required>
+                            <input type="text" id="register-username" autocomplete="username" placeholder="Username"
+                                data-i18n-placeholder="usernamePlaceholder" required>
                             <span class="error-message" id="register-username-error" aria-live="polite"></span>
                         </div>
                         <div class="input-group">
                             <div class="input-wrapper">
                                 <label for="register-pin" class="visually-hidden">PIN</label>
                                 <input type="password" id="register-pin" autocomplete="new-password"
-                                    placeholder="PIN (4-6 digits)" data-i18n-placeholder="pinPlaceholder" minlength="4" maxlength="6" required>
+                                    placeholder="PIN (4-6 digits)" data-i18n-placeholder="pinPlaceholder" minlength="4"
+                                    maxlength="6" required>
                                 <button type="button" class="btn-toggle-visibility" data-target="register-pin"
                                     aria-label="Show PIN" title="Show PIN">
                                     <!-- Icon will be injected by JS -->
@@ -118,7 +121,7 @@
                             data-i18n="registerSubmit">Create Vault</button>
                     </form>
                     <p class="hint center" style="margin-top: 1rem; font-size: 0.85rem;">
-                        Already have a vault? 
+                        Already have a vault?
                         <button type="button" class="btn-link" id="btn-switch-to-login">
                             Sign in
                         </button>
@@ -127,16 +130,17 @@
             </div>
 
             <div class="auth-footer">
-                <button type="button" class="btn btn-icon" id="btn-settings" title="Settings" aria-label="Open settings">
+                <button type="button" class="btn btn-icon" id="btn-settings" title="Settings"
+                    aria-label="Open settings">
                     <i data-feather="settings"></i>
                 </button>
-                <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i> Recovery</button>
+                <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i>
+                    Recovery</button>
             </div>
         </div>
 
         <!-- SETTINGS MODAL -->
-        <dialog id="auth-settings-modal" class="modal-overlay hidden"
-            aria-labelledby="settings-modal-title">
+        <dialog id="auth-settings-modal" class="modal-overlay hidden" aria-labelledby="settings-modal-title">
             <div class="modal-content glass-panel settings-panel">
                 <div class="settings-panel-header">
                     <div>
@@ -173,12 +177,30 @@
                         </div>
                     </button>
                 </div>
+
+                <!-- ADDITIVE: System Health Check (Natural Discovery) -->
+                <div class="settings-section mt-1">
+                    <p class="eyebrow">System Status</p>
+                    <div class="status-grid">
+                        <div class="status-item">
+                            <span class="status-indicator" id="status-offline-indicator"></span>
+                            <span id="status-offline-text">Connectivity Mode</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-indicator status-ok"></span>
+                            <span id="status-version-text">Version 2.0.4 (Stable)</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-indicator status-secure"></span>
+                            <span>AES-GCM 256-bit</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </dialog>
 
         <!-- ACCOUNT RECOVERY MODAL -->
-        <dialog id="recovery-modal" class="modal-overlay hidden"
-            aria-labelledby="recovery-modal-title">
+        <dialog id="recovery-modal" class="modal-overlay hidden" aria-labelledby="recovery-modal-title">
             <div class="modal-content glass-panel settings-panel">
                 <div class="modal-header">
                     <h2 id="recovery-modal-title">Account Recovery</h2>
@@ -253,7 +275,8 @@
                         <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
                     </form>
 
-                    <button type="button" class="btn btn-text" id="btn-back-from-recovery"><i data-feather="arrow-left"></i> Back to Login</button>
+                    <button type="button" class="btn btn-text" id="btn-back-from-recovery"><i
+                            data-feather="arrow-left"></i> Back to Login</button>
                 </div>
             </div>
         </dialog>
@@ -265,367 +288,367 @@
 
         <!-- SIDEBAR -->
         <nav class="sidebar glass-panel">
-                <div class="sidebar-top">
-                    <div class="logo-small">
-                        <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE mark">
-                    </div>
+            <div class="sidebar-top">
+                <div class="logo-small">
+                    <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE mark">
                 </div>
+            </div>
 
-                <div class="nav-items">
-                    <button class="nav-item active" data-view="all" title="All Notes" data-i18n-title="navAll"
-                        aria-label="All Notes">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                            <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                            <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                            <polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                    <button class="nav-item" data-view="dashboard" title="Dashboard" data-i18n-title="navDashboard"
-                        aria-label="Dashboard">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                            <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                            <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                            <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                    <button class="nav-item" data-view="favorites" title="Favorites" data-i18n-title="navFavorites"
-                        aria-label="Favorites">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <polygon
-                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                    <button class="nav-item" data-view="templates" title="Templates" data-i18n-title="navTemplates"
-                        aria-label="Templates">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M8 13h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                            <path d="M8 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                            <path d="M10 9h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                    <button class="nav-item" data-view="trash" title="Trash" data-i18n-title="navTrash"
-                        aria-label="Trash">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                    <button class="nav-item" data-view="archive" title="Archive" data-i18n-title="navArchive"
-                        aria-label="Archive">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor"
-                                stroke-width="2" />
-                            <path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                        </svg>
-                    </button>
-                </div>
+            <div class="nav-items">
+                <button class="nav-item active" data-view="all" title="All Notes" data-i18n-title="navAll"
+                    aria-label="All Notes">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <line x1="16" y1="13" x2="8" y2="13" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <line x1="16" y1="17" x2="8" y2="17" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <polyline points="10 9 9 9 8 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" data-view="dashboard" title="Dashboard" data-i18n-title="navDashboard"
+                    aria-label="Dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <rect x="3" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="14" y="3" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="14" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="3" y="14" width="7" height="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" data-view="favorites" title="Favorites" data-i18n-title="navFavorites"
+                    aria-label="Favorites">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <polygon
+                            points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" data-view="templates" title="Templates" data-i18n-title="navTemplates"
+                    aria-label="Templates">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M8 13h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M8 17h8" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M10 9h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" data-view="trash" title="Trash" data-i18n-title="navTrash" aria-label="Trash">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <polyline points="3 6 5 6 21 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" data-view="archive" title="Archive" data-i18n-title="navArchive"
+                    aria-label="Archive">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2" />
+                        <path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
 
-                <div class="sidebar-divider"></div>
-                <div id="folder-list" class="nav-folders">
-                    <!-- Dynamic Folders -->
-                </div>
+            <div class="sidebar-divider"></div>
+            <div id="folder-list" class="nav-folders">
+                <!-- Dynamic Folders -->
+            </div>
 
-                <div class="sidebar-bottom">
-                    <div id="sync-status-indicator" class="sync-status-item" title="Connecting...">
-                        <span class="sync-dot status-offline"></span>
-                        <span class="sync-label" data-i18n="statusOffline">Offline</span>
-                    </div>
-                    <button class="nav-item" id="btn-vault-settings" title="Settings" data-i18n-title="settings"
-                        aria-label="Open vault settings">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                    <button class="nav-item" id="btn-tags-manager" title="Manage Tags" aria-label="Manage Tags">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
-                    <button class="nav-item" id="btn-lock" title="Lock Vault" data-i18n-title="lockVault"
-                        aria-label="Lock Vault">
-                        <svg viewBox="0 0 24 24" fill="none" class="icon">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                    </button>
+            <div class="sidebar-bottom">
+                <div id="sync-status-indicator" class="sync-status-item" title="Connecting...">
+                    <span class="sync-dot status-offline"></span>
+                    <span class="sync-label" data-i18n="statusOffline">Offline</span>
                 </div>
+                <button class="nav-item" id="btn-vault-settings" title="Settings" data-i18n-title="settings"
+                    aria-label="Open vault settings">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" id="btn-tags-manager" title="Manage Tags" aria-label="Manage Tags">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        <line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" id="btn-lock" title="Lock Vault" data-i18n-title="lockVault"
+                    aria-label="Lock Vault">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
         </nav>
 
         <!-- MOBILE TOP BAR -->
         <div id="mobile-topbar" class="mobile-topbar hidden glass-panel">
-                <button id="btn-mobile-menu" class="btn-icon ghost" title="Menu" aria-label="Open menu"><i data-feather="menu"></i></button>
-                <button class="topbar-logo" title="PINBRIDGE">
-                    <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
-                </button>
-                <div class="topbar-actions">
-                    <button class="nav-pill" data-view="all" title="Notes" data-i18n="mobileNotes">Notes</button>
-                    <button class="nav-pill" data-view="favorites" title="Favorites"
-                        data-i18n="mobileFavorites">Favorites</button>
-                    <button class="nav-pill" data-view="trash" title="Trash" data-i18n="mobileTrash">Trash</button>
-                </div>
-                <div class="topbar-utilities">
-                    <button id="mobile-new-note" class="btn-icon-primary" title="New note"
-                        data-i18n-title="newNoteTooltip">+</button>
-                    <button id="mobile-lock" class="btn-icon ghost" title="Lock"><i data-feather="lock"></i></button>
-                </div>
+            <button id="btn-mobile-menu" class="btn-icon ghost" title="Menu" aria-label="Open menu"><i
+                    data-feather="menu"></i></button>
+            <button class="topbar-logo" title="PINBRIDGE">
+                <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
+            </button>
+            <div class="topbar-actions">
+                <button class="nav-pill" data-view="all" title="Notes" data-i18n="mobileNotes">Notes</button>
+                <button class="nav-pill" data-view="favorites" title="Favorites"
+                    data-i18n="mobileFavorites">Favorites</button>
+                <button class="nav-pill" data-view="trash" title="Trash" data-i18n="mobileTrash">Trash</button>
+            </div>
+            <div class="topbar-utilities">
+                <button id="mobile-new-note" class="btn-icon-primary" title="New note"
+                    data-i18n-title="newNoteTooltip">+</button>
+                <button id="mobile-lock" class="btn-icon ghost" title="Lock"><i data-feather="lock"></i></button>
+            </div>
         </div>
 
         <!-- LIST PANEL -->
         <section class="list-panel">
-                <div class="list-header">
-                    <div class="search-wrapper">
-                        <i data-feather="search" class="search-icon"></i>
-                        <input type="text" id="search-input" placeholder="Search..." class="search-input-minimal"
-                            data-i18n-placeholder="searchPlaceholder">
-                        <kbd class="search-hint">/</kbd>
-                    </div>
-                    <div class="list-header-actions">
-                        <button id="btn-notes-settings" class="btn-icon-minimal" title="Notes Settings">
-                            <i data-feather="settings"></i>
-                        </button>
-                        <button id="btn-new-note" class="btn-new-minimal" title="New Note (N)"
-                            data-i18n-title="newNoteTooltip">+</button>
-                    </div>
+            <div class="list-header">
+                <div class="search-wrapper">
+                    <i data-feather="search" class="search-icon"></i>
+                    <input type="text" id="search-input" placeholder="Search..." class="search-input-minimal"
+                        data-i18n-placeholder="searchPlaceholder">
+                    <kbd class="search-hint">/</kbd>
                 </div>
+                <div class="list-header-actions">
+                    <button id="btn-notes-settings" class="btn-icon-minimal" title="Notes Settings">
+                        <i data-feather="settings"></i>
+                    </button>
+                    <button id="btn-new-note" class="btn-new-minimal" title="New Note (N)"
+                        data-i18n-title="newNoteTooltip">+</button>
+                </div>
+            </div>
 
-                <!-- Notes Settings Menu -->
-                <div id="notes-settings-menu" class="notes-settings-menu hidden">
-                    <div class="settings-menu-item">
-                        <label class="settings-toggle">
-                            <input type="checkbox" id="toggle-compact-view" class="toggle-input">
-                            <span class="toggle-label">Compact view</span>
-                        </label>
-                    </div>
-                    <div class="settings-menu-item">
-                        <label class="settings-toggle">
-                            <input type="checkbox" id="toggle-show-preview" class="toggle-input" checked>
-                            <span class="toggle-label">Show preview</span>
-                        </label>
-                    </div>
-                    <div class="settings-menu-item">
-                        <label>Sort by</label>
-                        <select id="notes-sort-select" class="settings-select-minimal">
-                            <option value="updated">Last updated</option>
-                            <option value="created">Date created</option>
-                            <option value="title">Title</option>
-                        </select>
-                    </div>
+            <!-- Notes Settings Menu -->
+            <div id="notes-settings-menu" class="notes-settings-menu hidden">
+                <div class="settings-menu-item">
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="toggle-compact-view" class="toggle-input">
+                        <span class="toggle-label">Compact view</span>
+                    </label>
                 </div>
+                <div class="settings-menu-item">
+                    <label class="settings-toggle">
+                        <input type="checkbox" id="toggle-show-preview" class="toggle-input" checked>
+                        <span class="toggle-label">Show preview</span>
+                    </label>
+                </div>
+                <div class="settings-menu-item">
+                    <label>Sort by</label>
+                    <select id="notes-sort-select" class="settings-select-minimal">
+                        <option value="updated">Last updated</option>
+                        <option value="created">Date created</option>
+                        <option value="title">Title</option>
+                    </select>
+                </div>
+            </div>
 
-                <div id="notes-list" class="scroll-container">
-                    <!-- Notes injected here -->
-                </div>
+            <div id="notes-list" class="scroll-container">
+                <!-- Notes injected here -->
+            </div>
         </section>
 
         <!-- EDITOR PANEL -->
         <section class="editor-panel">
-                <div class="editor-toolbar-minimal">
-                    <div class="editor-meta-minimal">
-                        <input type="text" id="note-folder" placeholder="Folder" list="folder-suggestions"
-                            class="meta-input-minimal" data-i18n-placeholder="folderPlaceholder">
-                        <input type="text" id="note-tags" placeholder="#tags" class="meta-input-minimal"
-                            data-i18n-placeholder="tagsPlaceholder">
-                        <datalist id="folder-suggestions"></datalist>
-                    </div>
-                    <div class="editor-actions-minimal">
-                        <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode" aria-label="Toggle Focus Mode">
-                            <i data-feather="maximize"></i>
-                        </button>
-                        <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
-                            <i data-feather="map-pin"></i>
-                        </button>
-                        <button class="btn-tool-minimal" id="btn-delete" title="Delete" data-i18n-title="delete">
-                            <i data-feather="trash-2"></i>
-                        </button>
-                    </div>
+            <div class="editor-toolbar-minimal">
+                <div class="editor-meta-minimal">
+                    <input type="text" id="note-folder" placeholder="Folder" list="folder-suggestions"
+                        class="meta-input-minimal" data-i18n-placeholder="folderPlaceholder">
+                    <input type="text" id="note-tags" placeholder="#tags" class="meta-input-minimal"
+                        data-i18n-placeholder="tagsPlaceholder">
+                    <datalist id="folder-suggestions"></datalist>
                 </div>
+                <div class="editor-actions-minimal">
+                    <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode"
+                        aria-label="Toggle Focus Mode">
+                        <i data-feather="maximize"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
+                        <i data-feather="map-pin"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-delete" title="Delete" data-i18n-title="delete">
+                        <i data-feather="trash-2"></i>
+                    </button>
+                </div>
+            </div>
 
-                <div class="editor-canvas">
-                    <input type="text" id="note-title" placeholder="Untitled" class="editor-input-title"
-                        data-i18n-placeholder="noteTitlePlaceholder">
-                    <textarea id="note-content" placeholder="Start typing..." class="editor-input-body"
-                        data-i18n-placeholder="noteBodyPlaceholder"></textarea>
-                </div>
+            <div class="editor-canvas">
+                <input type="text" id="note-title" placeholder="Untitled" class="editor-input-title"
+                    data-i18n-placeholder="noteTitlePlaceholder">
+                <textarea id="note-content" placeholder="Start typing..." class="editor-input-body"
+                    data-i18n-placeholder="noteBodyPlaceholder"></textarea>
+            </div>
         </section>
 
         <!-- DASHBOARD PANEL -->
         <section class="dashboard-panel hidden">
-                <div class="dashboard-header">
-                    <h1>Dashboard</h1>
-                    <p class="subtitle">Your productivity at a glance</p>
-                </div>
+            <div class="dashboard-header">
+                <h1>Dashboard</h1>
+                <p class="subtitle">Your productivity at a glance</p>
+            </div>
 
-                <div class="dashboard-grid">
-                    <!-- Stats Cards -->
-                    <div class="dashboard-card glass-panel">
-                        <div class="card-icon">??</div>
-                        <div class="card-content">
-                            <h3 id="stat-total-notes">0</h3>
-                            <p>Total Notes</p>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-card glass-panel">
-                        <div class="card-icon">?</div>
-                        <div class="card-content">
-                            <h3 id="stat-favorites">0</h3>
-                            <p>Favorites</p>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-card glass-panel">
-                        <div class="card-icon">??</div>
-                        <div class="card-content">
-                            <h3 id="stat-folders">0</h3>
-                            <p>Folders</p>
-                        </div>
-                    </div>
-
-                    <div class="dashboard-card glass-panel">
-                        <div class="card-icon">???</div>
-                        <div class="card-content">
-                            <h3 id="stat-tags">0</h3>
-                            <p>Tags</p>
-                        </div>
-                    </div>
-
-                    <!-- Recent Notes -->
-                    <div class="dashboard-section glass-panel">
-                        <h2>Recent Notes</h2>
-                        <div id="dashboard-recent-notes" class="dashboard-list">
-                            <!-- Injected dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Top Tags -->
-                    <div class="dashboard-section glass-panel">
-                        <h2>Popular Tags</h2>
-                        <div id="dashboard-top-tags" class="tag-cloud">
-                            <!-- Injected dynamically -->
-                        </div>
-                    </div>
-
-                    <!-- Quick Actions -->
-                    <div class="dashboard-section glass-panel">
-                        <h2>Quick Actions</h2>
-                        <div class="quick-actions-grid">
-                            <button class="quick-action-btn" data-action="new-note">
-                                <span>?</span>
-                                <span>New Note</span>
-                            </button>
-                            <button class="quick-action-btn" data-action="new-template">
-                                <span>??</span>
-                                <span>New Template</span>
-                            </button>
-                            <button class="quick-action-btn" data-action="view-favorites">
-                                <span>?</span>
-                                <span>Favorites</span>
-                            </button>
-                            <button class="quick-action-btn" data-action="view-trash">
-                                <span>???</span>
-                                <span>Trash</span>
-                            </button>
-                        </div>
+            <div class="dashboard-grid">
+                <!-- Stats Cards -->
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">??</div>
+                    <div class="card-content">
+                        <h3 id="stat-total-notes">0</h3>
+                        <p>Total Notes</p>
                     </div>
                 </div>
+
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">?</div>
+                    <div class="card-content">
+                        <h3 id="stat-favorites">0</h3>
+                        <p>Favorites</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">??</div>
+                    <div class="card-content">
+                        <h3 id="stat-folders">0</h3>
+                        <p>Folders</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card glass-panel">
+                    <div class="card-icon">???</div>
+                    <div class="card-content">
+                        <h3 id="stat-tags">0</h3>
+                        <p>Tags</p>
+                    </div>
+                </div>
+
+                <!-- Recent Notes -->
+                <div class="dashboard-section glass-panel">
+                    <h2>Recent Notes</h2>
+                    <div id="dashboard-recent-notes" class="dashboard-list">
+                        <!-- Injected dynamically -->
+                    </div>
+                </div>
+
+                <!-- Top Tags -->
+                <div class="dashboard-section glass-panel">
+                    <h2>Popular Tags</h2>
+                    <div id="dashboard-top-tags" class="tag-cloud">
+                        <!-- Injected dynamically -->
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-section glass-panel">
+                    <h2>Quick Actions</h2>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" data-action="new-note">
+                            <span>?</span>
+                            <span>New Note</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="new-template">
+                            <span>??</span>
+                            <span>New Template</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-favorites">
+                            <span>?</span>
+                            <span>Favorites</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-trash">
+                            <span>???</span>
+                            <span>Trash</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </section>
 
     </section>
 
     <!-- COMMAND PALETTE (Dynamically injected but CSS ready) -->
 
-        <!-- RECOVERY KEY MODAL -->
-        <dialog id="recovery-key-modal" class="modal-overlay hidden">
-            <div class="modal-content glass-panel">
-                <h2 data-i18n="recoveryTitle">Save Your Recovery Key</h2>
-                <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it
-                    somewhere safe. You will need it if you forget your PIN.</p>
-                <div class="recovery-key-container">
-                    <pre id="recovery-key-display"></pre>
-                    <button id="copy-recovery-key" class="btn btn-secondary" data-i18n="recoveryCopy">Copy</button>
-                </div>
-                <button id="close-recovery-modal" class="btn btn-primary btn-block" data-i18n="recoveryClose">I have
-                    saved
-                    my key. Continue.</button>
+    <!-- RECOVERY KEY MODAL -->
+    <dialog id="recovery-key-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <h2 data-i18n="recoveryTitle">Save Your Recovery Key</h2>
+            <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it
+                somewhere safe. You will need it if you forget your PIN.</p>
+            <div class="recovery-key-container">
+                <pre id="recovery-key-display"></pre>
+                <button id="copy-recovery-key" class="btn btn-secondary" data-i18n="recoveryCopy">Copy</button>
             </div>
-        </dialog>
+            <button id="close-recovery-modal" class="btn btn-primary btn-block" data-i18n="recoveryClose">I have
+                saved
+                my key. Continue.</button>
+        </div>
+    </dialog>
 
-        <!-- REMINDERS MODAL -->
-        <dialog id="reminders-modal" class="modal-overlay hidden">
-            <div class="modal-content glass-panel">
-                <div class="modal-header">
-                    <h2>Set Reminder</h2>
-                    <button id="close-reminders-modal" class="btn-icon ghost">×</button>
-                </div>
-                <div class="form-group">
-                    <label for="reminder-datetime">Date & Time</label>
-                    <input type="datetime-local" id="reminder-datetime" class="input-field">
-                </div>
-                <div class="form-group">
-                    <label for="reminder-recurrence">Recurrence</label>
-                    <select id="reminder-recurrence" class="settings-select">
-                        <option value="none">None</option>
-                        <option value="daily">Daily</option>
-                        <option value="weekly">Weekly</option>
-                        <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-                <div class="modal-actions">
-                    <button id="save-reminder" class="btn btn-primary">Set Reminder</button>
-                </div>
+    <!-- REMINDERS MODAL -->
+    <dialog id="reminders-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Set Reminder</h2>
+                <button id="close-reminders-modal" class="btn-icon ghost">×</button>
             </div>
-        </dialog>
-        <!-- HISTORY MODAL -->
-        <dialog id="history-modal" class="modal-overlay hidden">
-            <div class="modal-content glass-panel note-history-modal">
-                <div class="modal-header">
-                    <h2>Note History</h2>
-                    <button id="close-history-modal" class="btn-icon ghost">×</button>
-                </div>
-                <div id="history-list" class="history-list scroll-container">
-                    <!-- Versions injected here -->
-                </div>
+            <div class="form-group">
+                <label for="reminder-datetime">Date & Time</label>
+                <input type="datetime-local" id="reminder-datetime" class="input-field">
             </div>
-        </dialog>
+            <div class="form-group">
+                <label for="reminder-recurrence">Recurrence</label>
+                <select id="reminder-recurrence" class="settings-select">
+                    <option value="none">None</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button id="save-reminder" class="btn btn-primary">Set Reminder</button>
+            </div>
+        </div>
+    </dialog>
+    <!-- HISTORY MODAL -->
+    <dialog id="history-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel note-history-modal">
+            <div class="modal-header">
+                <h2>Note History</h2>
+                <button id="close-history-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div id="history-list" class="history-list scroll-container">
+                <!-- Versions injected here -->
+            </div>
+        </div>
+    </dialog>
 
-        <!-- TEMPLATE MODAL -->
-        <dialog id="template-modal" class="modal-overlay hidden">
-            <div class="modal-content glass-panel note-history-modal"> <!-- reusing style -->
-                <div class="modal-header">
-                    <h2>Insert Template</h2>
-                    <button id="close-template-modal" class="btn-icon ghost">×</button>
-                </div>
-                <div id="template-list" class="history-list scroll-container">
-                    <!-- Templates injected here -->
-                </div>
+    <!-- TEMPLATE MODAL -->
+    <dialog id="template-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel note-history-modal"> <!-- reusing style -->
+            <div class="modal-header">
+                <h2>Insert Template</h2>
+                <button id="close-template-modal" class="btn-icon ghost">×</button>
             </div>
-        </dialog>
+            <div id="template-list" class="history-list scroll-container">
+                <!-- Templates injected here -->
+            </div>
+        </div>
+    </dialog>
 
         <!-- SETTINGS MODAL (Main) -->
         <dialog id="settings-modal" class="modal-overlay hidden">
@@ -636,171 +659,261 @@
                 </div>
                 <p class="hint">Vault Settings (post-login). Requires an unlocked vault.</p>
                 <div class="settings-tabs">
-                    <button class="settings-tab active" data-tab="general">General</button>
-                    <button class="settings-tab" data-tab="security">Security</button>
-                    <button class="settings-tab" data-tab="tools">Tools</button>
+                <button class="settings-tab active" data-tab="general">General</button>
+                <button class="settings-tab" data-tab="security">Security</button>
+                <button class="settings-tab" data-tab="tools">Tools</button>
+                <button class="settings-tab" data-tab="activity">Activity</button>
+            </div>
+            <div class="settings-content-container">
+                <!-- General Settings Panel -->
+                <div id="settings-general" class="settings-content">
+                    <h3>General Settings</h3>
+                    <h4>Theme</h4>
+                    <div id="theme-switcher" class="settings-grid">
+                        <!-- Theme options are injected here -->
+                    </div>
+                    <div class="divider"></div>
+                    <h4>Sync</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Cloud Sync</span>
+                            <span class="settings-item-desc">Securely sync your encrypted vault across
+                                devices.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-sync-enabled" class="toggle-input">
+                            <label for="toggle-sync-enabled" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <h4>View Preferences</h4>
+                    <div class="settings-item">
+                        <span class="settings-item-title">Default View</span>
+                        <select id="default-view-select" class="settings-select">
+                            <option value="grid">Grid</option>
+                            <option value="list">List</option>
+                        </select>
+                    </div>
+                    <div class="divider"></div>
+                    <h4>Input Intelligence</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Auto-detection</span>
+                            <span class="settings-item-desc">Automatically detect checklists, tags, and commands
+                                like
+                                !pin.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-input-detection" class="toggle-input" checked>
+                            <label for="toggle-input-detection" class="toggle-label"></label>
+                        </div>
+                    </div>
                 </div>
-                <div class="settings-content-container">
-                    <!-- General Settings Panel -->
-                    <div id="settings-general" class="settings-content">
-                        <h3>General Settings</h3>
-                        <h4>Theme</h4>
-                        <div id="theme-switcher" class="settings-grid">
-                            <!-- Theme options are injected here -->
+                <div id="settings-security" class="settings-content hidden">
+                    <h3>Security & Recovery</h3>
+                    <h4>Session Security</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Auto-Lock on Inactivity</span>
+                            <span class="settings-item-desc">Lock the vault after a period of inactivity.</span>
                         </div>
-                        <div class="divider"></div>
-                        <h4>Sync</h4>
-                        <div class="settings-item">
-                            <div class="settings-item-content">
-                                <span class="settings-item-title">Cloud Sync</span>
-                                <span class="settings-item-desc">Securely sync your encrypted vault across
-                                    devices.</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="toggle-sync-enabled" class="toggle-input">
-                                <label for="toggle-sync-enabled" class="toggle-label"></label>
-                            </div>
-                        </div>
-                        <div class="divider"></div>
-                        <h4>View Preferences</h4>
-                        <div class="settings-item">
-                            <span class="settings-item-title">Default View</span>
-                            <select id="default-view-select" class="settings-select">
-                                <option value="grid">Grid</option>
-                                <option value="list">List</option>
-                            </select>
-                        </div>
-                        <div class="divider"></div>
-                        <h4>Input Intelligence</h4>
-                        <div class="settings-item">
-                            <div class="settings-item-content">
-                                <span class="settings-item-title">Auto-detection</span>
-                                <span class="settings-item-desc">Automatically detect checklists, tags, and commands
-                                    like
-                                    !pin.</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="toggle-input-detection" class="toggle-input" checked>
-                                <label for="toggle-input-detection" class="toggle-label"></label>
-                            </div>
-                        </div>
+                        <select id="autolock-timeout-select" class="settings-select">
+                            <option value="0">Disabled</option>
+                            <option value="1">1 Minute</option>
+                            <option value="5">5 Minutes</option>
+                            <option value="15">15 Minutes</option>
+                            <option value="30">30 Minutes</option>
+                        </select>
                     </div>
-                    <div id="settings-security" class="settings-content hidden">
-                        <h3>Security & Recovery</h3>
-                        <h4>Session Security</h4>
-                        <div class="settings-item">
-                            <div class="settings-item-content">
-                                <span class="settings-item-title">Auto-Lock on Inactivity</span>
-                                <span class="settings-item-desc">Lock the vault after a period of inactivity.</span>
-                            </div>
-                            <select id="autolock-timeout-select" class="settings-select">
-                                <option value="0">Disabled</option>
-                                <option value="1">1 Minute</option>
-                                <option value="5">5 Minutes</option>
-                                <option value="15">15 Minutes</option>
-                                <option value="30">30 Minutes</option>
-                            </select>
-                        </div>
-                        <div class="divider"></div>
-                        <h4>Active Recovery Methods</h4>
-                        <div id="active-recovery-methods" class="recovery-methods-list">
-                            <!-- Active methods are rendered here -->
-                        </div>
+                    <div class="divider"></div>
+                    <h4>Active Recovery Methods</h4>
+                    <div id="active-recovery-methods" class="recovery-methods-list">
+                        <!-- Active methods are rendered here -->
+                    </div>
 
-                        <h4>Recovery Actions</h4>
-                        <div class="recovery-actions">
-                            <div class="recovery-action-card">
-                                <div class="action-header">
-                                    <span class="action-icon">??</span>
-                                    <div>
-                                        <strong>Backup Codes</strong>
-                                        <p>Generate one-time codes to use if you lose your PIN.</p>
-                                    </div>
+                    <h4>Recovery Actions</h4>
+                    <div class="recovery-actions">
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">??</span>
+                                <div>
+                                    <strong>Backup Codes</strong>
+                                    <p>Generate one-time codes to use if you lose your PIN.</p>
                                 </div>
-                                <button id="btn-generate-backup-codes" class="btn btn-secondary">Generate</button>
                             </div>
-                            <div class="recovery-action-card">
-                                <div class="action-header">
-                                    <span class="action-icon">?</span>
-                                    <div>
-                                        <strong>Secret Question</strong>
-                                        <p>Set up a question only you can answer.</p>
-                                    </div>
+                            <button id="btn-generate-backup-codes" class="btn btn-secondary">Generate</button>
+                        </div>
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">?</span>
+                                <div>
+                                    <strong>Secret Question</strong>
+                                    <p>Set up a question only you can answer.</p>
                                 </div>
-                                <button id="btn-setup-secret-question" class="btn btn-secondary">Set Up</button>
                             </div>
-                            <div class="recovery-action-card">
-                                <div class="action-header">
-                                    <span class="action-icon">??</span>
-                                    <div>
-                                        <strong>Recovery File</strong>
-                                        <p>Generate an encrypted file to recover your vault on a new device.</p>
-                                    </div>
+                            <button id="btn-setup-secret-question" class="btn btn-secondary">Set Up</button>
+                        </div>
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">??</span>
+                                <div>
+                                    <strong>Recovery File</strong>
+                                    <p>Generate an encrypted file to recover your vault on a new device.</p>
                                 </div>
-                                <button id="btn-generate-recovery-file" class="btn btn-secondary">Generate</button>
                             </div>
-                            <div class="recovery-action-card">
-                                <div class="action-header">
-                                    <span class="action-icon">??</span>
-                                    <div>
-                                        <strong>Link New Device</strong>
-                                        <p>Securely sync your vault to another device using a QR code.</p>
-                                    </div>
+                            <button id="btn-generate-recovery-file" class="btn btn-secondary">Generate</button>
+                        </div>
+                        <div class="recovery-action-card">
+                            <div class="action-header">
+                                <span class="action-icon">??</span>
+                                <div>
+                                    <strong>Link New Device</strong>
+                                    <p>Securely sync your vault to another device using a QR code.</p>
                                 </div>
-                                <button id="btn-link-device" class="btn btn-secondary">Link</button>
                             </div>
+                            <button id="btn-link-device" class="btn btn-secondary">Link</button>
                         </div>
                     </div>
-                    <div id="settings-tools" class="settings-content hidden">
-                        <h3>Tools</h3>
-                        <h4>Passphrase Generator</h4>
+                </div>
+                <div id="settings-tools" class="settings-content hidden">
+                    <h3>Tools</h3>
+                        <h4>Password Generator</h4>
                         <div class="generated-password-container">
-                            <input type="text" id="generated-password-display" class="input-field" readonly
-                                placeholder="Your new passphrase will appear here...">
+                            <div class="input-wrapper">
+                                <input type="password" id="generated-password-display" class="input-field" readonly
+                                    placeholder="Your new password will appear here...">
+                                <button type="button" class="btn-toggle-visibility" data-target="generated-password-display" data-label="password"
+                                    aria-label="Show password" title="Show password">
+                                    <!-- Icon will be injected by JS -->
+                                </button>
+                            </div>
                             <button id="btn-copy-password" class="btn btn-secondary">Copy</button>
                         </div>
                         <div class="password-options-grid">
                             <div class="form-group">
-                                <label>Format</label>
-                                <p class="hint">Number.Word.Word.WordNumberSymbol</p>
-                            </div>
-                            <div class="form-group">
-                                <label>Notes</label>
-                                <p class="hint">Common words, safe symbols (! @ # $ %), no ambiguous characters.</p>
+                                <label>Length</label>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="pw-length" value="8"> 8</label>
+                                    <label><input type="radio" name="pw-length" value="12" checked> 12</label>
+                                    <label><input type="radio" name="pw-length" value="16"> 16</label>
+                                    <label><input type="radio" name="pw-length" value="20"> 20</label>
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label>Options</label>
                                 <div class="checkbox-group">
+                                    <label><input type="checkbox" id="pw-opt-uppercase" checked> Uppercase</label>
+                                    <label><input type="checkbox" id="pw-opt-numbers" checked> Numbers</label>
+                                    <label><input type="checkbox" id="pw-opt-symbols"> Symbols</label>
+                                    <label><input type="checkbox" id="pw-opt-no-ambiguous"> Exclude I, l, O, 0</label>
                                     <label><input type="checkbox" id="pw-opt-autoclear"> Autoclear clipboard (30s)</label>
                                 </div>
                             </div>
                         </div>
-                        <button id="btn-generate-password" class="btn btn-primary mt-1">Generate Passphrase</button>
-                        <div class="divider"></div>
-                        <h4>Data Management</h4>
-                        <div class="settings-item">
-                            <div class="settings-item-content">
-                                <span class="settings-item-title">Sync Tags</span>
-                                <span class="settings-item-desc">Sync tag names and colors across devices.</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="toggle-tag-sync" class="toggle-input">
-                                <label for="toggle-tag-sync" class="toggle-label"></label>
-                            </div>
+                        <div class="form-group" style="display:flex; gap:0.5rem; align-items:center;">
+                            <button id="btn-generate-password" class="btn btn-primary mt-1">Generate Password</button>
+                            <button id="btn-regenerate-password" class="btn btn-secondary mt-1">Regenerate</button>
                         </div>
-                        <div class="settings-item">
-                            <div class="settings-item-content">
-                                <span class="settings-item-title">Duplicate Note Detection</span>
-                                <span class="settings-item-desc">Warn when saving a note that appears to be a
-                                    duplicate.</span>
-                            </div>
-                            <div class="toggle-switch">
-                                <input type="checkbox" id="toggle-duplicate-detection" class="toggle-input">
-                                <label for="toggle-duplicate-detection" class="toggle-label"></label>
-                            </div>
+                    <div class="divider"></div>
+                    <h4>Data Management</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Sync Tags</span>
+                            <span class="settings-item-desc">Sync tag names and colors across devices.</span>
                         </div>
-                        <button id="btn-find-duplicates" class="btn btn-secondary mt-1">Find All
-                            Duplicates</button>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-tag-sync" class="toggle-input">
+                            <label for="toggle-tag-sync" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Duplicate Note Detection</span>
+                            <span class="settings-item-desc">Warn when saving a note that appears to be a
+                                duplicate.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-duplicate-detection" class="toggle-input">
+                            <label for="toggle-duplicate-detection" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <button id="btn-find-duplicates" class="btn btn-secondary mt-1">Find All
+                        Duplicates</button>
+                </div>
+
+                <!-- ADDITIVE: Session Activity Panel (Requires PIN verification via UI logic) -->
+                <div id="settings-activity" class="settings-content hidden">
+                    <h3>Session Activity</h3>
+                    <p class="hint">Recent activity for this vault instance.</p>
+                    <div id="session-logs-container" class="activity-logs">
+                        <div class="log-item empty">
+                            <span>No recent activity logged in this session.</span>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <h4>Privacy Controls</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Clear Session on Exit</span>
+                            <span class="settings-item-desc">Automatically clear local session cache when the window is
+                                closed.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-clear-on-exit" class="toggle-input" checked>
+                            <label for="toggle-clear-on-exit" class="toggle-label"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </dialog>
+
+        <!-- GENERATED PASSWORD DECISION MODAL -->
+        <dialog id="generated-password-modal" class="modal-overlay hidden" aria-labelledby="generated-password-title">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h2 id="generated-password-title">Generated Password</h2>
+                </div>
+                <div class="form-group">
+                    <label for="generated-password-note-title">Note Title</label>
+                    <input type="text" id="generated-password-note-title" class="input-field"
+                        placeholder="Title required to save">
+                </div>
+                <div class="modal-actions">
+                    <button id="btn-save-generated-password" class="btn btn-primary">Save as Secure Vault Note</button>
+                    <button id="btn-copy-generated-password" class="btn btn-secondary">Copy to Clipboard</button>
+                    <button id="btn-discard-generated-password" class="btn btn-text">Discard</button>
+                </div>
+            </div>
+        </dialog>
+
+        <!-- PASSWORD HISTORY DELETE CONFIRMATION -->
+        <dialog id="password-history-delete-modal" class="modal-overlay hidden" aria-labelledby="password-history-delete-title">
+            <div class="modal-content glass-panel">
+                <div class="modal-header">
+                    <h2 id="password-history-delete-title">Delete Password History</h2>
+                </div>
+                <div id="password-history-delete-step-1">
+                    <p>This will delete your entire password history.</p>
+                    <div class="modal-actions">
+                        <button id="btn-password-delete-cancel" class="btn btn-secondary">Cancel</button>
+                        <button id="btn-password-delete-continue" class="btn btn-primary">Continue</button>
+                    </div>
+                </div>
+                <div id="password-history-delete-step-2" class="hidden">
+                    <p>This action is irreversible.</p>
+                    <div class="modal-actions">
+                        <button id="btn-password-delete-back" class="btn btn-secondary">Go Back</button>
+                        <button id="btn-password-delete-confirm" class="btn btn-primary">Yes, delete</button>
+                    </div>
+                </div>
+                <div id="password-history-delete-step-3" class="hidden">
+                    <p>Type DELETE to confirm.</p>
+                    <div class="form-group">
+                        <input type="text" id="password-history-delete-input" class="input-field" placeholder="DELETE">
+                    </div>
+                    <div class="modal-actions">
+                        <button id="btn-password-delete-final" class="btn btn-primary">Delete</button>
                     </div>
                 </div>
             </div>
@@ -830,7 +943,8 @@
             <div class="form-group hidden" id="self-destruct-time-group">
                 <label for="self-destruct-time-value">Time until deletion</label>
                 <div class="flex-gap-05">
-                    <input type="number" id="self-destruct-time-value" class="input-field flex-grow-1" min="1" value="1">
+                    <input type="number" id="self-destruct-time-value" class="input-field flex-grow-1" min="1"
+                        value="1">
                     <select id="self-destruct-time-unit" class="settings-select flex-grow-2">
                         <option value="minutes">Minutes</option>
                         <option value="hours">Hours</option>
@@ -838,7 +952,7 @@
                     </select>
                 </div>
             </div>
-        </dialog>
+    </dialog>
     </div>
 
     <!-- SCAN QR MODAL (for new device) -->
@@ -874,7 +988,8 @@
                 <h2>Your Backup Codes</h2>
                 <button id="close-backup-codes-modal" class="btn-icon ghost">×</button>
             </div>
-            <p class="warning-text"><i data-feather="alert-triangle"></i> Save these codes in a safe place. Each code can only be used once.</p>
+            <p class="warning-text"><i data-feather="alert-triangle"></i> Save these codes in a safe place. Each code
+                can only be used once.</p>
             <div class="backup-codes-container">
                 <div id="backup-codes-display" class="backup-codes-grid">
                     <!-- Codes injected here -->
@@ -882,8 +997,10 @@
             </div>
             <div class="modal-actions">
                 <button id="copy-backup-codes" class="btn btn-secondary"><i data-feather="copy"></i> Copy All</button>
-                <button id="download-backup-codes" class="btn btn-secondary"><i data-feather="download"></i> Download</button>
-                <button id="confirm-backup-codes" class="btn btn-primary"><i data-feather="check-circle"></i> I've Saved Them</button>
+                <button id="download-backup-codes" class="btn btn-secondary"><i data-feather="download"></i>
+                    Download</button>
+                <button id="confirm-backup-codes" class="btn btn-primary"><i data-feather="check-circle"></i> I've Saved
+                    Them</button>
             </div>
         </div>
     </dialog>

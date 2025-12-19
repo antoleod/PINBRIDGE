@@ -3,31 +3,38 @@ import { vaultService } from './vault.js';
 import { bus } from './core/bus.js';
 import { uiService } from './ui/ui.js';
 
+/**
+ * SECURITY ARCHITECT NOTE:
+ * AuthService manages authentication and high-level recovery flows.
+ * CRITICAL: Auth Settings (pre-login) must NEVER access decrypted vault data or require a PIN.
+ * Pre-login actions are limited to recovery initialization and device sync handshakes.
+ */
+
 // Placeholder for vaultService methods that would be needed
 // In a real implementation, these would be in vault.js and handle crypto.
 // For this response, I'm just defining the interface AuthService would use.
 // This mock should be removed once actual vaultService methods are implemented.
 const mockVaultService = {
-    ...vaultService, // Keep existing methods
-    getVaultRecoveryKey: async () => {
-        console.log('vaultService: Retrieving vault recovery key...');
-        // This would securely retrieve the vault's recovery key from its internal storage.
-        return 'super-secret-vault-recovery-key-from-vault-storage'; // Placeholder
-    },
-    encryptRecoveryKeyWithCredentials: async (recoveryKey, username, partialPin) => {
-        console.log('vaultService: Encrypting recovery key with username and partial PIN...');
-        // Example: derive key from username+partialPin using PBKDF2, then AES-GCM encrypt recoveryKey.
-        return `encrypted:${recoveryKey}:${username}:${partialPin}`; // Simplified placeholder
-    },
-    decryptRecoveryKeyWithCredentials: async (encryptedFileContent, username, partialPin) => {
-        console.log('vaultService: Decrypting recovery key from file with username and partial PIN...');
-        // Example: derive key from username+partialPin, then AES-GCM decrypt fileContent.
-        const parts = encryptedFileContent.split(':');
-        if (parts[0] === 'encrypted' && parts[2] === username && parts[3] === partialPin) {
-            return parts[1]; // Return the original recovery key
-        }
-        throw new Error('Invalid recovery file or credentials.');
+  ...vaultService, // Keep existing methods
+  getVaultRecoveryKey: async () => {
+    console.log('vaultService: Retrieving vault recovery key...');
+    // This would securely retrieve the vault's recovery key from its internal storage.
+    return 'super-secret-vault-recovery-key-from-vault-storage'; // Placeholder
+  },
+  encryptRecoveryKeyWithCredentials: async (recoveryKey, username, partialPin) => {
+    console.log('vaultService: Encrypting recovery key with username and partial PIN...');
+    // Example: derive key from username+partialPin using PBKDF2, then AES-GCM encrypt recoveryKey.
+    return `encrypted:${recoveryKey}:${username}:${partialPin}`; // Simplified placeholder
+  },
+  decryptRecoveryKeyWithCredentials: async (encryptedFileContent, username, partialPin) => {
+    console.log('vaultService: Decrypting recovery key from file with username and partial PIN...');
+    // Example: derive key from username+partialPin, then AES-GCM decrypt fileContent.
+    const parts = encryptedFileContent.split(':');
+    if (parts[0] === 'encrypted' && parts[2] === username && parts[3] === partialPin) {
+      return parts[1]; // Return the original recovery key
     }
+    throw new Error('Invalid recovery file or credentials.');
+  }
 };
 // In a real application, you would directly modify vault.js, not mock it here.
 // For the purpose of demonstrating auth.js changes, we'll use the mock.
@@ -224,7 +231,7 @@ class AuthService {
     this._clearActivityWatchers();
     this.activityEvents.forEach(ev => document.addEventListener(ev, this.activityHandler, { passive: true }));
     this.lastActivity = Date.now();
-    
+
     this.checkInterval = setInterval(() => {
       const now = Date.now();
       const elapsed = now - this.lastActivity;

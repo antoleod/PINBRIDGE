@@ -81,6 +81,11 @@ class NotesService {
         });
     }
 
+    _isGeneratedPasswordNote(note) {
+        if (!note?.tags) return false;
+        return note.tags.some(tag => (typeof tag === 'string' ? tag : tag.name) === 'generated-password');
+    }
+
     /**
      * Create a new note.
      */
@@ -146,7 +151,7 @@ class NotesService {
         });
 
         // Versioning: Save OLD state before updating if it has content
-        if (note.body || note.title) {
+        if ((note.body || note.title) && !this._isGeneratedPasswordNote(note)) {
             await this.saveVersion(note);
         }
 

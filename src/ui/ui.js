@@ -23,7 +23,11 @@ class UIService {
         this.quickDropZone = null;
         this.activeNoteId = null;
         this.currentView = 'all';
-        this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') === 'true';
+        const autoSaveSetting = localStorage.getItem('pinbridge.auto_save');
+        this.autoSaveEnabled = autoSaveSetting !== 'false';
+        if (autoSaveSetting === null) {
+            localStorage.setItem('pinbridge.auto_save', 'true');
+        }
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
         this.footerAutoHide = localStorage.getItem('pinbridge.footer_autohide') === 'true';
         this.saveTimeout = null;
@@ -32,7 +36,7 @@ class UIService {
         this.qrScanner = null;
         this.usernameRecommendationText = null;
         this.storedUsername = null;
-        
+
         // Note Session Tracking
         this.noteSessionStart = 0;
 
@@ -43,6 +47,8 @@ class UIService {
         this.ocrScanInterval = null;
         this.isOcrProcessing = false;
         this.ocrWorker = null;
+        this.activityLogs = [];
+        this.generatedPassword = null;
     }
 
     showLoginForm() {
@@ -168,14 +174,58 @@ class UIService {
             sidebar: document.getElementById('notes-list')?.parentElement || document.querySelector('.notes-sidebar'),
             editor: document.querySelector('.editor-panel')
         };
+
+        // ADDITIVE: Status tracking
+        this.statusIndicators = {
+            offline: document.getElementById('status-offline-indicator'),
+            offlineText: document.getElementById('status-offline-text')
+        };
     }
-    
+
     _getById(id) {
         const el = document.getElementById(id);
         if (!el) {
             console.warn(`UI element with id "${id}" not found.`);
         }
         return el;
+    }
+
+    // ADDITIVE: Transparency & Activity Tracking
+    logActivity(action) {
+        const timestamp = new Date().toLocaleTimeString();
+        this.activityLogs.unshift({ action, time: timestamp });
+        if (this.activityLogs.length > 50) this.activityLogs.pop();
+        // If the settings modal is open and on the activity tab, refresh it
+        if (!document.getElementById('settings-activity')?.classList.contains('hidden')) {
+            this.renderActivityLogs();
+        }
+    }
+
+    renderActivityLogs() {
+        const container = document.getElementById('session-logs-container');
+        if (!container) return;
+
+        if (this.activityLogs.length === 0) {
+            container.innerHTML = '<div class="log-item empty"><span>No recent activity logged.</span></div>';
+            return;
+        }
+
+        container.innerHTML = this.activityLogs.map(log => `
+            <div class="log-item">
+                <span class="log-action">${log.action}</span>
+                <span class="log-time">${log.time}</span>
+            </div>
+        `).join('');
+    }
+
+    updateConnectivityStatus(status) {
+        const isOnline = status === 'online' || navigator.onLine;
+        if (this.statusIndicators.offline) {
+            this.statusIndicators.offline.className = `status-indicator ${isOnline ? 'status-online' : 'status-offline'}`;
+        }
+        if (this.statusIndicators.offlineText) {
+            this.statusIndicators.offlineText.textContent = isOnline ? 'Cloud Linked' : 'Offline Mode';
+        }
     }
 
     init() {
@@ -193,7 +243,9 @@ class UIService {
         this.setupSmartSuggestions();
         this.setupSecurityFeatures();
         this.setStatus(i18n.t('statusReady'));
-        
+        this.updateConnectivityStatus();
+        this.logActivity('System Initialized');
+
         // Initialize settings menu values
         const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
         const sortBy = localStorage.getItem('pinbridge.notes_sort') || 'updated';
@@ -201,7 +253,7 @@ class UIService {
         const sortSelect = document.getElementById('notes-sort-select');
         if (togglePreview) togglePreview.checked = showPreview;
         if (sortSelect) sortSelect.value = sortBy;
-        
+
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
@@ -213,7 +265,7 @@ class UIService {
 
         const toolbar = document.createElement('div');
         toolbar.className = 'markdown-toolbar';
-        
+
         const tools = [
             { icon: 'bold', action: () => this.insertMarkdown('**', '**'), title: 'Bold' },
             { icon: 'italic', action: () => this.insertMarkdown('_', '_'), title: 'Italic' },
@@ -248,7 +300,7 @@ class UIService {
         // Inject Sidebar
         const editorPanel = document.querySelector('.editor-panel');
         if (!editorPanel || document.querySelector('.suggestions-sidebar')) return;
-        
+
         const sidebar = document.createElement('div');
         sidebar.className = 'suggestions-sidebar';
         sidebar.innerHTML = `
@@ -259,7 +311,7 @@ class UIService {
             <div id="suggestions-content" class="suggestions-content"></div>
         `;
         editorPanel.appendChild(sidebar);
-        
+
         // Inject Toolbar Button
         const toolbar = document.querySelector('.editor-actions-minimal');
         if (toolbar && !document.getElementById('btn-smart-suggest')) {
@@ -282,10 +334,10 @@ class UIService {
         const blurEnabled = localStorage.getItem('pinbridge.security_blur') === 'true';
         const handleBlur = () => document.body.classList.add('app-blurred');
         const handleFocus = () => document.body.classList.remove('app-blurred');
-        
+
         window.removeEventListener('blur', handleBlur);
         window.removeEventListener('focus', handleFocus);
-        
+
         if (blurEnabled) {
             window.addEventListener('blur', handleBlur);
             window.addEventListener('focus', handleFocus);
@@ -312,7 +364,7 @@ class UIService {
         if (!document.getElementById('mobile-footer')) {
             this.renderMobileFooter();
         }
-        
+
         this.setupFooterAutoHide();
 
         // Handle resize events to reset layout
@@ -340,7 +392,7 @@ class UIService {
                 if (!this.footerAutoHide) return;
                 const current = container.scrollTop;
                 const footer = document.getElementById('mobile-footer');
-                
+
                 if (current > lastScroll && current > 50) {
                     footer?.classList.add('footer-hidden');
                 } else {
@@ -355,7 +407,7 @@ class UIService {
         const footer = document.createElement('nav');
         footer.id = 'mobile-footer';
         footer.className = 'mobile-footer glass-panel';
-        
+
         const items = [
             { id: 'nav-dash', icon: 'grid', label: 'Dash', view: 'dashboard' },
             { id: 'nav-all', icon: 'file-text', label: 'Notes', view: 'all' },
@@ -369,10 +421,10 @@ class UIService {
             btn.className = `mobile-nav-item ${this.currentView === item.view ? 'active' : ''}`;
             btn.dataset.view = item.view; // Bind view for sync
             btn.innerHTML = `<i data-feather="${item.icon}"></i><span>${item.label}</span>`;
-            
+
             btn.onclick = (e) => {
                 e.preventDefault();
-                
+
                 if (item.action === 'settings') {
                     this.openSettingsModal();
                     return;
@@ -381,11 +433,11 @@ class UIService {
                 // Visual update
                 document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
-                
+
                 // Sync with desktop sidebar logic
                 this.currentView = item.view;
                 this.renderCurrentView();
-                
+
                 // Sync desktop sidebar state
                 document.querySelectorAll('.nav-item').forEach(b => {
                     b.classList.toggle('active', b.dataset.view === item.view);
@@ -407,7 +459,7 @@ class UIService {
         if (window.innerWidth >= 768) return;
         if (this.panels.sidebar) this.panels.sidebar.classList.add('hidden');
         if (this.panels.editor) this.panels.editor.classList.remove('hidden');
-        
+
         document.getElementById('mobile-back-btn')?.classList.remove('hidden');
         this.mobile.btnMenu?.classList.add('hidden');
         if (typeof feather !== 'undefined') feather.replace();
@@ -416,12 +468,12 @@ class UIService {
     exitMobileEditor() {
         if (this.panels.sidebar) this.panels.sidebar.classList.remove('hidden');
         if (this.panels.editor) this.panels.editor.classList.add('hidden');
-        
+
         document.getElementById('mobile-back-btn')?.classList.add('hidden');
         this.mobile.btnMenu?.classList.remove('hidden');
         // Optional: this.activeNoteId = null;
     }
-    
+
     hapticFeedback() {
         if ('vibrate' in navigator) {
             navigator.vibrate(10); // Subtle vibration for 10ms
@@ -469,12 +521,12 @@ class UIService {
         toast.className = `toast toast-${type}`;
         toast.innerText = message;
         host.appendChild(toast);
-        
+
         // Trigger animation
         requestAnimationFrame(() => {
             toast.classList.add('visible');
         });
-        
+
         // Auto remove after delay
         setTimeout(() => {
             toast.classList.remove('visible');
@@ -506,10 +558,18 @@ class UIService {
             this.screens.loading?.classList.add('hidden');
             this.handleLockedSession(reason);
         });
-        
+
         // Session Timeout UI
         bus.on('auth:session-warning', (seconds) => this.updateSessionTimer(seconds));
         bus.on('auth:activity', () => this.hideSessionTimer());
+
+        // ADDITIVE: Connectivity and Sync Status
+        bus.on('sync:status', (status) => {
+            this.updateConnectivityStatus(status);
+            if (status === 'online' || status === 'offline') {
+                this.logActivity(`Connection: ${status}`);
+            }
+        });
 
         window.addEventListener('beforeunload', (e) => {
             // Check if save button is enabled (unsaved changes)
@@ -563,9 +623,9 @@ class UIService {
             if (!isDragging) return;
             currentY = e.touches[0].clientY;
             const diff = currentY - startY;
-            
+
             if (diff > 0) { // Dragging down
-                e.preventDefault(); 
+                e.preventDefault();
                 modal.querySelector('.modal-content').style.transform = `translateY(${diff}px)`;
             }
         }, { passive: false });
@@ -592,7 +652,7 @@ class UIService {
 
     addAuthEventListeners() {
         this.forms.loginForm?.addEventListener('submit', (e) => this.handleLoginSubmit(e));
-        
+
         this.inputs.loginPin?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 this.handleLoginSubmit(e);
@@ -889,7 +949,7 @@ class UIService {
 
     async handleLoginSubmit(e) {
         e.preventDefault();
-        
+
         // Check Lockout
         const lockoutUntil = parseInt(localStorage.getItem('pinbridge.lockout_until') || '0');
         if (Date.now() < lockoutUntil) {
@@ -915,12 +975,13 @@ class UIService {
             }
 
             await authService.unlockWithPin(pin);
+            this.logActivity(`Vault Unlocked: ${username}`);
 
             const welcomeName = vaultService.meta?.username || await storageService.getMeta('vault_username');
             const greeting = welcomeName ? i18n.t('toastWelcomeNamed', { name: welcomeName }) : i18n.t('toastWelcomeBack');
             this.showToast(greeting, 'success');
             this.refreshUsernameRecommendation();
-            
+
             // Reset attempts on success
             this.loginAttempts = 0;
             localStorage.removeItem('pinbridge.lockout_until');
@@ -1022,7 +1083,7 @@ class UIService {
         this.currentView = 'all';
         this.hideSessionTimer();
         document.querySelectorAll('.nav-item, .folder-item').forEach(el => el.classList.remove('active'));
-        
+
         // Don't show a toast on initial load when no session is found
         if (reason === 'no-session') return;
 
@@ -1258,7 +1319,7 @@ class UIService {
         document.getElementById('close-settings-modal')?.addEventListener('click', () => {
             document.getElementById('settings-modal').classList.add('hidden');
         });
-        
+
         // Sync toggle
         const syncToggle = document.getElementById('toggle-sync-enabled');
         if (syncToggle) {
@@ -1271,6 +1332,12 @@ class UIService {
 
         // Duplicate Detection
         this._getById('btn-find-duplicates')?.addEventListener('click', () => this.findDuplicates());
+
+        // Privacy Controls
+        document.getElementById('toggle-clear-on-exit')?.addEventListener('change', (e) => {
+            localStorage.setItem('pinbridge.clear_on_exit', e.target.checked);
+            this.logActivity(`Privacy: Clear session on exit ${e.target.checked ? 'enabled' : 'disabled'}`);
+        });
         // Settings Tabs
         document.querySelectorAll('.settings-tab').forEach(tab => {
             tab.addEventListener('click', e => {
@@ -1282,7 +1349,7 @@ class UIService {
         // Recovery Actions
         document.getElementById('btn-generate-backup-codes')?.addEventListener('click', () => this.generateBackupCodes());
         document.getElementById('btn-setup-secret-question')?.addEventListener('click', () => this.openSecretQuestionModal());
-        
+
         // Device Pairing
         this._getById('btn-link-device')?.addEventListener('click', () => this.showPairingModal());
         this._getById('close-pairing-modal')?.addEventListener('click', () => this.hidePairingModal());
@@ -1307,9 +1374,13 @@ class UIService {
             document.getElementById('secret-question-modal').classList.add('hidden');
         });
 
-        // Passphrase Generator
-        this._getById('btn-generate-password')?.addEventListener('click', () => this.generatePassword());
-        this._getById('btn-copy-password')?.addEventListener('click', () => this.copyPassword());
+        // Password Generator
+        document.getElementById('btn-generate-password')?.addEventListener('click', () => this.generatePassword());
+        document.getElementById('btn-regenerate-password')?.addEventListener('click', () => this.generatePassword());
+        document.getElementById('btn-copy-password')?.addEventListener('click', () => this.copyPassword());
+        document.getElementById('btn-save-generated-password')?.addEventListener('click', () => this.handleSaveGeneratedPassword());
+        document.getElementById('btn-copy-generated-password')?.addEventListener('click', () => this.copyPassword('btn-copy-generated-password'));
+        document.getElementById('btn-discard-generated-password')?.addEventListener('click', () => this.discardGeneratedPassword());
 
         document.getElementById('save-secret-question')?.addEventListener('click', () => this.saveSecretQuestion());
 
@@ -1409,7 +1480,7 @@ class UIService {
                 </div>
             `;
             document.body.appendChild(modal);
-            
+
             this._getById('close-ocr-modal').onclick = () => this.hideOCRModal();
             this._getById('btn-insert-ocr').onclick = () => {
                 this.insertOcrText();
@@ -1419,7 +1490,7 @@ class UIService {
 
         const modal = this._getById('ocr-modal');
         modal.classList.remove('hidden');
-        
+
         // Load and initialize Tesseract
         if (!this.ocrWorker) {
             this.showToast('Loading OCR engine...', 'info');
@@ -1430,8 +1501,8 @@ class UIService {
             this.ocrWorker = await Tesseract.createWorker('eng', 1, {
                 logger: m => {
                     if (m.status === 'recognizing text') {
-                         const statusEl = this._getById('ocr-status');
-                         if(statusEl) statusEl.innerText = `Scanning: ${Math.round(m.progress * 100)}%`;
+                        const statusEl = this._getById('ocr-status');
+                        if (statusEl) statusEl.innerText = `Scanning: ${Math.round(m.progress * 100)}%`;
                     }
                 }
             });
@@ -1492,7 +1563,7 @@ class UIService {
 
         const videoRect = video.getBoundingClientRect();
         const overlayRect = overlay.getBoundingClientRect();
-        
+
         const scaleX = video.videoWidth / videoRect.width;
         const scaleY = video.videoHeight / videoRect.height;
 
@@ -1500,21 +1571,21 @@ class UIService {
         const cropY = (overlayRect.top - videoRect.top) * scaleY;
         const cropWidth = overlayRect.width * scaleX;
         const cropHeight = overlayRect.height * scaleY;
-        
+
         canvas.width = cropWidth;
         canvas.height = cropHeight;
 
         context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-        
+
         this._preprocessCanvas(canvas);
 
         try {
             const { data } = await this.ocrWorker.recognize(canvas);
             const processedText = this._postProcessOcrText(data.text);
-            
+
             if (data.confidence > 60) {
-                 statusEl.innerText = `Confidence: ${data.confidence.toFixed(0)}%`;
-                 previewEl.textContent = processedText;
+                statusEl.innerText = `Confidence: ${data.confidence.toFixed(0)}%`;
+                previewEl.textContent = processedText;
             } else {
                 statusEl.innerText = "Text not clear yet — adjust angle or lighting";
             }
@@ -1538,7 +1609,7 @@ class UIService {
             // Simple contrast enhancement
             gray = 1.5 * (gray - 128) + 128;
             gray = Math.max(0, Math.min(255, gray));
-            
+
             data[i] = data[i + 1] = data[i + 2] = gray;
         }
         ctx.putImageData(imageData, 0, 0);
@@ -1551,7 +1622,7 @@ class UIService {
         }
         ctx.putImageData(imageData, 0, 0);
     }
-    
+
     _postProcessOcrText(text) {
         if (!text) return '';
         return text.split('\n')
@@ -1575,7 +1646,7 @@ class UIService {
         if (!sidebar) return;
 
         const isVisible = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('visible');
-        
+
         sidebar.classList.toggle('visible', isVisible);
         if (btn) btn.classList.toggle('active', isVisible);
 
@@ -1700,12 +1771,16 @@ class UIService {
                 e.preventDefault();
                 this.toggleFocusMode();
             }
-            
+
             // Escape to exit focus mode or close modals
             if (e.key === 'Escape') {
                 if (this.isFocusMode) {
                     this.toggleFocusMode(false);
                 } else {
+                    const decisionModal = this._getById('generated-password-modal');
+                    const deleteModal = this._getById('password-history-delete-modal');
+                    if (decisionModal && !decisionModal.classList.contains('hidden')) return;
+                    if (deleteModal && !deleteModal.classList.contains('hidden')) return;
                     // Close any open modals
                     document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(modal => {
                         modal.classList.add('hidden');
@@ -1784,6 +1859,11 @@ class UIService {
         const syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
         const syncToggle = document.getElementById('toggle-sync-enabled');
         if (syncToggle) syncToggle.checked = syncEnabled;
+
+        // ADDITIVE: Clear on exit toggle state
+        const clearOnExit = localStorage.getItem('pinbridge.clear_on_exit') === 'true';
+        const clearToggle = document.getElementById('toggle-clear-on-exit');
+        if (clearToggle) clearToggle.checked = clearOnExit;
         modal.classList.remove('hidden');
         // Update dependent toggles
         const tagSyncToggle = this._getById('toggle-tag-sync');
@@ -1873,7 +1953,7 @@ class UIService {
                 this.footerAutoHide = val;
                 document.getElementById('mobile-footer')?.classList.remove('footer-hidden'); // Reset
             });
-            
+
             // Timeout logic would go here (updating authService)
             this._bindSetting('setting-timeout', 'pinbridge.security_timeout', 'value');
 
@@ -1901,7 +1981,7 @@ class UIService {
             content.className = 'settings-content hidden';
             content.innerHTML = this._getNotificationsHTML();
             document.querySelector('.settings-modal').appendChild(content); // Append to modal container
-            
+
             this._bindNotificationSettings();
         }
     }
@@ -1988,7 +2068,7 @@ class UIService {
         this._bindSetting('notif-master-toggle', 'pinbridge.notif.enabled', 'checkbox');
         this._bindSetting('notif-default-time', 'pinbridge.notif.default_time', 'value');
         this._bindSetting('notif-snooze-duration', 'pinbridge.notif.snooze', 'value');
-        
+
         this._bindSetting('notif-channel-web', 'pinbridge.notif.channel_web', 'checkbox');
         this._bindSetting('notif-channel-pwa', 'pinbridge.notif.channel_pwa', 'checkbox');
         this._bindSetting('notif-channel-email', 'pinbridge.notif.channel_email', 'checkbox');
@@ -1996,7 +2076,7 @@ class UIService {
         // Focus Mode Logic
         const focusToggle = document.getElementById('notif-focus-enabled');
         const focusConfig = document.getElementById('focus-schedule-config');
-        
+
         if (focusToggle) {
             const saved = localStorage.getItem('pinbridge.notif.focus_enabled') === 'true';
             focusToggle.checked = saved;
@@ -2016,7 +2096,7 @@ class UIService {
     _bindSetting(id, storageKey, type, callback) {
         const el = document.getElementById(id);
         if (!el) return;
-        
+
         const saved = localStorage.getItem(storageKey);
         if (saved !== null) {
             if (type === 'checkbox') el.checked = saved === 'true';
@@ -2096,6 +2176,11 @@ class UIService {
             content.classList.add('hidden');
         });
         document.getElementById(`settings-${tabName}`)?.classList.remove('hidden');
+
+        // ADDITIVE: Render logs if activity tab is active
+        if (tabName === 'activity') {
+            this.renderActivityLogs();
+        }
     }
 
     async renderActiveRecoveryMethods() {
@@ -2268,44 +2353,78 @@ class UIService {
         // Close modal on success
         this.closeGenerateFileModal();
     }
-    
+
     /**
-     * Passphrase Generator Logic
+     * Password Generator Logic
      */
     generatePassword() {
-        const wordList = [
-            'trust', 'focus', 'secure', 'future', 'code', 'work', 'task', 'path', 'time', 'data',
-            'guard', 'prime', 'spark', 'mind', 'care', 'heart', 'truth', 'force', 'proof', 'safe',
-            'key', 'brave', 'courage', 'respect', 'steady', 'quiet', 'bright', 'kind', 'honest',
-            'worthy', 'ready', 'fresh', 'swift', 'sound', 'sense', 'craft', 'shape', 'guide',
-            'adapt', 'save', 'serve', 'share', 'seek', 'track', 'watch', 'grow', 'move', 'forge',
-            'drive', 'think', 'create'
-        ];
-        const safeWords = wordList.filter(word => !/l/.test(word) && !/^[io]/i.test(word));
+        const lengthInput = document.querySelector('input[name="pw-length"]:checked');
+        if (!lengthInput) {
+            this.showToast('Select a password length.', 'error');
+            return;
+        }
+        const length = parseInt(lengthInput.value, 10);
+        const includeUppercase = this._getById('pw-opt-uppercase')?.checked;
+        const includeNumbers = this._getById('pw-opt-numbers')?.checked;
+        const includeSymbols = this._getById('pw-opt-symbols')?.checked;
+        const excludeAmbiguous = this._getById('pw-opt-no-ambiguous')?.checked;
 
-        const symbols = ['!', '@', '#', '$', '%'];
-        const safeNumbers = [];
-        for (let i = 1; i <= 99; i++) {
-            const text = String(i);
-            if (!text.includes('0')) safeNumbers.push(text);
+        let lower = 'abcdefghijklmnopqrstuvwxyz';
+        let upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let numbers = '0123456789';
+        let symbols = '!@#$%&*?_';
+
+        if (excludeAmbiguous) {
+            lower = lower.replace(/l/g, '');
+            upper = upper.replace(/[IO]/g, '');
+            numbers = numbers.replace(/0/g, '');
         }
 
-        const words = new Set();
-        while (words.size < 3) {
-            words.add(this._getRandomItem(safeWords));
+        let characterPool = lower;
+        const requiredChars = [];
+
+        if (includeUppercase) {
+            if (!upper.length) {
+                this.showToast('No uppercase characters available.', 'error');
+                return;
+            }
+            characterPool += upper;
+            requiredChars.push(this._getRandomChar(upper));
+        }
+        if (includeNumbers) {
+            if (!numbers.length) {
+                this.showToast('No numeric characters available.', 'error');
+                return;
+            }
+            characterPool += numbers;
+            requiredChars.push(this._getRandomChar(numbers));
+        }
+        if (includeSymbols) {
+            if (!symbols.length) {
+                this.showToast('No symbol characters available.', 'error');
+                return;
+            }
+            characterPool += symbols;
+            requiredChars.push(this._getRandomChar(symbols));
         }
 
-        const shuffledWords = this._shuffleArray(Array.from(words))
-            .map(word => this._capitalizeWord(word));
-        const leadingNumber = this._getRandomItem(safeNumbers);
-        const trailingNumber = this._getRandomItem(safeNumbers);
-        const symbol = this._getRandomItem(symbols);
+        if (length < requiredChars.length) {
+            this.showToast('Length too short for selected options.', 'error');
+            return;
+        }
 
-        const passphrase = `${leadingNumber}${shuffledWords.join('.')}${trailingNumber}${symbol}`;
+        let password = requiredChars.join('');
+        const remainingLength = length - password.length;
 
+        for (let i = 0; i < remainingLength; i++) {
+            password += this._getRandomChar(characterPool);
+        }
+
+        const shuffledPassword = this._shuffleString(password);
+
+        this.generatedPassword = shuffledPassword;
         const passwordInput = this._getById('generated-password-display');
-        passwordInput.value = passphrase;
-        this.showToast('New passphrase generated!', 'success');
+        passwordInput.value = shuffledPassword;
 
         // UX Feedback
         passwordInput.classList.add('highlight');
@@ -2313,43 +2432,14 @@ class UIService {
         setTimeout(() => {
             passwordInput.classList.remove('highlight');
         }, 500);
+
+        this.openGeneratedPasswordModal();
     }
 
     _getRandomChar(charset) {
         const randomValues = new Uint32Array(1);
         crypto.getRandomValues(randomValues);
         return charset[randomValues[0] % charset.length];
-    }
-
-    _getSecureRandomInt(min, max) {
-        const range = max - min + 1;
-        const maxUint = 0x100000000;
-        const limit = Math.floor(maxUint / range) * range;
-        let value;
-        do {
-            const randomValues = new Uint32Array(1);
-            crypto.getRandomValues(randomValues);
-            value = randomValues[0];
-        } while (value >= limit);
-        return min + (value % range);
-    }
-
-    _getRandomItem(items) {
-        const index = this._getSecureRandomInt(0, items.length - 1);
-        return items[index];
-    }
-
-    _shuffleArray(items) {
-        const arr = items.slice();
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = this._getSecureRandomInt(0, i);
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        return arr;
-    }
-
-    _capitalizeWord(word) {
-        return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
     _shuffleString(str) {
@@ -2363,26 +2453,79 @@ class UIService {
         return arr.join('');
     }
 
-    copyPassword() {
-        const password = this._getById('generated-password-display').value;
+    copyPassword(buttonId = 'btn-copy-password') {
+        const password = this.generatedPassword || this._getById('generated-password-display').value;
         if (!password) return;
 
+        const button = this._getById(buttonId);
         navigator.clipboard.writeText(password).then(() => {
-            this.showToast('Passphrase copied to clipboard!', 'success');
+            this._setCopyFeedback(button);
             const autoClearToggle = this._getById('pw-opt-autoclear');
             if (autoClearToggle?.checked) {
                 setTimeout(() => {
-                    navigator.clipboard.writeText(' ').catch(() => {}); // Clear clipboard
+                    navigator.clipboard.writeText(' ').catch(() => { }); // Clear clipboard
                     this.showToast('Clipboard cleared.', 'info');
                 }, 30000);
             }
         });
     }
 
+    _setCopyFeedback(button) {
+        if (!button) return;
+        const original = button.innerText;
+        button.innerText = 'Copied ✓';
+        button.disabled = true;
+        setTimeout(() => {
+            button.innerText = original;
+            button.disabled = false;
+        }, 1200);
+    }
+
+    openGeneratedPasswordModal() {
+        const modal = this._getById('generated-password-modal');
+        const titleInput = this._getById('generated-password-note-title');
+        if (titleInput) {
+            titleInput.value = '';
+            titleInput.focus();
+        }
+        modal?.classList.remove('hidden');
+    }
+
+    closeGeneratedPasswordModal() {
+        this._getById('generated-password-modal')?.classList.add('hidden');
+    }
+
+    discardGeneratedPassword() {
+        this.generatedPassword = null;
+        const passwordInput = this._getById('generated-password-display');
+        if (passwordInput) passwordInput.value = '';
+        const titleInput = this._getById('generated-password-note-title');
+        if (titleInput) titleInput.value = '';
+        this.closeGeneratedPasswordModal();
+    }
+
+    async handleSaveGeneratedPassword() {
+        if (!this.ensureAuthenticated()) return;
+        if (!this.generatedPassword) {
+            this.showToast('Generate a password first.', 'error');
+            return;
+        }
+        const titleInput = this._getById('generated-password-note-title');
+        const title = (titleInput?.value || '').trim();
+        if (!title) {
+            this.showToast('A note title is required.', 'error');
+            return;
+        }
+        await notesService.createNote(title, this.generatedPassword, '', ['generated-password']);
+        this.discardGeneratedPassword();
+        this.showToast('Password saved to vault.', 'success');
+        if (this.currentView === 'all') this.renderCurrentView();
+    }
+
     async findDuplicates() {
         // This is a placeholder for the full UI. For now, we'll log to console.
         this.showToast('Scanning for duplicates...', 'info');
-        
+
         // In a real implementation, you'd get notes with their encrypted hashes
         // const notes = await notesService.getAllNotesWithHashes();
         const notes = notesService.notes.filter(n => !n.trash);
@@ -2434,7 +2577,7 @@ class UIService {
 
         const total = titleDuplicates.length + contentDuplicates.length;
         this.showToast(total > 0 ? `Found ${total} group(s) of duplicates. See console for details.` : 'No duplicates found.', 'success');
-        
+
         // Here you would open a modal to display these results to the user.
     }
 
@@ -2882,11 +3025,11 @@ class UIService {
     insertTextAtCursor(text) {
         const textarea = this.inputs.noteContent;
         if (!textarea) return;
-        
+
         const start = textarea.selectionStart;
         const end = textarea.selectionEnd;
         const currentVal = textarea.value;
-        
+
         textarea.value = currentVal.substring(0, start) + text + currentVal.substring(end);
         textarea.selectionStart = textarea.selectionEnd = start + text.length;
         textarea.focus();
@@ -2929,7 +3072,7 @@ class UIService {
         const text = this.inputs.noteContent?.value || '';
         const words = text.trim() ? text.trim().split(/\s+/).length : 0;
         const badge = document.getElementById('word-count-badge');
-        
+
         // Read time calculation (approx 225 words per minute)
         const minutes = Math.ceil(words / 225);
         const readTimeText = minutes > 0 ? `${minutes} min read` : '';
@@ -2982,7 +3125,8 @@ class UIService {
 
     async handleNewNote() {
         if (!this.ensureAuthenticated()) return;
-        
+        this.logActivity('New note created');
+
         // Animate button click
         const btn = document.getElementById('btn-new-note');
         if (btn) {
@@ -3006,7 +3150,7 @@ class UIService {
 
         // 2 Create new empty note (non-persisted until typed in)
         const id = await notesService.createNote("", "", "", [], { persist: false, isTemplate: isTemplateView });
-        
+
         // Ensure the new note has a timestamp for sorting
         const newNote = notesService.notes.find(n => n.id === id);
         if (newNote) {
@@ -3028,8 +3172,14 @@ class UIService {
         if (!this.activeNoteId) return;
 
         if (this.currentView === 'trash') {
-            if (confirm(i18n.t('confirmDeleteForever'))) {
+            const note = notesService.notes.find(n => n.id === this.activeNoteId);
+            let allowed = confirm(i18n.t('confirmDeleteForever'));
+            if (allowed && this._isGeneratedPasswordNote(note)) {
+                allowed = await this.confirmGeneratedPasswordDeletion();
+            }
+            if (allowed) {
                 await notesService.deleteNote(this.activeNoteId);
+                this.logActivity('Note moved to trash');
                 this.activeNoteId = null;
                 this.clearEditor();
                 this.renderCurrentView();
@@ -3057,7 +3207,7 @@ class UIService {
         if (!this.ensureAuthenticated()) return;
         const note = notesService.notes.find(n => n.id === noteId);
         if (!note) return;
-        
+
         if (note.archived) {
             await notesService.unarchiveNote(noteId);
             this.showToast('Note unarchived', 'success');
@@ -3065,7 +3215,7 @@ class UIService {
             await notesService.archiveNote(noteId);
             this.showToast('Note archived', 'success');
         }
-        
+
         if (this.activeNoteId === noteId) {
             this.activeNoteId = null;
             this.clearEditor();
@@ -3131,14 +3281,14 @@ class UIService {
             const folder = this.currentView.split('folder:')[1];
             filtered = filtered.filter(n => n.folder === folder);
         }
-        
+
         return this.sortNotes(filtered);
     }
 
     sortNotes(notes) {
         const sortBy = localStorage.getItem('pinbridge.notes_sort') || 'updated';
         const sorted = [...notes];
-        
+
         switch (sortBy) {
             case 'created':
                 sorted.sort((a, b) => (b.created || 0) - (a.created || 0));
@@ -3155,7 +3305,7 @@ class UIService {
                 sorted.sort((a, b) => (b.updated || 0) - (a.updated || 0));
                 break;
         }
-        
+
         // Always show pinned notes first
         return sorted.sort((a, b) => {
             if (a.pinned && !b.pinned) return -1;
@@ -3196,7 +3346,7 @@ class UIService {
 
             const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
             const previewText = showPreview ? Utils.escapeHtml(note.body?.substring(0, 100) || '') || '' : '';
-            
+
             div.innerHTML = `
                 <div class="note-top-minimal">
                     <h4>${Utils.escapeHtml(note.title) || i18n.t('noteTitlePlaceholder')}${badges.join(' ')}</h4>
@@ -3230,7 +3380,7 @@ class UIService {
                     e.stopPropagation();
                     const action = btn.dataset.action;
                     const noteId = btn.dataset.noteId;
-                    
+
                     switch (action) {
                         case 'pin':
                             await notesService.togglePin(noteId);
@@ -3242,9 +3392,11 @@ class UIService {
                             break;
                         case 'trash':
                             if (note.trash) {
-                                if (confirm('Permanently delete this note?')) {
-                                    await notesService.deleteNote(noteId);
+                                let allowed = confirm('Permanently delete this note?');
+                                if (allowed && this._isGeneratedPasswordNote(note)) {
+                                    allowed = await this.confirmGeneratedPasswordDeletion();
                                 }
+                                if (allowed) await notesService.deleteNote(noteId);
                             } else {
                                 await notesService.moveToTrash(noteId);
                             }
@@ -3265,14 +3417,14 @@ class UIService {
                     }
                 });
             });
-            
+
             // Initialize feather icons for this note
             if (typeof feather !== 'undefined') {
                 feather.replace();
             }
 
             listEl.appendChild(div);
-            
+
             // Initialize feather icons for this note
             if (typeof feather !== 'undefined') {
                 feather.replace();
@@ -3287,7 +3439,7 @@ class UIService {
         let isSwiping = false;
         let isScrolling = false;
         const threshold = 80; // Distance to trigger action
-        
+
         // Long press vars
         let longPressTimer = null;
         const longPressDuration = 500;
@@ -3298,12 +3450,12 @@ class UIService {
             isSwiping = false;
             isScrolling = false;
             el.style.transition = 'none'; // Disable transition for direct 1:1 movement
-            
+
             // Start Long Press Timer
             longPressTimer = setTimeout(() => {
                 this.hapticFeedback();
                 this.showMobileContextMenu(note);
-                isSwiping = false; 
+                isSwiping = false;
                 isScrolling = true; // Prevent swipe logic from continuing
             }, longPressDuration);
         }, { passive: true });
@@ -3317,7 +3469,7 @@ class UIService {
             }
 
             if (isScrolling) return;
-            
+
             currentX = e.touches[0].clientX;
             const diffX = currentX - startX;
             const diffY = e.touches[0].clientY - startY;
@@ -3338,13 +3490,13 @@ class UIService {
             if (isSwiping) {
                 e.preventDefault();
                 el.style.transform = `translateX(${diffX}px)`;
-                
+
                 // Visual feedback based on direction
                 if (diffX > 0) { // Right Swipe (Pin)
-                    el.style.background = `rgba(59, 130, 246, ${Math.min(Math.abs(diffX)/200, 0.4)})`;
+                    el.style.background = `rgba(59, 130, 246, ${Math.min(Math.abs(diffX) / 200, 0.4)})`;
                     el.style.borderColor = 'var(--brand-primary)';
                 } else { // Left Swipe (Trash)
-                    el.style.background = `rgba(239, 68, 68, ${Math.min(Math.abs(diffX)/200, 0.4)})`;
+                    el.style.background = `rgba(239, 68, 68, ${Math.min(Math.abs(diffX) / 200, 0.4)})`;
                     el.style.borderColor = 'var(--text-danger)';
                 }
             }
@@ -3353,7 +3505,7 @@ class UIService {
         el.addEventListener('touchend', async (e) => {
             clearTimeout(longPressTimer);
             if (!isSwiping) return;
-            
+
             el.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
             const diffX = currentX - startX;
 
@@ -3370,7 +3522,11 @@ class UIService {
                 this.hapticFeedback();
                 setTimeout(async () => {
                     if (note.trash) {
-                        if (confirm(i18n.t('confirmDeleteForever'))) await notesService.deleteNote(note.id);
+                        let allowed = confirm(i18n.t('confirmDeleteForever'));
+                        if (allowed && this._isGeneratedPasswordNote(note)) {
+                            allowed = await this.confirmGeneratedPasswordDeletion();
+                        }
+                        if (allowed) await notesService.deleteNote(note.id);
                     } else {
                         await notesService.moveToTrash(note.id);
                     }
@@ -3393,7 +3549,7 @@ class UIService {
             overlay.id = 'mobile-ctx-overlay';
             overlay.className = 'mobile-context-menu-overlay';
             document.body.appendChild(overlay);
-            
+
             overlay.addEventListener('click', (e) => {
                 if (e.target === overlay) {
                     overlay.classList.remove('visible');
@@ -3433,11 +3589,15 @@ class UIService {
             btn.onclick = async () => {
                 const action = btn.dataset.action;
                 overlay.classList.remove('visible');
-                
+
                 if (action === 'pin') this.handlePinNote(note.id);
                 if (action === 'delete') {
                     if (isTrash) {
-                        if (confirm(i18n.t('confirmDeleteForever'))) await notesService.deleteNote(note.id);
+                        let allowed = confirm(i18n.t('confirmDeleteForever'));
+                        if (allowed && this._isGeneratedPasswordNote(note)) {
+                            allowed = await this.confirmGeneratedPasswordDeletion();
+                        }
+                        if (allowed) await notesService.deleteNote(note.id);
                     } else {
                         await notesService.moveToTrash(note.id);
                     }
@@ -3542,15 +3702,15 @@ class UIService {
     renderNoteMeta(note) {
         const metaContainer = document.querySelector('.editor-meta-minimal');
         if (!metaContainer) return;
-        
+
         const meta = this.getNoteMeta(note.id);
         const workTimeMs = meta.workTime || 0;
-        
+
         // Format time (e.g., 1h 20m)
         const minutes = Math.floor(workTimeMs / 60000);
         const hours = Math.floor(minutes / 60);
         const timeStr = hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
-        
+
         const date = new Date(note.updated || Date.now()).toLocaleDateString();
         // Mock version count based on history availability or random for demo if empty
         const version = note.history ? note.history.length + 1 : 1;
@@ -3711,7 +3871,7 @@ class UIService {
         document.body.classList.toggle('compact-notes', this.compactViewEnabled);
         const btn = document.getElementById('btn-toggle-compact');
         if (btn) btn.innerText = i18n.t('compactLabel', { state: i18n.t(this.compactViewEnabled ? 'compactOn' : 'compactOff') });
-        
+
         // Update settings menu toggle
         const toggle = document.getElementById('toggle-compact-view');
         if (toggle) toggle.checked = this.compactViewEnabled;
@@ -3825,6 +3985,82 @@ class UIService {
         this.showScreen('auth');
         this.showToast(i18n.t('authRequired'), 'error');
         return false;
+    }
+
+    _isGeneratedPasswordNote(note) {
+        if (!note?.tags) return false;
+        return note.tags.some(tag => (typeof tag === 'string' ? tag : tag.name) === 'generated-password');
+    }
+
+    confirmGeneratedPasswordDeletion() {
+        return new Promise((resolve) => {
+            const modal = this._getById('password-history-delete-modal');
+            const step1 = this._getById('password-history-delete-step-1');
+            const step2 = this._getById('password-history-delete-step-2');
+            const step3 = this._getById('password-history-delete-step-3');
+            const input = this._getById('password-history-delete-input');
+            const btnCancel = this._getById('btn-password-delete-cancel');
+            const btnContinue = this._getById('btn-password-delete-continue');
+            const btnBack = this._getById('btn-password-delete-back');
+            const btnConfirm = this._getById('btn-password-delete-confirm');
+            const btnFinal = this._getById('btn-password-delete-final');
+
+            if (!modal || !step1 || !step2 || !step3 || !input) {
+                resolve(false);
+                return;
+            }
+
+            const reset = () => {
+                step1.classList.remove('hidden');
+                step2.classList.add('hidden');
+                step3.classList.add('hidden');
+                input.value = '';
+            };
+
+            const cleanup = (result) => {
+                btnCancel?.removeEventListener('click', onCancel);
+                btnContinue?.removeEventListener('click', onContinue);
+                btnBack?.removeEventListener('click', onBack);
+                btnConfirm?.removeEventListener('click', onConfirm);
+                btnFinal?.removeEventListener('click', onFinal);
+                modal.classList.add('hidden');
+                reset();
+                resolve(result);
+            };
+
+            const onCancel = () => cleanup(false);
+            const onContinue = () => {
+                step1.classList.add('hidden');
+                step2.classList.remove('hidden');
+            };
+            const onBack = () => {
+                step2.classList.add('hidden');
+                step1.classList.remove('hidden');
+            };
+            const onConfirm = () => {
+                step2.classList.add('hidden');
+                step3.classList.remove('hidden');
+                input.focus();
+            };
+            const onFinal = () => {
+                if (input.value !== 'DELETE') {
+                    input.value = '';
+                    input.focus();
+                    this.showToast('Type DELETE to confirm.', 'error');
+                    return;
+                }
+                cleanup(true);
+            };
+
+            btnCancel?.addEventListener('click', onCancel);
+            btnContinue?.addEventListener('click', onContinue);
+            btnBack?.addEventListener('click', onBack);
+            btnConfirm?.addEventListener('click', onConfirm);
+            btnFinal?.addEventListener('click', onFinal);
+
+            reset();
+            modal.classList.remove('hidden');
+        });
     }
 
     shakeElement(el) {

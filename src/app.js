@@ -31,17 +31,18 @@ async function init() {
             button.innerHTML = eyeIcon;
 
             button.addEventListener('click', () => {
+                const label = button.dataset.label || 'PIN';
                 const isPassword = targetInput.type === 'password';
                 if (isPassword) {
                     targetInput.type = 'text';
                     button.innerHTML = eyeOffIcon;
-                    button.setAttribute('aria-label', 'Hide PIN');
-                    button.setAttribute('title', 'Hide PIN');
+                    button.setAttribute('aria-label', `Hide ${label}`);
+                    button.setAttribute('title', `Hide ${label}`);
                 } else {
                     targetInput.type = 'password';
                     button.innerHTML = eyeIcon;
-                    button.setAttribute('aria-label', 'Show PIN');
-                    button.setAttribute('title', 'Show PIN');
+                    button.setAttribute('aria-label', `Show ${label}`);
+                    button.setAttribute('title', `Show ${label}`);
                 }
             });
         });
@@ -105,13 +106,13 @@ async function init() {
 bus.on('auth:unlock', async () => {
     console.log('auth:unlock event fired');
     uiService.showScreen('vault');
-    
+
     // Show skeleton loaders while loading
     uiService.renderNoteList([], true);
-    
+
     // Small delay to ensure vault is fully initialized
     await new Promise(resolve => setTimeout(resolve, 100));
-    
+
     try {
         // Ensure vault is unlocked
         if (!vaultService.isUnlocked()) {
@@ -119,17 +120,17 @@ bus.on('auth:unlock', async () => {
             uiService.showToast('Vault is locked. Please try again.', 'error');
             return;
         }
-        
+
         console.log('Loading notes...');
         const notes = await notesService.loadAll();
         console.log('Notes loaded:', notes.length, 'notes');
-        
+
         if (notes && Array.isArray(notes)) {
             searchService.buildIndex(notes);
             // Small delay for smooth transition from skeleton
             await new Promise(resolve => setTimeout(resolve, 300));
             uiService.renderCurrentView(notes);
-            
+
             // Initialize feather icons after rendering
             if (typeof feather !== 'undefined') {
                 feather.replace();
@@ -163,3 +164,11 @@ bus.on('sync:disabled', () => {
 
 // Start the application
 window.addEventListener('DOMContentLoaded', init);
+
+// ADDITIVE: Privacy - Clear session on exit
+window.addEventListener('beforeunload', () => {
+    const clearOnExit = localStorage.getItem('pinbridge.clear_on_exit') === 'true';
+    if (clearOnExit) {
+        vaultService.clearSession();
+    }
+});
