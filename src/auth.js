@@ -39,8 +39,10 @@ class AuthService {
     this.ready = new Promise((resolve) => {
       this._resolveReady = resolve;
     });
-    this.idleTimer = null;
     this.sessionTimeoutMs = 10 * 60 * 1000;
+    this.warningThresholdMs = 60 * 1000; // Warn 60s before
+    this.lastActivity = Date.now();
+    this.checkInterval = null;
     this.activityEvents = ['mousemove', 'keydown', 'click', 'touchstart', 'visibilitychange'];
     this.activityHandler = () => this._handleActivity();
     this.offlineMode = false;
@@ -214,19 +216,34 @@ class AuthService {
   }
 
   _handleActivity() {
-    clearTimeout(this.idleTimer);
-    this.idleTimer = setTimeout(() => this.forceLogout('idle'), this.sessionTimeoutMs);
+    this.lastActivity = Date.now();
+    bus.emit('auth:activity');
   }
 
   _bindActivityWatchers() {
     this._clearActivityWatchers();
     this.activityEvents.forEach(ev => document.addEventListener(ev, this.activityHandler, { passive: true }));
-    this._handleActivity();
+    this.lastActivity = Date.now();
+    
+    this.checkInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsed = now - this.lastActivity;
+      const remaining = this.sessionTimeoutMs - elapsed;
+
+      if (remaining <= 0) {
+        this.forceLogout('idle');
+      } else if (remaining <= this.warningThresholdMs) {
+        bus.emit('auth:session-warning', Math.ceil(remaining / 1000));
+      }
+    }, 1000);
   }
 
   _clearActivityWatchers() {
     this.activityEvents.forEach(ev => document.removeEventListener(ev, this.activityHandler));
-    clearTimeout(this.idleTimer);
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+      this.checkInterval = null;
+    }
   }
 
   /**

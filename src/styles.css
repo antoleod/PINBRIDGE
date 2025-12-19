@@ -4068,6 +4068,87 @@ input[type="file"]::file-selector-button {
     height: 18px;
 }
 
+/* Session Timeout Indicator */
+.session-timeout-indicator {
+    margin-top: auto;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-warning);
+    background: rgba(251, 191, 36, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(251, 191, 36, 0.3);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.session-timeout-indicator.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.session-timeout-indicator.critical {
+    color: var(--text-danger);
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.3);
+    animation: pulse 1s infinite;
+}
+
+/* Shake Animation */
+.shake-animation {
+    animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+    10%, 90% { transform: translate3d(-1px, 0, 0); }
+    20%, 80% { transform: translate3d(2px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+    40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* --- MOBILE SETTINGS SHEET --- */
+@media (max-width: 900px) {
+    .modal-content.settings-modal {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        width: 100%;
+        max-width: 100%;
+        height: 85vh;
+        height: 85dvh;
+        max-height: 85vh;
+        border-radius: 24px 24px 0 0;
+        margin: 0;
+        transform: translateY(100%);
+        display: flex;
+        flex-direction: column;
+        border-bottom: none;
+        transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .modal-overlay:not(.hidden) .modal-content.settings-modal {
+        transform: translateY(0);
+        animation: none; /* Override default floatIn */
+    }
+
+    .settings-modal .modal-header {
+        flex-shrink: 0;
+        cursor: grab; /* Hint for swipe */
+    }
+
+    .settings-modal .settings-content-container {
+        flex: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2rem; /* Safe area */
+    }
+}
+
 /* High DPI displays */
 @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
     .logo-ring {

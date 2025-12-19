@@ -39,6 +39,7 @@ class UIService {
         // Capture Tools
         this.recognition = null;
         this.isRecording = false;
+        this.loginAttempts = 0;
     }
 
     showLoginForm() {
@@ -502,6 +503,10 @@ class UIService {
             this.screens.loading?.classList.add('hidden');
             this.handleLockedSession(reason);
         });
+        
+        // Session Timeout UI
+        bus.on('auth:session-warning', (seconds) => this.updateSessionTimer(seconds));
+        bus.on('auth:activity', () => this.hideSessionTimer());
 
         window.addEventListener('beforeunload', (e) => {
             // Check if save button is enabled (unsaved changes)
@@ -510,6 +515,75 @@ class UIService {
                 e.preventDefault();
                 e.returnValue = ''; // Standard for showing alert
             }
+        });
+
+        this.setupBottomSheetGestures();
+    }
+
+    updateSessionTimer(seconds) {
+        let timerEl = document.getElementById('session-timeout-indicator');
+        if (!timerEl) {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                timerEl = document.createElement('div');
+                timerEl.id = 'session-timeout-indicator';
+                timerEl.className = 'session-timeout-indicator';
+                sidebar.appendChild(timerEl);
+            }
+        }
+        if (timerEl) {
+            timerEl.innerText = `${seconds}s`;
+            timerEl.classList.add('visible');
+            timerEl.classList.toggle('critical', seconds <= 10);
+        }
+    }
+
+    hideSessionTimer() {
+        document.getElementById('session-timeout-indicator')?.classList.remove('visible');
+    }
+
+    setupBottomSheetGestures() {
+        const header = document.querySelector('#settings-modal .modal-header');
+        const modal = document.getElementById('settings-modal');
+        if (!header || !modal) return;
+
+        let startY = 0;
+        let currentY = 0;
+        let isDragging = false;
+
+        header.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+            isDragging = true;
+        }, { passive: true });
+
+        header.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            currentY = e.touches[0].clientY;
+            const diff = currentY - startY;
+            
+            if (diff > 0) { // Dragging down
+                e.preventDefault(); 
+                modal.querySelector('.modal-content').style.transform = `translateY(${diff}px)`;
+            }
+        }, { passive: false });
+
+        header.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            const diff = currentY - startY;
+            const content = modal.querySelector('.modal-content');
+
+            if (diff > 100) { // Threshold to close
+                modal.classList.add('hidden');
+                setTimeout(() => { content.style.transform = ''; }, 300);
+            } else {
+                // Bounce back
+                content.style.transition = 'transform 0.2s ease';
+                content.style.transform = '';
+                setTimeout(() => { content.style.transition = ''; }, 200);
+            }
+            startY = 0;
+            currentY = 0;
         });
     }
 
@@ -809,6 +883,16 @@ class UIService {
 
     async handleLoginSubmit(e) {
         e.preventDefault();
+        
+        // Check Lockout
+        const lockoutUntil = parseInt(localStorage.getItem('pinbridge.lockout_until') || '0');
+        if (Date.now() < lockoutUntil) {
+            const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+            this.showToast(`Account locked. Try again in ${remaining}s`, 'error');
+            this.shakeElement(this.inputs.loginPin);
+            return;
+        }
+
         const username = (this.inputs.loginUsername?.value || '').trim();
         const pin = (this.inputs.loginPin?.value || '').trim();
 
@@ -830,9 +914,24 @@ class UIService {
             const greeting = welcomeName ? i18n.t('toastWelcomeNamed', { name: welcomeName }) : i18n.t('toastWelcomeBack');
             this.showToast(greeting, 'success');
             this.refreshUsernameRecommendation();
+            
+            // Reset attempts on success
+            this.loginAttempts = 0;
+            localStorage.removeItem('pinbridge.lockout_until');
         } catch (err) {
-            this.showToast(this.resolveAuthErrorMessage(err?.message || err), 'error');
+            // Handle Lockout Logic
+            this.loginAttempts++;
+            if (this.loginAttempts >= 3) {
+                const lockoutTime = Date.now() + 30000; // 30 seconds
+                localStorage.setItem('pinbridge.lockout_until', lockoutTime);
+                this.loginAttempts = 0;
+                this.showToast('Too many attempts. Account locked for 30s.', 'error');
+            } else {
+                this.showToast(this.resolveAuthErrorMessage(err?.message || err), 'error');
+            }
+
             if (this.inputs.loginPin) this.inputs.loginPin.value = '';
+            this.shakeElement(this.inputs.loginPin);
 
             const code = err?.message || err;
             if (code === 'VAULT_METADATA_MISSING' || code === 'NO_VAULT') {
@@ -915,6 +1014,7 @@ class UIService {
         this.renderNoteList([]);
         this.clearEditor();
         this.currentView = 'all';
+        this.hideSessionTimer();
         document.querySelectorAll('.nav-item, .folder-item').forEach(el => el.classList.remove('active'));
         
         // Don't show a toast on initial load when no session is found
@@ -3600,6 +3700,12 @@ class UIService {
         this.showScreen('auth');
         this.showToast(i18n.t('authRequired'), 'error');
         return false;
+    }
+
+    shakeElement(el) {
+        if (!el) return;
+        el.classList.add('shake-animation');
+        setTimeout(() => el.classList.remove('shake-animation'), 500);
     }
 }
 

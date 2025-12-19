@@ -25,6 +25,16 @@ class VaultService {
 
   setSyncEnabled(enabled) {
     this.syncEnabled = enabled;
+    if (!enabled) {
+      if (this.realtimeUnsub) this.realtimeUnsub();
+      this.realtimeUnsub = null;
+      return;
+    }
+    if (!this.uid || !this.dataKey) return;
+    this._startRealtime();
+    this.persistVault().catch((e) => {
+      console.warn('Sync enable persist failed', e);
+    });
   }
 
   isUnlocked() {
