@@ -25,28 +25,13 @@
 <body>
 
     <!-- LOADING SCREEN -->
-    <div id="loading-screen" class="screen">
+    <section id="loading-screen" class="screen">
         <div class="logo-mark">PB</div>
         <div class="loader-pulse"></div>
-    </div>
+    </section>
 
     <!-- AUTH SCREEN -->
-    <div id="auth-screen" class="screen hidden auth-hero">
-        <!-- DESKTOP HEADER -->
-        <header class="auth-header desktop-only">
-            <div class="auth-header-content">
-                <div class="header-logo">
-                    <img src="src/public/icons/android/pinbridge_192x192.png" alt="PINBRIDGE logo">
-                    <span class="header-title">PINBRIDGE</span>
-                </div>
-                <div class="header-actions">
-                    <button class="btn-settings" id="btn-settings-desktop" title="Settings" aria-label="Open settings">
-                        <i data-feather="settings"></i>
-                    </button>
-                </div>
-            </div>
-        </header>
-
+    <section id="auth-screen" class="screen hidden auth-hero">
         <div class="auth-card glass-panel auth-stack">
             <div class="auth-card-header">
                 <div class="auth-brand">
@@ -56,6 +41,7 @@
                     <h1 class="brand-title">PINBRIDGE</h1>
                 </div>
                 <div class="lang-switcher">
+                    <label for="language-select" class="visually-hidden">Language</label>
                     <select id="language-select"></select>
                 </div>
             </div>
@@ -81,11 +67,13 @@
                 <div id="auth-login">
                     <form id="login-form">
                         <div class="input-group">
+                            <label for="login-username" class="visually-hidden">Username</label>
                             <input type="text" id="login-username" autocomplete="username"
                                 placeholder="Username" data-i18n-placeholder="usernamePlaceholder">
                         </div>
                         <div class="input-group">
                             <div class="input-wrapper">
+                                <label for="login-pin" class="visually-hidden">PIN</label>
                                 <input type="password" id="login-pin" autocomplete="current-password"
                                     placeholder="PIN" data-i18n-placeholder="pinPlaceholder">
                                 <button type="button" class="btn-toggle-visibility" data-target="login-pin"
@@ -94,12 +82,12 @@
                                 </button>
                             </div>
                         </div>
-                        <button type="button" id="btn-login-submit" class="btn btn-primary btn-block accent"
+                        <button type="submit" id="btn-login-submit" class="btn btn-primary btn-block accent"
                             data-i18n="loginSubmit">Unlock</button>
                     </form>
                     <p class="hint center" style="margin-top: 1rem; font-size: 0.85rem;">
                         Don't have a vault? 
-                        <button type="button" class="btn-link" id="btn-switch-to-register" style="background: none; border: none; color: var(--brand-primary); cursor: pointer; text-decoration: underline; padding: 0; font-size: inherit;">
+                        <button type="button" class="btn-link" id="btn-switch-to-register">
                             Create one
                         </button>
                     </p>
@@ -109,12 +97,14 @@
                 <div id="auth-register" class="hidden">
                     <form id="register-form">
                         <div class="input-group">
+                            <label for="register-username" class="visually-hidden">Username</label>
                             <input type="text" id="register-username" autocomplete="username"
                                 placeholder="Username" data-i18n-placeholder="usernamePlaceholder" required>
-                            <span class="error-message" id="register-username-error"></span>
+                            <span class="error-message" id="register-username-error" aria-live="polite"></span>
                         </div>
                         <div class="input-group">
                             <div class="input-wrapper">
+                                <label for="register-pin" class="visually-hidden">PIN</label>
                                 <input type="password" id="register-pin" autocomplete="new-password"
                                     placeholder="PIN (4-6 digits)" data-i18n-placeholder="pinPlaceholder" minlength="4" maxlength="6" required>
                                 <button type="button" class="btn-toggle-visibility" data-target="register-pin"
@@ -122,33 +112,30 @@
                                     <!-- Icon will be injected by JS -->
                                 </button>
                             </div>
-                            <span class="error-message" id="register-pin-error"></span>
+                            <span class="error-message" id="register-pin-error" aria-live="polite"></span>
                         </div>
                         <button type="button" id="btn-register-submit" class="btn btn-primary btn-block accent"
                             data-i18n="registerSubmit">Create Vault</button>
                     </form>
                     <p class="hint center" style="margin-top: 1rem; font-size: 0.85rem;">
                         Already have a vault? 
-                        <button type="button" class="btn-link" id="btn-switch-to-login" style="background: none; border: none; color: var(--brand-primary); cursor: pointer; text-decoration: underline; padding: 0; font-size: inherit;">
+                        <button type="button" class="btn-link" id="btn-switch-to-login">
                             Sign in
                         </button>
                     </p>
                 </div>
             </div>
 
-            <div class="auth-actions">
-                <button type="button" class="btn btn-text" id="btn-auth-choice-existing" style="display: none;"><span data-i18n="actionExistingVault">I have a vault</span></button>
-                <button type="button" class="btn btn-text" id="btn-auth-choice-create" style="display: none;"><span data-i18n="actionCreateVault">Create vault</span></button>
-                <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i> Recovery</button>
-                <button type="button" class="btn btn-text mobile-only" id="btn-settings-mobile"
-                    aria-label="Open settings">
+            <div class="auth-footer">
+                <button type="button" class="btn btn-icon" id="btn-settings" title="Settings" aria-label="Open settings">
                     <i data-feather="settings"></i>
                 </button>
+                <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i> Recovery</button>
             </div>
         </div>
 
         <!-- SETTINGS MODAL -->
-        <div id="auth-settings-modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+        <dialog id="auth-settings-modal" class="modal-overlay hidden"
             aria-labelledby="settings-modal-title">
             <div class="modal-content glass-panel settings-panel">
                 <div class="settings-panel-header">
@@ -187,10 +174,10 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </dialog>
 
         <!-- ACCOUNT RECOVERY MODAL -->
-        <div id="recovery-modal" class="modal-overlay hidden" role="dialog" aria-modal="true"
+        <dialog id="recovery-modal" class="modal-overlay hidden"
             aria-labelledby="recovery-modal-title">
             <div class="modal-content glass-panel settings-panel">
                 <div class="modal-header">
@@ -269,12 +256,12 @@
                     <button type="button" class="btn btn-text" id="btn-back-from-recovery"><i data-feather="arrow-left"></i> Back to Login</button>
                 </div>
             </div>
-        </div>
+        </dialog>
 
-    </div>
+    </section>
 
     <!-- VAULT SCREEN -->
-    <div id="vault-screen" class="screen hidden">
+    <section id="vault-screen" class="screen hidden">
 
         <!-- SIDEBAR -->
         <nav class="sidebar glass-panel">
@@ -569,12 +556,12 @@
                 </div>
         </section>
 
-    </div>
+    </section>
 
     <!-- COMMAND PALETTE (Dynamically injected but CSS ready) -->
 
         <!-- RECOVERY KEY MODAL -->
-        <div id="recovery-key-modal" class="modal-overlay hidden">
+        <dialog id="recovery-key-modal" class="modal-overlay hidden">
             <div class="modal-content glass-panel">
                 <h2 data-i18n="recoveryTitle">Save Your Recovery Key</h2>
                 <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it
@@ -587,10 +574,10 @@
                     saved
                     my key. Continue.</button>
             </div>
-        </div>
+        </dialog>
 
         <!-- REMINDERS MODAL -->
-        <div id="reminders-modal" class="modal-overlay hidden">
+        <dialog id="reminders-modal" class="modal-overlay hidden">
             <div class="modal-content glass-panel">
                 <div class="modal-header">
                     <h2>Set Reminder</h2>
@@ -613,9 +600,9 @@
                     <button id="save-reminder" class="btn btn-primary">Set Reminder</button>
                 </div>
             </div>
-        </div>
+        </dialog>
         <!-- HISTORY MODAL -->
-        <div id="history-modal" class="modal-overlay hidden">
+        <dialog id="history-modal" class="modal-overlay hidden">
             <div class="modal-content glass-panel note-history-modal">
                 <div class="modal-header">
                     <h2>Note History</h2>
@@ -625,10 +612,10 @@
                     <!-- Versions injected here -->
                 </div>
             </div>
-        </div>
+        </dialog>
 
         <!-- TEMPLATE MODAL -->
-        <div id="template-modal" class="modal-overlay hidden">
+        <dialog id="template-modal" class="modal-overlay hidden">
             <div class="modal-content glass-panel note-history-modal"> <!-- reusing style -->
                 <div class="modal-header">
                     <h2>Insert Template</h2>
@@ -638,10 +625,10 @@
                     <!-- Templates injected here -->
                 </div>
             </div>
-        </div>
+        </dialog>
 
         <!-- SETTINGS MODAL (Main) -->
-        <div id="settings-modal" class="modal-overlay hidden">
+        <dialog id="settings-modal" class="modal-overlay hidden">
             <div class="modal-content glass-panel settings-modal">
                 <div class="modal-header">
                     <h2>Settings</h2>
@@ -771,10 +758,26 @@
                                 placeholder="Your new password will appear here...">
                             <button id="btn-copy-password" class="btn btn-secondary">??</button>
                         </div>
-                        <div class="password-options-grid">
-                            <!-- Password options will be added here later -->
-                        </div>
-                        <button id="btn-generate-password" class="btn btn-primary" style="margin-top: 1rem;">Generate
+                            <div class="password-options-grid">
+                                <div class="form-group">
+                                    <label>Length</label>
+                                    <div class="radio-group">
+                                        <label><input type="radio" name="pw-length" value="8"> 8</label>
+                                        <label><input type="radio" name="pw-length" value="12" checked> 12</label>
+                                        <label><input type="radio" name="pw-length" value="16"> 16</label>
+                                        <label><input type="radio" name="pw-length" value="20"> 20</label>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Options</label>
+                                    <div class="checkbox-group">
+                                        <label><input type="checkbox" id="pw-opt-uppercase" checked> Uppercase</label>
+                                        <label><input type="checkbox" id="pw-opt-numbers" checked> Numbers</label>
+                                        <label><input type="checkbox" id="pw-opt-symbols"> Symbols</label>
+                                        <label><input type="checkbox" id="pw-opt-autoclear"> Autoclear clipboard (30s)</label>
+                                    </div>
+                                </div>
+                            </div>                        <button id="btn-generate-password" class="btn btn-primary mt-1">Generate
                             New
                             Password</button>
                         <div class="divider"></div>
@@ -800,15 +803,15 @@
                                 <label for="toggle-duplicate-detection" class="toggle-label"></label>
                             </div>
                         </div>
-                        <button id="btn-find-duplicates" class="btn btn-secondary" style="margin-top: 1rem;">Find All
+                        <button id="btn-find-duplicates" class="btn btn-secondary mt-1">Find All
                             Duplicates</button>
                     </div>
                 </div>
             </div>
-        </div>
+        </dialog>
 
     <!-- NOTE PROTECTION / SELF-DESTRUCT MODAL -->
-    <div id="note-protection-modal" class="modal-overlay hidden">
+    <dialog id="note-protection-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h2><i data-feather="shield"></i> Note Protection</h2>
@@ -830,21 +833,20 @@
 
             <div class="form-group hidden" id="self-destruct-time-group">
                 <label for="self-destruct-time-value">Time until deletion</label>
-                <div style="display: flex; gap: 0.5rem;">
-                    <input type="number" id="self-destruct-time-value" class="input-field" min="1" value="1"
-                        style="flex-grow: 1;">
-                    <select id="self-destruct-time-unit" class="settings-select" style="flex-grow: 2;">
+                <div class="flex-gap-05">
+                    <input type="number" id="self-destruct-time-value" class="input-field flex-grow-1" min="1" value="1">
+                    <select id="self-destruct-time-unit" class="settings-select flex-grow-2">
                         <option value="minutes">Minutes</option>
                         <option value="hours">Hours</option>
                         <option value="days">Days</option>
                     </select>
                 </div>
             </div>
-        </div>
+        </dialog>
     </div>
 
     <!-- SCAN QR MODAL (for new device) -->
-    <div id="scan-qr-modal" class="modal-overlay hidden">
+    <dialog id="scan-qr-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h2>Link Device by Scanning</h2>
@@ -867,10 +869,10 @@
                 </form>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- BACKUP CODES MODAL -->
-    <div id="backup-codes-modal" class="modal-overlay hidden">
+    <dialog id="backup-codes-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h2>Your Backup Codes</h2>
@@ -888,10 +890,10 @@
                 <button id="confirm-backup-codes" class="btn btn-primary"><i data-feather="check-circle"></i> I've Saved Them</button>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- SECRET QUESTION MODAL -->
-    <div id="secret-question-modal" class="modal-overlay hidden">
+    <dialog id="secret-question-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h2>Setup Secret Question</h2>
@@ -917,10 +919,10 @@
                 <button id="save-secret-question" class="btn btn-primary">Save Question</button>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- TAGS MANAGER MODAL -->
-    <div id="tags-manager-modal" class="modal-overlay hidden">
+    <dialog id="tags-manager-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel settings-modal">
             <div class="modal-header">
                 <h2><i data-feather="tag"></i> Tags Manager</h2>
@@ -934,10 +936,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
     <!-- GENERATE RECOVERY FILE MODAL -->
-    <div id="generate-file-modal" class="modal-overlay hidden">
+    <dialog id="generate-file-modal" class="modal-overlay hidden">
         <div class="modal-content glass-panel">
             <div class="modal-header">
                 <h2>Generate Recovery File</h2>
@@ -970,10 +972,10 @@
                 </div>
             </form>
         </div>
-    </div>
+    </dialog>
 
     <!-- PAIRING MODAL -->
-    <div id="pairing-modal" class="modal-overlay hidden">
+    <dialog id="pairing-modal" class="modal-overlay hidden">
         <!-- ... content for pairing modal ... -->
         <div class="modal-content glass-panel">
             <div class="modal-header">
@@ -999,7 +1001,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </dialog>
 
 
 

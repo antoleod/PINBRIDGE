@@ -112,6 +112,18 @@ body {
     display: none !important;
 }
 
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
 .screen {
     position: absolute;
     inset: 0;
@@ -234,6 +246,19 @@ body {
     }
 }
 
+@keyframes highlight {
+    from {
+        background-color: var(--brand-glow);
+    }
+    to {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+}
+
+.highlight {
+    animation: highlight 0.5s ease-out;
+}
+
 /* --- AUTH SCREEN --- */
 #auth-screen.auth-hero {
     justify-content: center;
@@ -298,100 +323,40 @@ body {
     font-weight: 500;
 }
 
-.auth-actions {
+.auth-footer {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.5rem;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-subtle);
 }
 
-.auth-actions .btn-text {
+.auth-footer .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+}
+
+.auth-footer .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-color: var(--border-active);
+}
+
+.auth-footer .btn-text {
     font-size: 0.85rem;
     padding: 0.5rem 0.75rem;
     color: var(--text-secondary);
     transition: color 0.2s;
 }
 
-.auth-actions .btn-text:hover {
+.auth-footer .btn-text:hover {
     color: var(--text-primary);
 }
 
-/* Desktop Header */
-.auth-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    display: none;
-    background: rgba(9, 9, 11, 0.95);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-subtle);
-    z-index: 100;
-    padding: 1rem 2rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-}
 
-.auth-header-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.header-logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.header-logo img {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-}
-
-.header-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-
-.header-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.btn-settings {
-    background: transparent;
-    border: 1px solid var(--border-subtle);
-    color: var(--text-secondary);
-    padding: 0.5rem;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 1.2rem;
-}
-
-.btn-settings:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    border-color: var(--border-active);
-}
-
-.desktop-only {
-    display: none;
-}
-
-@media (min-width: 901px) {
-    .auth-header {
-        display: flex;
-    }
-}
 
 .auth-settings-mobile {
     display: none;
@@ -418,15 +383,7 @@ body {
     border: 1px solid var(--border-subtle);
 }
 
-.mobile-only {
-    display: none;
-}
 
-@media (max-width: 900px) {
-    .mobile-only {
-        display: flex;
-    }
-}
 
 
 .modal-overlay {
@@ -944,6 +901,16 @@ button.btn:active {
     color: var(--text-primary);
 }
 
+.btn-link {
+    background: none;
+    border: none;
+    color: var(--brand-primary);
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0;
+    font-size: inherit;
+}
+
 .btn-secondary {
     background: transparent;
     border: 1px solid var(--border-active);
@@ -997,6 +964,23 @@ button.btn:active {
     font-size: 0.8rem;
     color: var(--text-secondary);
     margin-top: 1.5rem;
+}
+
+.mt-1 {
+    margin-top: 1rem;
+}
+
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.flex-grow-2 {
+    flex-grow: 2;
+}
+
+.flex-gap-05 {
+    display: flex;
+    gap: 0.5rem;
 }
 
 /* --- VAULT LAYOUT --- */
@@ -3220,6 +3204,19 @@ input[type="file"]::file-selector-button {
     align-items: center;
     gap: 0.5rem;
     font-weight: normal;
+}
+
+.radio-group, .checkbox-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.radio-group label, .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.9rem;
 }
 
 .toggle-option {

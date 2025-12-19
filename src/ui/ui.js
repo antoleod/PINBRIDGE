@@ -2184,7 +2184,7 @@ class UIService {
      * Password Generator Logic
      */
     generatePassword() {
-        const length = parseInt(document.querySelector('input[name="pw-length"]:checked').value);
+        const length = parseInt(document.querySelector('input[name="pw-length"]:checked')?.value || '12');
         const includeUppercase = this._getById('pw-opt-uppercase').checked;
         const includeNumbers = this._getById('pw-opt-numbers').checked;
         const includeSymbols = this._getById('pw-opt-symbols').checked;
@@ -2222,8 +2222,16 @@ class UIService {
         // Shuffle the password to ensure required characters are not always at the start
         const shuffledPassword = this._shuffleString(password);
 
-        this._getById('generated-password-display').value = shuffledPassword;
+        const passwordInput = this._getById('generated-password-display');
+        passwordInput.value = shuffledPassword;
         this.showToast('New password generated!', 'success');
+
+        // UX Feedback
+        passwordInput.classList.add('highlight');
+        passwordInput.select();
+        setTimeout(() => {
+            passwordInput.classList.remove('highlight');
+        }, 500);
     }
 
     _getRandomChar(charset) {

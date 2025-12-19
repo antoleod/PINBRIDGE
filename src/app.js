@@ -48,6 +48,17 @@ async function init() {
     }
 
     initPinVisibilityToggle();
+
+    function initEnterToLogin() {
+        const loginForm = document.getElementById('login-form');
+        if (loginForm) {
+            loginForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                document.getElementById('btn-login-submit').click();
+            });
+        }
+    }
+    initEnterToLogin();
     // --- End UI Enhancements ---
 
     const lang = i18n.init();
