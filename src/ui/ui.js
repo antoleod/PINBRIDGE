@@ -34,6 +34,10 @@ class UIService {
         
         // Note Session Tracking
         this.noteSessionStart = 0;
+
+        // Capture Tools
+        this.recognition = null;
+        this.isRecording = false;
     }
 
     showLoginForm() {
@@ -180,6 +184,7 @@ class UIService {
         this.refreshSaveButtonState();
         this.refreshUsernameRecommendation();
         this.setupMobileUX();
+        this.setupSmartSuggestions();
         this.setupSecurityFeatures();
         this.setStatus(i18n.t('statusReady'));
         
@@ -194,6 +199,38 @@ class UIService {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
+    }
+
+    setupSmartSuggestions() {
+        // Inject Sidebar
+        const editorPanel = document.querySelector('.editor-panel');
+        if (!editorPanel || document.querySelector('.suggestions-sidebar')) return;
+        
+        const sidebar = document.createElement('div');
+        sidebar.className = 'suggestions-sidebar';
+        sidebar.innerHTML = `
+            <div class="suggestions-header">
+                <h3>Smart Suggestions</h3>
+                <button class="btn-icon-minimal" id="close-suggestions"><i data-feather="x"></i></button>
+            </div>
+            <div id="suggestions-content" class="suggestions-content"></div>
+        `;
+        editorPanel.appendChild(sidebar);
+        
+        // Inject Toolbar Button
+        const toolbar = document.querySelector('.editor-actions-minimal');
+        if (toolbar && !document.getElementById('btn-smart-suggest')) {
+            const btn = document.createElement('button');
+            btn.className = 'btn-tool-minimal';
+            btn.id = 'btn-smart-suggest';
+            btn.title = 'Smart Suggestions';
+            btn.innerHTML = '<i data-feather="zap"></i>';
+            btn.onclick = () => this.toggleSmartSuggestions();
+            // Insert before Zen Mode or at start
+            toolbar.insertBefore(btn, toolbar.firstChild);
+        }
+
+        document.getElementById('close-suggestions')?.addEventListener('click', () => this.toggleSmartSuggestions(false));
     }
 
     setupSecurityFeatures() {
@@ -944,9 +981,34 @@ class UIService {
         }
         if (typeof feather !== 'undefined') feather.replace();
 
+        // Inject Capture Tools (Voice & OCR)
+        if (toolbarActions) {
+            // Voice
+            if (!document.getElementById('btn-voice-type')) {
+                const btn = document.createElement('button');
+                btn.id = 'btn-voice-type';
+                btn.className = 'btn-tool-minimal';
+                btn.title = 'Voice Typing';
+                btn.innerHTML = '<i data-feather="mic"></i>';
+                btn.onclick = () => this.toggleVoiceRecording();
+                toolbarActions.insertBefore(btn, toolbarActions.firstChild);
+            }
+            // OCR
+            if (!document.getElementById('btn-ocr-scan')) {
+                const btn = document.createElement('button');
+                btn.id = 'btn-ocr-scan';
+                btn.className = 'btn-tool-minimal';
+                btn.title = 'Scan Text (OCR)';
+                btn.innerHTML = '<i data-feather="camera"></i>';
+                btn.onclick = () => this.initOCR();
+                toolbarActions.insertBefore(btn, toolbarActions.firstChild);
+            }
+        }
+
         this.inputs.noteTitle?.addEventListener('input', () => {
             this.scheduleAutoSave();
             this.refreshSaveButtonState();
+            this.updateSmartSuggestions();
         });
 
         this.inputs.noteContent?.addEventListener('input', () => {
@@ -954,10 +1016,14 @@ class UIService {
             this.refreshSaveButtonState();
             this.updateWordCount();
             this.autoResizeTextarea(this.inputs.noteContent);
+            this.updateSmartSuggestions();
         });
 
         this.inputs.noteFolder?.addEventListener('input', () => this.scheduleAutoSave());
-        this.inputs.noteTags?.addEventListener('input', () => this.scheduleAutoSave());
+        this.inputs.noteTags?.addEventListener('input', () => {
+            this.scheduleAutoSave();
+            this.updateSmartSuggestions();
+        });
 
         document.getElementById('btn-delete')?.addEventListener('click', () => this.handleDelete());
         // Minimal toolbar actions
@@ -1077,6 +1143,264 @@ class UIService {
         document.getElementById('generate-file-form')?.addEventListener('submit', (e) => {
             e.preventDefault();
             this.handleGenerateFileSubmit();
+        });
+    }
+
+    // --- VOICE TYPING ---
+    toggleVoiceRecording() {
+        if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+            this.showToast('Speech recognition not supported in this browser.', 'error');
+            return;
+        }
+
+        if (this.isRecording) {
+            this.stopVoiceRecording();
+            return;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        this.recognition = new SpeechRecognition();
+        this.recognition.continuous = true;
+        this.recognition.interimResults = true;
+        this.recognition.lang = i18n.getLanguage();
+
+        this.recognition.onstart = () => {
+            this.isRecording = true;
+            document.getElementById('btn-voice-type')?.classList.add('recording-pulse');
+            this.showToast('Listening...', 'info');
+        };
+
+        this.recognition.onresult = (event) => {
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    this.insertTextAtCursor(event.results[i][0].transcript + ' ');
+                }
+            }
+        };
+
+        this.recognition.onerror = (event) => {
+            console.error('Speech error', event.error);
+            this.stopVoiceRecording();
+        };
+
+        this.recognition.onend = () => {
+            this.stopVoiceRecording();
+        };
+
+        this.recognition.start();
+    }
+
+    stopVoiceRecording() {
+        this.isRecording = false;
+        document.getElementById('btn-voice-type')?.classList.remove('recording-pulse');
+        if (this.recognition) {
+            this.recognition.stop();
+            this.recognition = null;
+        }
+    }
+
+    // --- OCR SCANNING ---
+    async initOCR() {
+        // Create Modal if missing
+        if (!document.getElementById('ocr-modal')) {
+            const modal = document.createElement('div');
+            modal.id = 'ocr-modal';
+            modal.className = 'modal-overlay hidden';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Scan Text</h2>
+                        <button class="modal-close" id="close-ocr-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="qr-scanner-container">
+                            <video id="ocr-video" playsinline></video>
+                            <div class="qr-scanner-overlay"></div>
+                        </div>
+                        <div id="ocr-status" class="hint center">Point camera at text</div>
+                        <div class="modal-actions">
+                            <button id="btn-capture-ocr" class="btn btn-primary">Capture & Convert</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            document.getElementById('close-ocr-modal').onclick = () => this.hideOCRModal();
+            document.getElementById('btn-capture-ocr').onclick = () => this.captureAndProcessOCR();
+        }
+
+        const modal = document.getElementById('ocr-modal');
+        modal.classList.remove('hidden');
+        
+        // Load Tesseract dynamically
+        if (!window.Tesseract) {
+            this.showToast('Loading OCR engine...', 'info');
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+            document.head.appendChild(script);
+            await new Promise(resolve => script.onload = resolve);
+        }
+
+        this.startOCRCamera();
+    }
+
+    hideOCRModal() {
+        document.getElementById('ocr-modal')?.classList.add('hidden');
+        this.stopOCRCamera();
+    }
+
+    async startOCRCamera() {
+        const video = document.getElementById('ocr-video');
+        if (!video) return;
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            video.srcObject = stream;
+            video.play();
+        } catch (err) {
+            console.error("OCR Camera Error:", err);
+            this.showToast('Could not access camera', 'error');
+        }
+    }
+
+    stopOCRCamera() {
+        const video = document.getElementById('ocr-video');
+        if (video && video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+    }
+
+    async captureAndProcessOCR() {
+        const video = document.getElementById('ocr-video');
+        const status = document.getElementById('ocr-status');
+        if (!video || !window.Tesseract) return;
+
+        status.innerText = 'Processing...';
+        
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        try {
+            // Map 2-letter lang code to 3-letter for Tesseract
+            const langMap = { 'en': 'eng', 'es': 'spa', 'fr': 'fra', 'de': 'deu', 'it': 'ita', 'pt': 'por', 'nl': 'nld' };
+            const lang = langMap[i18n.getLanguage()] || 'eng';
+
+            const { data: { text } } = await window.Tesseract.recognize(canvas, lang, {
+                logger: m => { if(m.status === 'recognizing text') status.innerText = `Scanning: ${Math.round(m.progress * 100)}%`; }
+            });
+
+            if (text.trim()) {
+                this.insertTextAtCursor(text.trim() + ' ');
+                this.showToast('Text scanned successfully', 'success');
+                this.hideOCRModal();
+            } else {
+                status.innerText = 'No text detected. Try again.';
+            }
+        } catch (err) {
+            console.error(err);
+            status.innerText = 'Scan failed.';
+        }
+    }
+
+    toggleSmartSuggestions(forceState) {
+        const sidebar = document.querySelector('.suggestions-sidebar');
+        const btn = document.getElementById('btn-smart-suggest');
+        if (!sidebar) return;
+
+        const isVisible = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('visible');
+        
+        sidebar.classList.toggle('visible', isVisible);
+        if (btn) btn.classList.toggle('active', isVisible);
+
+        if (isVisible) {
+            this.updateSmartSuggestions();
+        }
+    }
+
+    updateSmartSuggestions() {
+        const sidebar = document.querySelector('.suggestions-sidebar');
+        if (!sidebar || !sidebar.classList.contains('visible')) return;
+
+        const contentContainer = document.getElementById('suggestions-content');
+        if (!contentContainer) return;
+
+        const title = (this.inputs.noteTitle?.value || '').toLowerCase();
+        const body = (this.inputs.noteContent?.value || '').toLowerCase();
+        const fullText = title + " " + body;
+        const currentTags = (this.inputs.noteTags?.value || '').split(',').map(t => t.trim().toLowerCase()).filter(t => t);
+
+        const allNotes = notesService.notes;
+        const tagCounts = {};
+        const coOccurring = {};
+
+        // 1. Analyze Vault Tags
+        allNotes.forEach(n => {
+            if (n.tags) n.tags.forEach(t => {
+                const lower = t.toLowerCase();
+                tagCounts[lower] = (tagCounts[lower] || 0) + 1;
+
+                // Co-occurrence analysis
+                if (currentTags.length > 0 && n.tags.some(nt => currentTags.includes(nt.toLowerCase()))) {
+                    if (!currentTags.includes(lower)) {
+                        coOccurring[lower] = (coOccurring[lower] || 0) + 1;
+                    }
+                }
+            });
+        });
+
+        const contentMatches = new Set();
+        const relatedTags = new Set();
+
+        // 2. Find Content Matches
+        Object.keys(tagCounts).forEach(tag => {
+            if (fullText.includes(tag) && !currentTags.includes(tag)) {
+                contentMatches.add(tag);
+            }
+        });
+
+        // 3. Find Related Tags (Top 5 co-occurring)
+        Object.entries(coOccurring)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5)
+            .forEach(([tag]) => relatedTags.add(tag));
+
+        // Render
+        let html = '';
+
+        if (contentMatches.size > 0) {
+            html += `<div class="suggestion-group"><h4>Found in text</h4><div class="suggestion-chips">`;
+            contentMatches.forEach(tag => {
+                html += `<button class="suggestion-chip" data-tag="${tag}"><i data-feather="plus"></i> ${tag}</button>`;
+            });
+            html += `</div></div>`;
+        }
+
+        if (relatedTags.size > 0) {
+            html += `<div class="suggestion-group"><h4>Related</h4><div class="suggestion-chips">`;
+            relatedTags.forEach(tag => {
+                html += `<button class="suggestion-chip" data-tag="${tag}"><i data-feather="link"></i> ${tag}</button>`;
+            });
+            html += `</div></div>`;
+        }
+
+        if (contentMatches.size === 0 && relatedTags.size === 0) {
+            html = '<p class="hint">No suggestions found based on current content.</p>';
+        }
+
+        contentContainer.innerHTML = html;
+        if (typeof feather !== 'undefined') feather.replace();
+
+        // Bind click events
+        contentContainer.querySelectorAll('.suggestion-chip').forEach(btn => {
+            btn.onclick = () => {
+                const tag = btn.dataset.tag;
+                const newTags = currentTags.concat(tag).join(', ');
+                this.inputs.noteTags.value = newTags;
+                this.inputs.noteTags.dispatchEvent(new Event('input')); // Trigger save & update
+            };
         });
     }
 
@@ -2228,6 +2552,20 @@ class UIService {
         textarea.focus();
 
         // Trigger save
+        textarea.dispatchEvent(new Event('input'));
+    }
+
+    insertTextAtCursor(text) {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+        
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const currentVal = textarea.value;
+        
+        textarea.value = currentVal.substring(0, start) + text + currentVal.substring(end);
+        textarea.selectionStart = textarea.selectionEnd = start + text.length;
+        textarea.focus();
         textarea.dispatchEvent(new Event('input'));
     }
 

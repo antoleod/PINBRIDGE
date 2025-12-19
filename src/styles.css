@@ -3435,9 +3435,91 @@ input[type="file"]::file-selector-button {
     }
 
     .editor-input-body {
-        font-size: 1.05rem;
         min-height: 220px;
     }
+
+/* --- SMART SUGGESTIONS SIDEBAR --- */
+.suggestions-sidebar {
+    position: absolute;
+    top: 60px; /* Below toolbar */
+    right: 1rem;
+    bottom: 1rem;
+    width: 240px;
+    background: var(--bg-glass);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 1.25rem;
+    transform: translateX(120%); /* Hidden off-screen */
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 40;
+    overflow-y: auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+}
+
+.suggestions-sidebar.visible {
+    transform: translateX(0);
+}
+
+.suggestions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.suggestions-header h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--brand-primary);
+}
+
+.suggestion-group {
+    margin-bottom: 1.5rem;
+}
+
+.suggestion-group h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    margin: 0 0 0.5rem 0;
+}
+
+.suggestion-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.suggestion-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+    color: var(--text-primary);
+}
+
+.suggestion-chip:hover {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.suggestion-chip i {
+    width: 12px;
+    height: 12px;
+}
 
     /* Increase touch targets and readable sizes */
     button.btn {
@@ -3936,6 +4018,20 @@ input[type="file"]::file-selector-button {
     .editor-input-body {
         min-height: 150px;
     }
+}
+
+/* Recording Pulse Animation */
+.recording-pulse {
+    color: var(--text-danger) !important;
+    animation: pulse-red 1.5s infinite;
+    background: rgba(248, 113, 113, 0.1) !important;
+    border-color: var(--text-danger) !important;
+}
+
+@keyframes pulse-red {
+    0% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(248, 113, 113, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(248, 113, 113, 0); }
 }
 
 /* High DPI displays */
