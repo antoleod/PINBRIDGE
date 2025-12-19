@@ -99,6 +99,7 @@ html,
 body {
     -webkit-text-size-adjust: 100%;
     -ms-text-size-adjust: 100%;
+    font-size: var(--font-size-base, 16px);
 }
 
 /* Reduce tap highlight on mobile */
@@ -384,6 +385,12 @@ body {
 
 .desktop-only {
     display: none;
+}
+
+@media (min-width: 901px) {
+    .auth-header {
+        display: flex;
+    }
 }
 
 .auth-settings-mobile {

@@ -1027,22 +1027,30 @@ class UIService {
     }
 
     addEditorEventListeners() {
-        // Inject Zen Mode Controls
+        // Inject Focus Mode Controls
         const toolbarActions = document.querySelector('.editor-actions-minimal');
-        if (toolbarActions && !document.getElementById('btn-zen-mode')) {
+        let focusBtn = document.getElementById('btn-focus-mode');
+        if (toolbarActions && !focusBtn) {
             const btn = document.createElement('button');
-            btn.id = 'btn-zen-mode';
+            btn.id = 'btn-focus-mode';
             btn.className = 'btn-tool-minimal';
-            btn.title = 'Zen Mode (F)';
+            btn.title = 'Focus Mode (F)';
+            btn.setAttribute('aria-label', 'Toggle Focus Mode');
             btn.innerHTML = '<i data-feather="maximize"></i>';
             btn.onclick = () => this.toggleFocusMode();
             toolbarActions.insertBefore(btn, toolbarActions.firstChild);
+            focusBtn = btn;
+        }
+        if (focusBtn) {
+            focusBtn.onclick = () => this.toggleFocusMode();
         }
 
         if (!document.getElementById('btn-exit-focus-mode')) {
             const exitBtn = document.createElement('button');
             exitBtn.id = 'btn-exit-focus-mode';
             exitBtn.className = 'btn-icon-primary';
+            exitBtn.title = 'Exit Focus Mode';
+            exitBtn.setAttribute('aria-label', 'Exit Focus Mode');
             exitBtn.innerHTML = '<i data-feather="minimize"></i>';
             exitBtn.onclick = () => this.toggleFocusMode(false);
             document.body.appendChild(exitBtn);
@@ -1085,6 +1093,12 @@ class UIService {
             this.updateWordCount();
             this.autoResizeTextarea(this.inputs.noteContent);
             this.updateSmartSuggestions();
+        });
+
+        this.inputs.noteContent?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                this.handleSmartList(e);
+            }
         });
 
         this.inputs.noteFolder?.addEventListener('input', () => this.scheduleAutoSave());
@@ -1139,12 +1153,6 @@ class UIService {
             document.getElementById('settings-modal').classList.add('hidden');
         });
         
-        // Theme switcher logic
-        const themeSwitcher = document.getElementById('theme-switcher');
-        if (themeSwitcher) {
-            themeSwitcher.addEventListener('click', (e) => this.handleThemeChange(e));
-        }
-
         // Sync toggle
         const syncToggle = document.getElementById('toggle-sync-enabled');
         if (syncToggle) {
@@ -1482,6 +1490,10 @@ class UIService {
     toggleFocusMode(forceState) {
         this.isFocusMode = typeof forceState === 'boolean' ? forceState : !this.isFocusMode;
         document.body.classList.toggle('focus-mode-active', this.isFocusMode);
+        const focusBtn = document.getElementById('btn-focus-mode');
+        if (focusBtn) {
+            focusBtn.setAttribute('aria-pressed', this.isFocusMode ? 'true' : 'false');
+        }
         this.hapticFeedback();
 
         if (this.isFocusMode) {
@@ -1674,6 +1686,13 @@ class UIService {
             });
             
             // Timeout logic would go here (updating authService)
+            this._bindSetting('setting-timeout', 'pinbridge.security_timeout', 'value');
+
+            // Theme Switcher Listener (Delegation)
+            const themeContainer = document.getElementById('theme-switcher');
+            if (themeContainer) {
+                themeContainer.addEventListener('click', (e) => this.handleThemeChange(e));
+            }
         }
 
         // Inject Notifications Tab if missing
