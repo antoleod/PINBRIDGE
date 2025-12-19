@@ -31,6 +31,9 @@ class UIService {
         this.qrScanner = null;
         this.usernameRecommendationText = null;
         this.storedUsername = null;
+        
+        // Note Session Tracking
+        this.noteSessionStart = 0;
     }
 
     showLoginForm() {
@@ -151,6 +154,11 @@ class UIService {
             btnMenu: document.getElementById('btn-mobile-menu'),
             backdrop: document.getElementById('mobile-nav-backdrop')
         };
+
+        this.panels = {
+            sidebar: document.getElementById('notes-list')?.parentElement || document.querySelector('.notes-sidebar'),
+            editor: document.querySelector('.editor-panel')
+        };
     }
     
     _getById(id) {
@@ -171,6 +179,8 @@ class UIService {
         this.updateCompactViewUI();
         this.refreshSaveButtonState();
         this.refreshUsernameRecommendation();
+        this.setupMobileUX();
+        this.setupSecurityFeatures();
         this.setStatus(i18n.t('statusReady'));
         
         // Initialize settings menu values
@@ -184,6 +194,123 @@ class UIService {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
+    }
+
+    setupSecurityFeatures() {
+        // Blur on app switch
+        const blurEnabled = localStorage.getItem('pinbridge.security_blur') === 'true';
+        const handleBlur = () => document.body.classList.add('app-blurred');
+        const handleFocus = () => document.body.classList.remove('app-blurred');
+        
+        window.removeEventListener('blur', handleBlur);
+        window.removeEventListener('focus', handleFocus);
+        
+        if (blurEnabled) {
+            window.addEventListener('blur', handleBlur);
+            window.addEventListener('focus', handleFocus);
+        }
+    }
+
+    setupMobileUX() {
+        // Inject Back Button for Mobile
+        if (this.mobile.topbar && !document.getElementById('mobile-back-btn')) {
+            const btn = document.createElement('button');
+            btn.id = 'mobile-back-btn';
+            btn.className = 'btn-icon hidden';
+            btn.innerHTML = '<i data-feather="arrow-left"></i>';
+            btn.setAttribute('aria-label', 'Back to list');
+            btn.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.exitMobileEditor();
+            };
+            this.mobile.topbar.insertBefore(btn, this.mobile.topbar.firstChild);
+        }
+
+        // Inject Mobile Footer Navigation
+        if (!document.getElementById('mobile-footer')) {
+            this.renderMobileFooter();
+        }
+
+        // Handle resize events to reset layout
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                if (this.panels.sidebar) this.panels.sidebar.classList.remove('hidden');
+                if (this.panels.editor) this.panels.editor.classList.remove('hidden');
+                document.getElementById('mobile-back-btn')?.classList.add('hidden');
+                this.mobile.btnMenu?.classList.remove('hidden');
+            }
+        });
+    }
+
+    renderMobileFooter() {
+        const footer = document.createElement('nav');
+        footer.id = 'mobile-footer';
+        footer.className = 'mobile-footer glass-panel';
+        
+        const items = [
+            { id: 'nav-all', icon: 'file-text', label: 'Notes', view: 'all' },
+            { id: 'nav-favorites', icon: 'star', label: 'Favorites', view: 'favorites' },
+            { id: 'nav-trash', icon: 'trash-2', label: 'Trash', view: 'trash' },
+            { id: 'nav-settings', icon: 'settings', label: 'Settings', action: 'settings' }
+        ];
+
+        items.forEach(item => {
+            const btn = document.createElement('button');
+            btn.className = `mobile-nav-item ${this.currentView === item.view ? 'active' : ''}`;
+            btn.dataset.view = item.view; // Bind view for sync
+            btn.innerHTML = `<i data-feather="${item.icon}"></i><span>${item.label}</span>`;
+            
+            btn.onclick = (e) => {
+                e.preventDefault();
+                
+                if (item.action === 'settings') {
+                    this.openSettingsModal();
+                    return;
+                }
+
+                // Visual update
+                document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Sync with desktop sidebar logic
+                this.currentView = item.view;
+                this.renderCurrentView();
+                
+                // Sync desktop sidebar state
+                document.querySelectorAll('.nav-item').forEach(b => {
+                    b.classList.toggle('active', b.dataset.view === item.view);
+                });
+
+                // If on mobile editor, return to list
+                if (window.innerWidth < 900) {
+                    this.exitMobileEditor();
+                }
+            };
+            footer.appendChild(btn);
+        });
+
+        document.body.appendChild(footer);
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+    enterMobileEditor() {
+        if (window.innerWidth >= 768) return;
+        if (this.panels.sidebar) this.panels.sidebar.classList.add('hidden');
+        if (this.panels.editor) this.panels.editor.classList.remove('hidden');
+        
+        document.getElementById('mobile-back-btn')?.classList.remove('hidden');
+        this.mobile.btnMenu?.classList.add('hidden');
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+    exitMobileEditor() {
+        if (this.panels.sidebar) this.panels.sidebar.classList.remove('hidden');
+        if (this.panels.editor) this.panels.editor.classList.add('hidden');
+        
+        document.getElementById('mobile-back-btn')?.classList.add('hidden');
+        this.mobile.btnMenu?.classList.remove('hidden');
+        // Optional: this.activeNoteId = null;
     }
     
     hapticFeedback() {
@@ -283,6 +410,13 @@ class UIService {
 
     addAuthEventListeners() {
         this.forms.loginForm?.addEventListener('submit', (e) => this.handleLoginSubmit(e));
+        
+        this.inputs.loginPin?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                this.handleLoginSubmit(e);
+            }
+        });
+
         this.forms.loginButton?.addEventListener('click', (e) => {
             e.preventDefault();
             if (this.forms.loginForm?.requestSubmit) {
@@ -788,6 +922,28 @@ class UIService {
     }
 
     addEditorEventListeners() {
+        // Inject Zen Mode Controls
+        const toolbarActions = document.querySelector('.editor-actions-minimal');
+        if (toolbarActions && !document.getElementById('btn-zen-mode')) {
+            const btn = document.createElement('button');
+            btn.id = 'btn-zen-mode';
+            btn.className = 'btn-tool-minimal';
+            btn.title = 'Zen Mode (F)';
+            btn.innerHTML = '<i data-feather="maximize"></i>';
+            btn.onclick = () => this.toggleFocusMode();
+            toolbarActions.insertBefore(btn, toolbarActions.firstChild);
+        }
+
+        if (!document.getElementById('btn-exit-focus-mode')) {
+            const exitBtn = document.createElement('button');
+            exitBtn.id = 'btn-exit-focus-mode';
+            exitBtn.className = 'btn-icon-primary';
+            exitBtn.innerHTML = '<i data-feather="minimize"></i>';
+            exitBtn.onclick = () => this.toggleFocusMode(false);
+            document.body.appendChild(exitBtn);
+        }
+        if (typeof feather !== 'undefined') feather.replace();
+
         this.inputs.noteTitle?.addEventListener('input', () => {
             this.scheduleAutoSave();
             this.refreshSaveButtonState();
@@ -797,6 +953,7 @@ class UIService {
             this.scheduleAutoSave();
             this.refreshSaveButtonState();
             this.updateWordCount();
+            this.autoResizeTextarea(this.inputs.noteContent);
         });
 
         this.inputs.noteFolder?.addEventListener('input', () => this.scheduleAutoSave());
@@ -923,6 +1080,12 @@ class UIService {
         });
     }
 
+    autoResizeTextarea(element) {
+        if (!element) return;
+        element.style.height = 'auto';
+        element.style.height = element.scrollHeight + 'px';
+    }
+
     toggleFocusMode(forceState) {
         this.isFocusMode = typeof forceState === 'boolean' ? forceState : !this.isFocusMode;
         document.body.classList.toggle('focus-mode-active', this.isFocusMode);
@@ -995,6 +1158,12 @@ class UIService {
                 e.preventDefault();
                 this.navigateNotes(e.key === 'ArrowDown' ? 1 : -1);
             }
+
+            // Switch focus between List and Editor (Ctrl+Alt+Left/Right)
+            if (e.ctrlKey && e.altKey) {
+                if (e.key === 'ArrowLeft') { this.inputs.noteTitle?.blur(); this.inputs.noteContent?.blur(); }
+                if (e.key === 'ArrowRight') { this.inputs.noteContent?.focus(); }
+            }
         });
     }
 
@@ -1009,10 +1178,13 @@ class UIService {
         if (newIndex >= notes.length) newIndex = 0;
 
         this.selectNote(notes[newIndex]);
+        const el = document.querySelector(`.note-item[data-id="${notes[newIndex].id}"]`);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     async openSettingsModal() {
         const modal = document.getElementById('settings-modal');
+        this.renderSettingsPanel(); // Render full settings UI
         this.renderThemeSwitcher();
         // Set the toggle to the correct initial state
         const syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
@@ -1026,11 +1198,228 @@ class UIService {
         await this.renderActiveRecoveryMethods();
     }
 
+    renderSettingsPanel() {
+        // Inject settings sections if they don't exist
+        const generalTab = document.getElementById('settings-general');
+        if (generalTab && !generalTab.querySelector('.settings-injected')) {
+            generalTab.innerHTML = `
+                <div class="settings-injected">
+                    <h3>Appearance</h3>
+                    <div class="form-group">
+                        <label>Theme</label>
+                        <div id="theme-switcher" class="settings-actions"></div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Font Size</label>
+                        <select id="setting-font-size" class="input-field">
+                            <option value="sm">Small</option>
+                            <option value="md" selected>Medium</option>
+                            <option value="lg">Large</option>
+                        </select>
+                    </div>
+
+                    <h3>Security</h3>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Blur on App Switch</span>
+                            <span class="settings-item-desc">Hide content when switching windows</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="setting-blur-app" class="toggle-input">
+                            <label for="setting-blur-app" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Auto-Lock Timeout</span>
+                            <span class="settings-item-desc">Lock vault after inactivity</span>
+                        </div>
+                        <select id="setting-timeout" class="settings-select-minimal">
+                            <option value="5">5 minutes</option>
+                            <option value="15">15 minutes</option>
+                            <option value="30">30 minutes</option>
+                            <option value="0">Never</option>
+                        </select>
+                    </div>
+
+                    <h3>Notes Behavior</h3>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Smart Checklists</span>
+                            <span class="settings-item-desc">Continue list when pressing Enter</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="setting-smart-lists" class="toggle-input">
+                            <label for="setting-smart-lists" class="toggle-label"></label>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Bind Events
+            this._bindSetting('setting-blur-app', 'pinbridge.security_blur', 'checkbox', () => this.setupSecurityFeatures());
+            this._bindSetting('setting-smart-lists', 'pinbridge.smart_lists', 'checkbox');
+            this._bindSetting('setting-font-size', 'pinbridge.ui_font_size', 'value', (val) => {
+                document.documentElement.style.setProperty('--font-size-base', val === 'lg' ? '18px' : val === 'sm' ? '14px' : '16px');
+            });
+            
+            // Timeout logic would go here (updating authService)
+        }
+
+        // Inject Notifications Tab if missing
+        const tabsContainer = document.querySelector('.settings-tabs');
+        if (tabsContainer && !document.getElementById('tab-notifications')) {
+            const btn = document.createElement('button');
+            btn.id = 'tab-notifications';
+            btn.className = 'settings-tab';
+            btn.dataset.tab = 'notifications';
+            btn.innerText = 'Notifications';
+            btn.onclick = (e) => this.switchSettingsTab('notifications');
+            tabsContainer.appendChild(btn);
+
+            // Inject Content
+            const content = document.createElement('div');
+            content.id = 'settings-notifications';
+            content.className = 'settings-content hidden';
+            content.innerHTML = this._getNotificationsHTML();
+            document.querySelector('.settings-modal').appendChild(content); // Append to modal container
+            
+            this._bindNotificationSettings();
+        }
+    }
+
+    _getNotificationsHTML() {
+        return `
+            <h3>Notifications & Focus</h3>
+            
+            <div class="settings-item">
+                <div class="settings-item-content">
+                    <span class="settings-item-title">Enable Notifications</span>
+                    <span class="settings-item-desc">Master switch for all alerts</span>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="notif-master-toggle" class="toggle-input">
+                    <label for="notif-master-toggle" class="toggle-label"></label>
+                </div>
+            </div>
+
+            <h4>Reminder Defaults</h4>
+            <div class="form-group input-row">
+                <div>
+                    <label>Default Time</label>
+                    <input type="time" id="notif-default-time" class="input-field" value="09:00">
+                </div>
+                <div>
+                    <label>Snooze Duration</label>
+                    <select id="notif-snooze-duration" class="input-field">
+                        <option value="5">5 minutes</option>
+                        <option value="10">10 minutes</option>
+                        <option value="30">30 minutes</option>
+                    </select>
+                </div>
+            </div>
+
+            <h4>Notification Channels</h4>
+            <div class="settings-list">
+                <div class="settings-item">
+                    <div class="settings-item-content">
+                        <span class="settings-item-title">Browser Push</span>
+                    </div>
+                    <input type="checkbox" id="notif-channel-web" checked>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-content">
+                        <span class="settings-item-title">Mobile (PWA)</span>
+                    </div>
+                    <input type="checkbox" id="notif-channel-pwa" checked>
+                </div>
+                <div class="settings-item">
+                    <div class="settings-item-content">
+                        <span class="settings-item-title">Email Digest</span>
+                        <span class="settings-item-desc">Daily summary (Opt-in)</span>
+                    </div>
+                    <input type="checkbox" id="notif-channel-email">
+                </div>
+            </div>
+
+            <h4>Focus Mode</h4>
+            <div class="settings-item">
+                <div class="settings-item-content">
+                    <span class="settings-item-title">Silent Hours</span>
+                    <span class="settings-item-desc">Mute notifications during specific times</span>
+                </div>
+                <div class="toggle-switch">
+                    <input type="checkbox" id="notif-focus-enabled" class="toggle-input">
+                    <label for="notif-focus-enabled" class="toggle-label"></label>
+                </div>
+            </div>
+            <div id="focus-schedule-config" class="form-group input-row hidden" style="margin-top: 1rem;">
+                <div>
+                    <label>Start</label>
+                    <input type="time" id="notif-focus-start" class="input-field" value="22:00">
+                </div>
+                <div>
+                    <label>End</label>
+                    <input type="time" id="notif-focus-end" class="input-field" value="07:00">
+                </div>
+            </div>
+        `;
+    }
+
+    _bindNotificationSettings() {
+        this._bindSetting('notif-master-toggle', 'pinbridge.notif.enabled', 'checkbox');
+        this._bindSetting('notif-default-time', 'pinbridge.notif.default_time', 'value');
+        this._bindSetting('notif-snooze-duration', 'pinbridge.notif.snooze', 'value');
+        
+        this._bindSetting('notif-channel-web', 'pinbridge.notif.channel_web', 'checkbox');
+        this._bindSetting('notif-channel-pwa', 'pinbridge.notif.channel_pwa', 'checkbox');
+        this._bindSetting('notif-channel-email', 'pinbridge.notif.channel_email', 'checkbox');
+
+        // Focus Mode Logic
+        const focusToggle = document.getElementById('notif-focus-enabled');
+        const focusConfig = document.getElementById('focus-schedule-config');
+        
+        if (focusToggle) {
+            const saved = localStorage.getItem('pinbridge.notif.focus_enabled') === 'true';
+            focusToggle.checked = saved;
+            if (saved) focusConfig.classList.remove('hidden');
+
+            focusToggle.addEventListener('change', (e) => {
+                localStorage.setItem('pinbridge.notif.focus_enabled', e.target.checked);
+                if (e.target.checked) focusConfig.classList.remove('hidden');
+                else focusConfig.classList.add('hidden');
+            });
+        }
+
+        this._bindSetting('notif-focus-start', 'pinbridge.notif.focus_start', 'value');
+        this._bindSetting('notif-focus-end', 'pinbridge.notif.focus_end', 'value');
+    }
+
+    _bindSetting(id, storageKey, type, callback) {
+        const el = document.getElementById(id);
+        if (!el) return;
+        
+        const saved = localStorage.getItem(storageKey);
+        if (saved !== null) {
+            if (type === 'checkbox') el.checked = saved === 'true';
+            else el.value = saved;
+        }
+
+        el.addEventListener('change', (e) => {
+            const val = type === 'checkbox' ? e.target.checked : e.target.value;
+            localStorage.setItem(storageKey, val);
+            if (callback) callback(val);
+        });
+    }
+
     renderThemeSwitcher() {
         const container = document.getElementById('theme-switcher');
         if (!container) return;
 
         const themes = [
+            { id: 'light', name: 'Light' },
             { id: 'dark', name: 'Default Dark' },
             { id: 'amoled', name: 'AMOLED Black' },
             { id: 'low-contrast', name: 'Low Contrast' }
@@ -1878,7 +2267,24 @@ class UIService {
         const text = this.inputs.noteContent?.value || '';
         const words = text.trim() ? text.trim().split(/\s+/).length : 0;
         const badge = document.getElementById('word-count-badge');
-        if (badge) badge.innerText = `${words} w`;
+        
+        // Read time calculation (approx 225 words per minute)
+        const minutes = Math.ceil(words / 225);
+        const readTimeText = minutes > 0 ? `${minutes} min read` : '';
+
+        if (badge) {
+            badge.innerText = `${words} w`;
+            // Check for existing read time badge or create it
+            let rt = document.getElementById('read-time-badge');
+            if (!rt && readTimeText) {
+                rt = document.createElement('span');
+                rt.id = 'read-time-badge';
+                rt.className = 'status-badge';
+                rt.style.marginLeft = '8px';
+                badge.parentNode.insertBefore(rt, badge.nextSibling);
+            }
+            if (rt) rt.innerText = readTimeText;
+        }
     }
 
     addKeyboardShortcuts() {
@@ -1974,12 +2380,14 @@ class UIService {
         }
     }
 
-    async handlePinNote() {
-        if (!this.ensureAuthenticated() || !this.activeNoteId) return;
-        const note = notesService.notes.find(n => n.id === this.activeNoteId);
+    async handlePinNote(noteId = this.activeNoteId) {
+        if (!this.ensureAuthenticated() || !noteId) return;
+        const note = notesService.notes.find(n => n.id === noteId);
         if (!note) return;
-        await notesService.togglePin(this.activeNoteId);
-        this.updatePinButtonState(!note.pinned);
+        await notesService.togglePin(noteId);
+        if (noteId === this.activeNoteId) {
+            this.updatePinButtonState(!note.pinned);
+        }
         this.renderCurrentView();
     }
 
@@ -2040,6 +2448,11 @@ class UIService {
             this.renderFolders();
             this.updateDeleteButtonContext();
             this.renderNoteList(filtered);
+
+            // Sync Mobile Footer State
+            document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === this.currentView);
+            });
         }
     }
 
@@ -2114,6 +2527,7 @@ class UIService {
             div.className = 'note-item';
             div.dataset.id = note.id;
             if (note.id === this.activeNoteId) div.classList.add('active');
+            this.addSwipeHandlers(div, note);
 
             const badges = [];
             if (note.pinned) badges.push('<span class="note-badge">&#9733;</span>');
@@ -2204,6 +2618,190 @@ class UIService {
         });
     }
 
+    addSwipeHandlers(el, note) {
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let isSwiping = false;
+        let isScrolling = false;
+        const threshold = 80; // Distance to trigger action
+        
+        // Long press vars
+        let longPressTimer = null;
+        const longPressDuration = 500;
+
+        el.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isSwiping = false;
+            isScrolling = false;
+            el.style.transition = 'none'; // Disable transition for direct 1:1 movement
+            
+            // Start Long Press Timer
+            longPressTimer = setTimeout(() => {
+                this.hapticFeedback();
+                this.showMobileContextMenu(note);
+                isSwiping = false; 
+                isScrolling = true; // Prevent swipe logic from continuing
+            }, longPressDuration);
+        }, { passive: true });
+
+        el.addEventListener('touchmove', (e) => {
+            // Check movement to cancel long press
+            const moveX = e.touches[0].clientX;
+            const moveY = e.touches[0].clientY;
+            if (Math.abs(moveX - startX) > 10 || Math.abs(moveY - startY) > 10) {
+                clearTimeout(longPressTimer);
+            }
+
+            if (isScrolling) return;
+            
+            currentX = e.touches[0].clientX;
+            const diffX = currentX - startX;
+            const diffY = e.touches[0].clientY - startY;
+
+            // Determine if user is scrolling vertically or swiping horizontally
+            if (!isSwiping && !isScrolling) {
+                if (Math.abs(diffY) > Math.abs(diffX)) {
+                    isScrolling = true;
+                    clearTimeout(longPressTimer);
+                    return;
+                }
+                if (Math.abs(diffX) > 10) {
+                    isSwiping = true;
+                    clearTimeout(longPressTimer);
+                }
+            }
+
+            if (isSwiping) {
+                e.preventDefault();
+                el.style.transform = `translateX(${diffX}px)`;
+                
+                // Visual feedback based on direction
+                if (diffX > 0) { // Right Swipe (Pin)
+                    el.style.background = `rgba(59, 130, 246, ${Math.min(Math.abs(diffX)/200, 0.4)})`;
+                    el.style.borderColor = 'var(--brand-primary)';
+                } else { // Left Swipe (Trash)
+                    el.style.background = `rgba(239, 68, 68, ${Math.min(Math.abs(diffX)/200, 0.4)})`;
+                    el.style.borderColor = 'var(--text-danger)';
+                }
+            }
+        }, { passive: false });
+
+        el.addEventListener('touchend', async (e) => {
+            clearTimeout(longPressTimer);
+            if (!isSwiping) return;
+            
+            el.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            const diffX = currentX - startX;
+
+            if (diffX > threshold) {
+                // Trigger Pin
+                el.style.transform = 'translateX(100%)';
+                el.style.opacity = '0';
+                this.hapticFeedback();
+                setTimeout(() => this.handlePinNote(note.id), 200);
+            } else if (diffX < -threshold) {
+                // Trigger Trash
+                el.style.transform = 'translateX(-100%)';
+                el.style.opacity = '0';
+                this.hapticFeedback();
+                setTimeout(async () => {
+                    if (note.trash) {
+                        if (confirm(i18n.t('confirmDeleteForever'))) await notesService.deleteNote(note.id);
+                    } else {
+                        await notesService.moveToTrash(note.id);
+                    }
+                    this.renderCurrentView();
+                }, 200);
+            } else {
+                // Reset
+                el.style.transform = '';
+                el.style.background = '';
+                el.style.borderColor = '';
+                el.style.opacity = '';
+            }
+        });
+    }
+
+    showMobileContextMenu(note) {
+        let overlay = document.getElementById('mobile-ctx-overlay');
+        if (!overlay) {
+            overlay = document.createElement('div');
+            overlay.id = 'mobile-ctx-overlay';
+            overlay.className = 'mobile-context-menu-overlay';
+            document.body.appendChild(overlay);
+            
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    overlay.classList.remove('visible');
+                }
+            });
+        }
+
+        const isPinned = note.pinned;
+        const isTrash = note.trash;
+
+        overlay.innerHTML = `
+            <div class="mobile-context-menu">
+                <div class="ctx-header">${Utils.escapeHtml(note.title || 'Untitled Note')}</div>
+                
+                <button class="ctx-item" data-action="folder">
+                    <i data-feather="folder"></i> Move to Folder
+                </button>
+                
+                <button class="ctx-item" data-action="share">
+                    <i data-feather="share-2"></i> Share
+                </button>
+                
+                <button class="ctx-item" data-action="pin">
+                    <i data-feather="${isPinned ? 'star-off' : 'star'}"></i> ${isPinned ? 'Unpin' : 'Pin to Top'}
+                </button>
+                
+                <button class="ctx-item danger" data-action="delete">
+                    <i data-feather="${isTrash ? 'trash-2' : 'trash'}"></i> ${isTrash ? 'Delete Forever' : 'Move to Trash'}
+                </button>
+            </div>
+        `;
+
+        if (typeof feather !== 'undefined') feather.replace();
+
+        // Bind actions
+        overlay.querySelectorAll('.ctx-item').forEach(btn => {
+            btn.onclick = async () => {
+                const action = btn.dataset.action;
+                overlay.classList.remove('visible');
+                
+                if (action === 'pin') this.handlePinNote(note.id);
+                if (action === 'delete') {
+                    if (isTrash) {
+                        if (confirm(i18n.t('confirmDeleteForever'))) await notesService.deleteNote(note.id);
+                    } else {
+                        await notesService.moveToTrash(note.id);
+                    }
+                    this.renderCurrentView();
+                }
+                if (action === 'share') {
+                    if (navigator.share) {
+                        navigator.share({ title: note.title, text: note.body }).catch(console.error);
+                    } else {
+                        this.showToast('Sharing not supported on this device', 'info');
+                    }
+                }
+                if (action === 'folder') {
+                    const folder = prompt('Enter folder name:', note.folder || '');
+                    if (folder !== null) {
+                        await notesService.updateNote(note.id, note.title, note.body, folder, note.tags);
+                        this.renderCurrentView();
+                    }
+                }
+            };
+        });
+
+        // Show
+        requestAnimationFrame(() => overlay.classList.add('visible'));
+    }
+
     updateActiveListItem(note) {
         if (!note) return;
         const el = document.querySelector(`.note-item[data-id="${note.id}"]`);
@@ -2246,6 +2844,7 @@ class UIService {
         if (this.inputs.noteTags) this.inputs.noteTags.value = note.tags ? note.tags.join(', ') : '';
 
         this.updatePinButtonState(note.pinned);
+        this.startNoteSession(note);
 
         document.querySelectorAll('.note-item.active').forEach(el => el.classList.remove('active'));
         const newActiveEl = document.querySelector(`.note-item[data-id="${note.id}"]`);
@@ -2255,8 +2854,53 @@ class UIService {
             newActiveEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
+        this.enterMobileEditor();
+        this.autoResizeTextarea(this.inputs.noteContent);
+
         this.refreshSaveButtonState();
         this.updateWordCount();
+    }
+
+    startNoteSession(note) {
+        this.noteSessionStart = Date.now();
+        this.renderNoteMeta(note);
+    }
+
+    getNoteMeta(noteId) {
+        try {
+            return JSON.parse(localStorage.getItem(`pinbridge_meta_${noteId}`)) || {};
+        } catch (e) { return {}; }
+    }
+
+    saveNoteMeta(noteId, data) {
+        const current = this.getNoteMeta(noteId);
+        localStorage.setItem(`pinbridge_meta_${noteId}`, JSON.stringify({ ...current, ...data }));
+    }
+
+    renderNoteMeta(note) {
+        const metaContainer = document.querySelector('.editor-meta-minimal');
+        if (!metaContainer) return;
+        
+        const meta = this.getNoteMeta(note.id);
+        const workTimeMs = meta.workTime || 0;
+        
+        // Format time (e.g., 1h 20m)
+        const minutes = Math.floor(workTimeMs / 60000);
+        const hours = Math.floor(minutes / 60);
+        const timeStr = hours > 0 ? `${hours}h ${minutes % 60}m` : `${minutes}m`;
+        
+        const date = new Date(note.updated || Date.now()).toLocaleDateString();
+        // Mock version count based on history availability or random for demo if empty
+        const version = note.history ? note.history.length + 1 : 1;
+
+        metaContainer.innerHTML = `
+            <div class="note-meta-info">
+                <span title="Last updated"><i data-feather="calendar"></i> ${date}</span>
+                <span title="Time spent working"><i data-feather="clock"></i> ${timeStr}</span>
+                <span title="Version count"><i data-feather="git-commit"></i> v${version}</span>
+            </div>
+        `;
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     renderFolders() {
@@ -2340,12 +2984,21 @@ class UIService {
             return false;
         }
 
+        // Update Work Time
+        if (this.noteSessionStart) {
+            const sessionDuration = Date.now() - this.noteSessionStart;
+            const currentMeta = this.getNoteMeta(this.activeNoteId);
+            this.saveNoteMeta(this.activeNoteId, { workTime: (currentMeta.workTime || 0) + sessionDuration });
+            this.noteSessionStart = Date.now(); // Reset session start
+        }
+
         this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
         await notesService.updateNote(this.activeNoteId, title, body, folder, tags);
         this.setStatus(i18n.t('statusSaved') + (folder ? ` (${folder})` : ''));
         this.renderFolders();
         this.refreshSaveButtonState();
         this.updateActiveListItem(note);
+        this.renderNoteMeta(note); // Update display
         return true;
     }
 
