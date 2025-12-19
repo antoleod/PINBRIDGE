@@ -40,6 +40,9 @@ class UIService {
         this.recognition = null;
         this.isRecording = false;
         this.loginAttempts = 0;
+        this.ocrScanInterval = null;
+        this.isOcrProcessing = false;
+        this.ocrWorker = null;
     }
 
     showLoginForm() {
@@ -627,6 +630,9 @@ class UIService {
             }
         });
 
+        // Auth Settings (pre-login only): recovery/sync/readonly info, no vault data access.
+        document.getElementById('btn-settings')?.addEventListener('click', () => this.showSettingsModal());
+
         // Settings modal
         document.getElementById('btn-settings-desktop')?.addEventListener('click', () => this.showSettingsModal());
         document.getElementById('btn-settings-mobile')?.addEventListener('click', () => this.showSettingsModal());
@@ -1117,6 +1123,7 @@ class UIService {
     }
 
     showSettingsModal() {
+        // Auth Settings (pre-login): never touch encrypted vault data.
         this.settingsModal.overlay?.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -1246,8 +1253,7 @@ class UIService {
             });
         });
 
-        // Settings Modal
-        document.getElementById('btn-settings')?.addEventListener('click', () => this.openSettingsModal());
+        // Settings Modal (vault-only)
         document.getElementById('btn-vault-settings')?.addEventListener('click', () => this.openSettingsModal());
         document.getElementById('close-settings-modal')?.addEventListener('click', () => {
             document.getElementById('settings-modal').classList.add('hidden');
@@ -1301,7 +1307,7 @@ class UIService {
             document.getElementById('secret-question-modal').classList.add('hidden');
         });
 
-        // Password Generator
+        // Passphrase Generator
         this._getById('btn-generate-password')?.addEventListener('click', () => this.generatePassword());
         this._getById('btn-copy-password')?.addEventListener('click', () => this.copyPassword());
 
@@ -1380,7 +1386,7 @@ class UIService {
     async initOCR() {
         // Create Modal if missing
         if (!document.getElementById('ocr-modal')) {
-            const modal = document.createElement('div');
+            const modal = document.createElement('dialog');
             modal.id = 'ocr-modal';
             modal.className = 'modal-overlay hidden';
             modal.innerHTML = `
@@ -1395,45 +1401,62 @@ class UIService {
                             <div class="qr-scanner-overlay"></div>
                         </div>
                         <div id="ocr-status" class="hint center">Point camera at text</div>
+                        <div id="ocr-result-preview" class="ocr-preview"></div>
                         <div class="modal-actions">
-                            <button id="btn-capture-ocr" class="btn btn-primary">Capture & Convert</button>
+                            <button id="btn-insert-ocr" class="btn btn-primary">Insert Text</button>
                         </div>
                     </div>
                 </div>
             `;
             document.body.appendChild(modal);
             
-            document.getElementById('close-ocr-modal').onclick = () => this.hideOCRModal();
-            document.getElementById('btn-capture-ocr').onclick = () => this.captureAndProcessOCR();
+            this._getById('close-ocr-modal').onclick = () => this.hideOCRModal();
+            this._getById('btn-insert-ocr').onclick = () => {
+                this.insertOcrText();
+                this.hideOCRModal();
+            };
         }
 
-        const modal = document.getElementById('ocr-modal');
+        const modal = this._getById('ocr-modal');
         modal.classList.remove('hidden');
         
-        // Load Tesseract dynamically
-        if (!window.Tesseract) {
+        // Load and initialize Tesseract
+        if (!this.ocrWorker) {
             this.showToast('Loading OCR engine...', 'info');
             const script = document.createElement('script');
             script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
             document.head.appendChild(script);
             await new Promise(resolve => script.onload = resolve);
+            this.ocrWorker = await Tesseract.createWorker('eng', 1, {
+                logger: m => {
+                    if (m.status === 'recognizing text') {
+                         const statusEl = this._getById('ocr-status');
+                         if(statusEl) statusEl.innerText = `Scanning: ${Math.round(m.progress * 100)}%`;
+                    }
+                }
+            });
+            await this.ocrWorker.setParameters({
+                tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
+                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+            });
         }
 
         this.startOCRCamera();
     }
 
     hideOCRModal() {
-        document.getElementById('ocr-modal')?.classList.add('hidden');
+        this._getById('ocr-modal')?.classList.add('hidden');
         this.stopOCRCamera();
     }
 
     async startOCRCamera() {
-        const video = document.getElementById('ocr-video');
+        const video = this._getById('ocr-video');
         if (!video) return;
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
             video.srcObject = stream;
-            video.play();
+            await video.play();
+            this.ocrScanInterval = setInterval(() => this.scanFrame(), 1000);
         } catch (err) {
             console.error("OCR Camera Error:", err);
             this.showToast('Could not access camera', 'error');
@@ -1441,44 +1464,108 @@ class UIService {
     }
 
     stopOCRCamera() {
-        const video = document.getElementById('ocr-video');
+        if (this.ocrScanInterval) {
+            clearInterval(this.ocrScanInterval);
+            this.ocrScanInterval = null;
+        }
+        this.isOcrProcessing = false;
+        const video = this._getById('ocr-video');
         if (video && video.srcObject) {
             video.srcObject.getTracks().forEach(track => track.stop());
             video.srcObject = null;
         }
     }
 
-    async captureAndProcessOCR() {
-        const video = document.getElementById('ocr-video');
-        const status = document.getElementById('ocr-status');
-        if (!video || !window.Tesseract) return;
+    async scanFrame() {
+        const video = this._getById('ocr-video');
+        const overlay = document.querySelector('.qr-scanner-overlay');
+        const statusEl = this._getById('ocr-status');
+        const previewEl = this._getById('ocr-result-preview');
 
-        status.innerText = 'Processing...';
-        
+        if (!video || !overlay || this.isOcrProcessing || !this.ocrWorker) return;
+
+        this.isOcrProcessing = true;
+        statusEl.innerText = 'Capturing...';
+
         const canvas = document.createElement('canvas');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+
+        const videoRect = video.getBoundingClientRect();
+        const overlayRect = overlay.getBoundingClientRect();
+        
+        const scaleX = video.videoWidth / videoRect.width;
+        const scaleY = video.videoHeight / videoRect.height;
+
+        const cropX = (overlayRect.left - videoRect.left) * scaleX;
+        const cropY = (overlayRect.top - videoRect.top) * scaleY;
+        const cropWidth = overlayRect.width * scaleX;
+        const cropHeight = overlayRect.height * scaleY;
+        
+        canvas.width = cropWidth;
+        canvas.height = cropHeight;
+
+        context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        
+        this._preprocessCanvas(canvas);
 
         try {
-            // Map 2-letter lang code to 3-letter for Tesseract
-            const langMap = { 'en': 'eng', 'es': 'spa', 'fr': 'fra', 'de': 'deu', 'it': 'ita', 'pt': 'por', 'nl': 'nld' };
-            const lang = langMap[i18n.getLanguage()] || 'eng';
-
-            const { data: { text } } = await window.Tesseract.recognize(canvas, lang, {
-                logger: m => { if(m.status === 'recognizing text') status.innerText = `Scanning: ${Math.round(m.progress * 100)}%`; }
-            });
-
-            if (text.trim()) {
-                this.insertTextAtCursor(text.trim() + ' ');
-                this.showToast('Text scanned successfully', 'success');
-                this.hideOCRModal();
+            const { data } = await this.ocrWorker.recognize(canvas);
+            const processedText = this._postProcessOcrText(data.text);
+            
+            if (data.confidence > 60) {
+                 statusEl.innerText = `Confidence: ${data.confidence.toFixed(0)}%`;
+                 previewEl.textContent = processedText;
             } else {
-                status.innerText = 'No text detected. Try again.';
+                statusEl.innerText = "Text not clear yet — adjust angle or lighting";
             }
         } catch (err) {
             console.error(err);
-            status.innerText = 'Scan failed.';
+            statusEl.innerText = 'Scan failed. Try again.';
+        } finally {
+            this.isOcrProcessing = false;
+        }
+    }
+
+    _preprocessCanvas(canvas) {
+        const ctx = canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+
+        // Grayscale and Contrast
+        for (let i = 0; i < data.length; i += 4) {
+            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+            let gray = avg;
+            // Simple contrast enhancement
+            gray = 1.5 * (gray - 128) + 128;
+            gray = Math.max(0, Math.min(255, gray));
+            
+            data[i] = data[i + 1] = data[i + 2] = gray;
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        // Binarization (Otsu's method would be better, but simple threshold for now)
+        const threshold = 128;
+        for (let i = 0; i < data.length; i += 4) {
+            const val = data[i] < threshold ? 0 : 255;
+            data[i] = data[i + 1] = data[i + 2] = val;
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }
+    
+    _postProcessOcrText(text) {
+        if (!text) return '';
+        return text.split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 2 && !/^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]+$/.test(line))
+            .join('\n')
+            .replace(/\s+/g, ' ');
+    }
+
+    insertOcrText() {
+        const text = this._getById('ocr-result-preview').textContent;
+        if (text) {
+            this.insertTextAtCursor(text + ' ');
+            this.showToast('Text inserted from scan', 'success');
         }
     }
 
@@ -1688,6 +1775,8 @@ class UIService {
     }
 
     async openSettingsModal() {
+        // Vault Settings (post-login): require unlocked vault before rendering.
+        if (!this.ensureAuthenticated()) return;
         const modal = document.getElementById('settings-modal');
         this.renderSettingsPanel(); // Render full settings UI
         this.renderThemeSwitcher();
@@ -2181,50 +2270,42 @@ class UIService {
     }
     
     /**
-     * Password Generator Logic
+     * Passphrase Generator Logic
      */
     generatePassword() {
-        const length = parseInt(document.querySelector('input[name="pw-length"]:checked')?.value || '12');
-        const includeUppercase = this._getById('pw-opt-uppercase').checked;
-        const includeNumbers = this._getById('pw-opt-numbers').checked;
-        const includeSymbols = this._getById('pw-opt-symbols').checked;
+        const wordList = [
+            'trust', 'focus', 'secure', 'future', 'code', 'work', 'task', 'path', 'time', 'data',
+            'guard', 'prime', 'spark', 'mind', 'care', 'heart', 'truth', 'force', 'proof', 'safe',
+            'key', 'brave', 'courage', 'respect', 'steady', 'quiet', 'bright', 'kind', 'honest',
+            'worthy', 'ready', 'fresh', 'swift', 'sound', 'sense', 'craft', 'shape', 'guide',
+            'adapt', 'save', 'serve', 'share', 'seek', 'track', 'watch', 'grow', 'move', 'forge',
+            'drive', 'think', 'create'
+        ];
+        const safeWords = wordList.filter(word => !/l/.test(word) && !/^[io]/i.test(word));
 
-        const charsets = {
-            lower: 'abcdefghjkmnpqrstuvwxyz',
-            upper: 'ABCDEFGHJKMNPQRSTUVWXYZ',
-            numbers: '23456789',
-            symbols: '!@#$%&*?_'
-        };
-
-        let characterPool = charsets.lower;
-        const requiredChars = [];
-
-        if (includeUppercase) {
-            characterPool += charsets.upper;
-            requiredChars.push(this._getRandomChar(charsets.upper));
-        }
-        if (includeNumbers) {
-            characterPool += charsets.numbers;
-            requiredChars.push(this._getRandomChar(charsets.numbers));
-        }
-        if (includeSymbols) {
-            characterPool += charsets.symbols;
-            requiredChars.push(this._getRandomChar(charsets.symbols));
+        const symbols = ['!', '@', '#', '$', '%'];
+        const safeNumbers = [];
+        for (let i = 1; i <= 99; i++) {
+            const text = String(i);
+            if (!text.includes('0')) safeNumbers.push(text);
         }
 
-        let password = requiredChars.join('');
-        const remainingLength = length - password.length;
-
-        for (let i = 0; i < remainingLength; i++) {
-            password += this._getRandomChar(characterPool);
+        const words = new Set();
+        while (words.size < 3) {
+            words.add(this._getRandomItem(safeWords));
         }
 
-        // Shuffle the password to ensure required characters are not always at the start
-        const shuffledPassword = this._shuffleString(password);
+        const shuffledWords = this._shuffleArray(Array.from(words))
+            .map(word => this._capitalizeWord(word));
+        const leadingNumber = this._getRandomItem(safeNumbers);
+        const trailingNumber = this._getRandomItem(safeNumbers);
+        const symbol = this._getRandomItem(symbols);
+
+        const passphrase = `${leadingNumber}${shuffledWords.join('.')}${trailingNumber}${symbol}`;
 
         const passwordInput = this._getById('generated-password-display');
-        passwordInput.value = shuffledPassword;
-        this.showToast('New password generated!', 'success');
+        passwordInput.value = passphrase;
+        this.showToast('New passphrase generated!', 'success');
 
         // UX Feedback
         passwordInput.classList.add('highlight');
@@ -2238,6 +2319,37 @@ class UIService {
         const randomValues = new Uint32Array(1);
         crypto.getRandomValues(randomValues);
         return charset[randomValues[0] % charset.length];
+    }
+
+    _getSecureRandomInt(min, max) {
+        const range = max - min + 1;
+        const maxUint = 0x100000000;
+        const limit = Math.floor(maxUint / range) * range;
+        let value;
+        do {
+            const randomValues = new Uint32Array(1);
+            crypto.getRandomValues(randomValues);
+            value = randomValues[0];
+        } while (value >= limit);
+        return min + (value % range);
+    }
+
+    _getRandomItem(items) {
+        const index = this._getSecureRandomInt(0, items.length - 1);
+        return items[index];
+    }
+
+    _shuffleArray(items) {
+        const arr = items.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = this._getSecureRandomInt(0, i);
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    _capitalizeWord(word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
     _shuffleString(str) {
@@ -2256,8 +2368,9 @@ class UIService {
         if (!password) return;
 
         navigator.clipboard.writeText(password).then(() => {
-            this.showToast('Password copied to clipboard!', 'success');
-            if (this._getById('pw-opt-autoclear').checked) {
+            this.showToast('Passphrase copied to clipboard!', 'success');
+            const autoClearToggle = this._getById('pw-opt-autoclear');
+            if (autoClearToggle?.checked) {
                 setTimeout(() => {
                     navigator.clipboard.writeText(' ').catch(() => {}); // Clear clipboard
                     this.showToast('Clipboard cleared.', 'info');
@@ -3653,7 +3766,11 @@ class UIService {
         const results = el.querySelector('.palette-results');
 
         const commands = [
-            { id: 'settings', label: i18n.t('settingsTitle'), action: () => settingsService.renderSettingsModal() },
+            {
+                id: 'settings',
+                label: i18n.t('settingsTitle'),
+                action: () => this.ensureAuthenticated() && settingsService.renderSettingsModal()
+            },
             { id: 'new', label: i18n.t('newNoteTooltip'), action: () => this.handleNewNote() },
             { id: 'all', label: i18n.t('navAll'), action: () => document.querySelector('[data-view="all"]')?.click() },
             { id: 'trash', label: i18n.t('navTrash'), action: () => document.querySelector('[data-view="trash"]')?.click() },

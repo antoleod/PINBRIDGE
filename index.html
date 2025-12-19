@@ -142,8 +142,8 @@
                     <div>
                         <p class="eyebrow">Vault Safety</p>
                         <h2 id="auth-settings-modal-title">Account & Recovery</h2>
-                        <p class="settings-panel-subtitle">Use alternative sign-in flows or reset this device safely.
-                        </p>
+                        <p class="settings-panel-subtitle">Auth Settings (pre-login) for recovery, device sync, and
+                            safety info only. No vault data is decrypted here.</p>
                     </div>
                     <button class="btn-icon ghost" id="btn-close-settings" aria-label="Close settings">×</button>
                 </div>
@@ -634,6 +634,7 @@
                     <h2>Settings</h2>
                     <button id="close-settings-modal" class="btn-icon ghost">×</button>
                 </div>
+                <p class="hint">Vault Settings (post-login). Requires an unlocked vault.</p>
                 <div class="settings-tabs">
                     <button class="settings-tab active" data-tab="general">General</button>
                     <button class="settings-tab" data-tab="security">Security</button>
@@ -752,34 +753,29 @@
                     </div>
                     <div id="settings-tools" class="settings-content hidden">
                         <h3>Tools</h3>
-                        <h4>Password Generator</h4>
+                        <h4>Passphrase Generator</h4>
                         <div class="generated-password-container">
                             <input type="text" id="generated-password-display" class="input-field" readonly
-                                placeholder="Your new password will appear here...">
-                            <button id="btn-copy-password" class="btn btn-secondary">??</button>
+                                placeholder="Your new passphrase will appear here...">
+                            <button id="btn-copy-password" class="btn btn-secondary">Copy</button>
                         </div>
-                            <div class="password-options-grid">
-                                <div class="form-group">
-                                    <label>Length</label>
-                                    <div class="radio-group">
-                                        <label><input type="radio" name="pw-length" value="8"> 8</label>
-                                        <label><input type="radio" name="pw-length" value="12" checked> 12</label>
-                                        <label><input type="radio" name="pw-length" value="16"> 16</label>
-                                        <label><input type="radio" name="pw-length" value="20"> 20</label>
-                                    </div>
+                        <div class="password-options-grid">
+                            <div class="form-group">
+                                <label>Format</label>
+                                <p class="hint">Number.Word.Word.WordNumberSymbol</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Notes</label>
+                                <p class="hint">Common words, safe symbols (! @ # $ %), no ambiguous characters.</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Options</label>
+                                <div class="checkbox-group">
+                                    <label><input type="checkbox" id="pw-opt-autoclear"> Autoclear clipboard (30s)</label>
                                 </div>
-                                <div class="form-group">
-                                    <label>Options</label>
-                                    <div class="checkbox-group">
-                                        <label><input type="checkbox" id="pw-opt-uppercase" checked> Uppercase</label>
-                                        <label><input type="checkbox" id="pw-opt-numbers" checked> Numbers</label>
-                                        <label><input type="checkbox" id="pw-opt-symbols"> Symbols</label>
-                                        <label><input type="checkbox" id="pw-opt-autoclear"> Autoclear clipboard (30s)</label>
-                                    </div>
-                                </div>
-                            </div>                        <button id="btn-generate-password" class="btn btn-primary mt-1">Generate
-                            New
-                            Password</button>
+                            </div>
+                        </div>
+                        <button id="btn-generate-password" class="btn btn-primary mt-1">Generate Passphrase</button>
                         <div class="divider"></div>
                         <h4>Data Management</h4>
                         <div class="settings-item">

@@ -3274,6 +3274,18 @@ input[type="file"]::file-selector-button {
     50% { top: 90%; }
 }
 
+.ocr-preview {
+    min-height: 50px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 0.5rem;
+    margin: 1rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
 /* Responsive tweaks */
 @media (max-width: 900px) {
     body {
