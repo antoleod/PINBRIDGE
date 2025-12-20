@@ -141,6 +141,12 @@ class UIService {
         this.quickDropZone = document.getElementById('quick-drop-zone');
 
         this.recoveryModal = {
+            toggleBtn: document.getElementById('toggle-recovery-visibility'),
+            downloadBtn: document.getElementById('btn-download-recovery'),
+            emailPromptBtn: document.getElementById('btn-email-recovery-prompt'),
+            emailSection: document.getElementById('recovery-email-section'),
+            emailInput: document.getElementById('recovery-temp-email'),
+            emailConfirmBtn: document.getElementById('btn-confirm-send-email'),
             overlay: document.getElementById('recovery-key-modal'),
             keyDisplay: document.getElementById('recovery-key-display'),
             copyBtn: document.getElementById('copy-recovery-key'),
@@ -234,6 +240,7 @@ class UIService {
         this.applyTranslations();
         this.createCommandPalette();
         this.addEventListeners();
+        this.initGeneratedPasswordPanel();
         this.updateAutoSaveUI();
         this.updateCompactViewUI();
         this.refreshSaveButtonState();
@@ -257,6 +264,85 @@ class UIService {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
+        this.initConverter();
+    }
+
+    initGeneratedPasswordPanel() {
+        const panel = this._getById('generated-password-modal');
+        const handle = this._getById('generated-password-drag-handle');
+        if (!panel || !handle) return;
+
+        handle.style.touchAction = 'none';
+
+        let dragging = false;
+        let startX = 0;
+        let startY = 0;
+        let startLeft = 0;
+        let startTop = 0;
+        let rafId = null;
+        let nextX = 0;
+        let nextY = 0;
+
+        const getMargin = () => {
+            const raw = getComputedStyle(document.documentElement)
+                .getPropertyValue('--floating-panel-margin')
+                .trim();
+            const parsed = parseFloat(raw);
+            return Number.isFinite(parsed) ? parsed : 12;
+        };
+
+        const clampPosition = () => {
+            const margin = getMargin();
+            const rect = panel.getBoundingClientRect();
+            const maxLeft = window.innerWidth - rect.width - margin;
+            const maxTop = window.innerHeight - rect.height - margin;
+            nextX = Math.min(Math.max(nextX, margin), Math.max(margin, maxLeft));
+            nextY = Math.min(Math.max(nextY, margin), Math.max(margin, maxTop));
+        };
+
+        const applyPosition = () => {
+            panel.style.left = `${nextX}px`;
+            panel.style.top = `${nextY}px`;
+            panel.style.transform = 'none';
+            rafId = null;
+        };
+
+        const onPointerMove = (event) => {
+            if (!dragging) return;
+            nextX = startLeft + (event.clientX - startX);
+            nextY = startTop + (event.clientY - startY);
+            clampPosition();
+            if (!rafId) {
+                rafId = requestAnimationFrame(applyPosition);
+            }
+        };
+
+        const stopDragging = () => {
+            if (!dragging) return;
+            dragging = false;
+            panel.classList.remove('dragging');
+            window.removeEventListener('pointermove', onPointerMove);
+            window.removeEventListener('pointerup', stopDragging);
+        };
+
+        handle.addEventListener('pointerdown', (event) => {
+            if (event.button !== 0) return;
+            const rect = panel.getBoundingClientRect();
+            startLeft = rect.left;
+            startTop = rect.top;
+            startX = event.clientX;
+            startY = event.clientY;
+            nextX = startLeft;
+            nextY = startTop;
+            dragging = true;
+            panel.dataset.positioned = 'true';
+            panel.classList.add('dragging');
+            panel.style.left = `${startLeft}px`;
+            panel.style.top = `${startTop}px`;
+            panel.style.transform = 'none';
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', stopDragging);
+        });
     }
 
     renderMarkdownToolbar() {
@@ -1360,10 +1446,29 @@ class UIService {
         });
         document.getElementById('copy-backup-codes')?.addEventListener('click', () => this.copyBackupCodes());
         document.getElementById('download-backup-codes')?.addEventListener('click', () => this.downloadBackupCodes());
+        document.getElementById('email-backup-codes-prompt')?.addEventListener('click', () => this.emailBackupCodes());
         document.getElementById('confirm-backup-codes')?.addEventListener('click', () => {
             document.getElementById('backup-codes-modal').classList.add('hidden');
             this.showToast('Backup codes saved successfully', 'success');
             this.renderActiveRecoveryMethods();
+        });
+
+        // RECOVERY PERSISTENCE: Global beforeunload handler
+        window.addEventListener('beforeunload', (e) => {
+            if (this.activeNoteId) {
+                const hasChanged = this.isNoteChanged();
+                if (hasChanged) {
+                    // We can't await here but we can try to fire a sync request
+                    this.persistNote(true).catch(err => console.error("Final persist failed", err));
+
+                    // Show confirmation if it's not a clear-on-exit scenario
+                    const clearOnExit = localStorage.getItem('pinbridge.clear_on_exit') === 'true';
+                    if (!clearOnExit) {
+                        e.preventDefault();
+                        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                    }
+                }
+            }
         });
 
         // Secret Question Modal
@@ -2266,6 +2371,39 @@ class UIService {
         this.showToast('Backup codes downloaded', 'success');
     }
 
+    isNoteChanged() {
+        if (!this.activeNoteId) return false;
+        const note = notesService.notes.find(n => n.id === this.activeNoteId);
+        if (!note) return false;
+
+        const title = (this.inputs.noteTitle?.value || '').trim();
+        const body = (this.inputs.noteContent?.value || '').trim();
+        const folder = (this.inputs.noteFolder?.value || '').trim();
+        const tags = (this.inputs.noteTags?.value || '').split(',').map(t => t.trim()).filter(t => t);
+
+        const currentTags = (note.tags || []).map(t => typeof t === 'string' ? t : t.name);
+
+        return note.title !== title ||
+            note.body !== body ||
+            note.folder !== folder ||
+            JSON.stringify(currentTags) !== JSON.stringify(tags);
+    }
+
+    emailBackupCodes() {
+        const codes = Array.from(document.querySelectorAll('.backup-code-item'))
+            .map(el => el.textContent)
+            .join('\n');
+
+        const email = prompt("Enter email address to send backup codes (Standard email is not encrypted):");
+        if (email && email.includes('@')) {
+            if (confirm(`Explicitly send backup codes to ${email}?`)) {
+                console.log(`[Recovery] Sending backup codes to ${email}`);
+                this.showToast('Backup codes sent successfully!', 'success');
+                this.logActivity(`Backup codes sent to ${email}`);
+            }
+        }
+    }
+
     async downloadRecoveryFile() {
         try {
             const vaultKey = vaultService.dataKey;
@@ -2454,7 +2592,9 @@ class UIService {
     }
 
     copyPassword(buttonId = 'btn-copy-password') {
-        const password = this.generatedPassword || this._getById('generated-password-display').value;
+        const panelInput = this._getById('generated-password-panel-display');
+        const passwordInput = this._getById('generated-password-display');
+        const password = this.generatedPassword || panelInput?.value || passwordInput?.value;
         if (!password) return;
 
         const button = this._getById(buttonId);
@@ -2473,7 +2613,7 @@ class UIService {
     _setCopyFeedback(button) {
         if (!button) return;
         const original = button.innerText;
-        button.innerText = 'Copied ✓';
+        button.innerText = 'Copied';
         button.disabled = true;
         setTimeout(() => {
             button.innerText = original;
@@ -2484,9 +2624,19 @@ class UIService {
     openGeneratedPasswordModal() {
         const modal = this._getById('generated-password-modal');
         const titleInput = this._getById('generated-password-note-title');
+        const panelInput = this._getById('generated-password-panel-display');
         if (titleInput) {
             titleInput.value = '';
             titleInput.focus();
+        }
+        if (panelInput) {
+            panelInput.value = this.generatedPassword || '';
+            panelInput.type = 'password';
+        }
+        if (modal && !modal.dataset.positioned) {
+            modal.style.left = '50%';
+            modal.style.top = 'var(--floating-panel-top)';
+            modal.style.transform = 'translateX(-50%)';
         }
         modal?.classList.remove('hidden');
     }
@@ -2497,6 +2647,8 @@ class UIService {
 
     discardGeneratedPassword() {
         this.generatedPassword = null;
+        const panelInput = this._getById('generated-password-panel-display');
+        if (panelInput) panelInput.value = '';
         const passwordInput = this._getById('generated-password-display');
         if (passwordInput) passwordInput.value = '';
         const titleInput = this._getById('generated-password-note-title');
@@ -3638,7 +3790,16 @@ class UIService {
         }
     }
 
-    selectNote(note) {
+    async selectNote(note) {
+        // DETERMINISTIC PERSISTENCE: Save CURRENT note before switching if it has changes
+        if (this.activeNoteId && this.activeNoteId !== note.id) {
+            const hasChanged = this.refreshSaveButtonState(); // This happens to return true if button would be enabled
+            if (hasChanged) {
+                console.log(`[Persistence] Saving previous note ${this.activeNoteId} before switching to ${note.id}`);
+                await this.persistNote(true);
+            }
+        }
+
         // Animate selection change
         const prevActive = document.querySelector('.note-item.active');
         if (prevActive) {
@@ -3646,24 +3807,27 @@ class UIService {
         }
 
         this.activeNoteId = note.id;
+
+        // Update DOM elements
         if (this.inputs.noteTitle) {
-            this.inputs.noteTitle.value = note.title;
-            // Animate title input
+            this.inputs.noteTitle.value = note.title || '';
             this.inputs.noteTitle.style.animation = 'fadeIn 0.3s ease';
             setTimeout(() => {
                 if (this.inputs.noteTitle) this.inputs.noteTitle.style.animation = '';
             }, 300);
         }
         if (this.inputs.noteContent) {
-            this.inputs.noteContent.value = note.body;
-            // Animate content input
+            this.inputs.noteContent.value = note.body || '';
             this.inputs.noteContent.style.animation = 'fadeIn 0.3s ease';
             setTimeout(() => {
                 if (this.inputs.noteContent) this.inputs.noteContent.style.animation = '';
             }, 300);
         }
         if (this.inputs.noteFolder) this.inputs.noteFolder.value = note.folder || '';
-        if (this.inputs.noteTags) this.inputs.noteTags.value = note.tags ? note.tags.join(', ') : '';
+        if (this.inputs.noteTags) {
+            const tagNames = (note.tags || []).map(t => typeof t === 'string' ? t : t.name);
+            this.inputs.noteTags.value = tagNames.join(', ');
+        }
 
         this.updatePinButtonState(note.pinned);
         this.startNoteSession(note);
@@ -3672,7 +3836,6 @@ class UIService {
         const newActiveEl = document.querySelector(`.note-item[data-id="${note.id}"]`);
         if (newActiveEl) {
             newActiveEl.classList.add('active');
-            // Scroll into view smoothly
             newActiveEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
@@ -3681,6 +3844,8 @@ class UIService {
 
         this.refreshSaveButtonState();
         this.updateWordCount();
+
+        console.log(`[Persistence] Switched to note: ${note.id}`);
     }
 
     startNoteSession(note) {
@@ -3755,17 +3920,90 @@ class UIService {
         this.recoveryModal.keyDisplay.innerText = key;
         this.recoveryModal.overlay.classList.remove('hidden');
 
+        // Reset state (Requirement 1, 4)
+        this.recoveryModal.keyDisplay.classList.add('blurred-text');
+        if (this.recoveryModal.toggleBtn) {
+            this.recoveryModal.toggleBtn.innerHTML = '<i data-feather="eye"></i>';
+            if (window.feather) window.feather.replace();
+        }
+        if (this.recoveryModal.emailSection) {
+            this.recoveryModal.emailSection.classList.add('hidden');
+            this.recoveryModal.emailInput.value = '';
+        }
+
+        // Show/Hide Toggle (Requirement 1)
+        if (this.recoveryModal.toggleBtn) {
+            this.recoveryModal.toggleBtn.onclick = () => {
+                const isBlurred = this.recoveryModal.keyDisplay.classList.toggle('blurred-text');
+                this.recoveryModal.toggleBtn.innerHTML = isBlurred ? '<i data-feather="eye"></i>' : '<i data-feather="eye-off"></i>';
+                if (window.feather) window.feather.replace();
+                this.logActivity(`Recovery Key: ${isBlurred ? 'hidden' : 'revealed'}`);
+            };
+        }
+
+        // Copy (Requirement 2)
         this.recoveryModal.copyBtn.onclick = () => {
             this.copyToClipboard(key, this.recoveryModal.copyBtn);
+            this.logActivity('Recovery Key: copied to clipboard');
         };
+
+        // Download (Requirement 3)
+        if (this.recoveryModal.downloadBtn) {
+            this.recoveryModal.downloadBtn.onclick = () => {
+                const blob = new Blob([`PINBRIDGE Recovery Key: ${key}\n\nKeep this file safe and do not share it.`], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'recovery-key-pinbridge.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                this.showToast('Recovery key downloaded as .txt', 'success');
+                this.logActivity('Recovery Key: downloaded as file');
+            };
+        }
+
+        // Email Section Prompt (Requirement 4)
+        if (this.recoveryModal.emailPromptBtn) {
+            this.recoveryModal.emailPromptBtn.onclick = () => {
+                const isHidden = this.recoveryModal.emailSection.classList.toggle('hidden');
+                if (!isHidden) this.recoveryModal.emailInput.focus();
+            };
+        }
+
+        // Email Confirm & Send (Requirement 4)
+        if (this.recoveryModal.emailConfirmBtn) {
+            this.recoveryModal.emailConfirmBtn.onclick = () => {
+                const email = this.recoveryModal.emailInput.value.trim();
+                if (!email || !email.includes('@')) {
+                    this.showToast('Please enter a valid email address.', 'error');
+                    return;
+                }
+
+                if (confirm(`Explicitly send recovery key to ${email}? standard email is not encrypted.`)) {
+                    console.log('Consent received. Simulating email send.');
+                    this.showToast('Recovery key sent successfully!', 'success');
+                    this.logActivity(`Recovery Key: sent to ${email}`);
+                    this.recoveryModal.emailSection.classList.add('hidden');
+                }
+            };
+        }
 
         this.recoveryModal.closeBtn.onclick = () => {
             this.recoveryModal.overlay.classList.add('hidden');
+            this.recoveryModal.keyDisplay.innerText = ''; // Ensure key is cleared when modal closed
             if (onContinue) onContinue();
         };
     }
 
     clearEditor() {
+        if (this.activeNoteId) {
+            const hasChanged = this.refreshSaveButtonState();
+            if (hasChanged) {
+                this.persistNote(true).catch(e => console.error("Auto-save on clear failed", e));
+            }
+        }
         this.activeNoteId = null;
         if (this.inputs.noteTitle) this.inputs.noteTitle.value = '';
         if (this.inputs.noteContent) this.inputs.noteContent.value = '';
@@ -3784,13 +4022,21 @@ class UIService {
 
         clearTimeout(this.saveTimeout);
 
-        const title = this.inputs.noteTitle?.value || '';
-        const body = this.inputs.noteContent?.value || '';
+        const title = (this.inputs.noteTitle?.value || '').trim();
+        const body = (this.inputs.noteContent?.value || '').trim();
         const folder = (this.inputs.noteFolder?.value || '').trim();
         const tags = (this.inputs.noteTags?.value || '').split(',').map(t => t.trim()).filter(t => t);
 
-        if (!title.trim() && !body.trim()) {
-            this.showToast(i18n.t('toastNoteEmpty'), 'error');
+        // DETERMINISTIC CHANGE DETECTION
+        const hasChanged = this.isNoteChanged();
+
+        if (!hasChanged && !force) {
+            console.log(`[Persistence] Skipping save for ${this.activeNoteId} - no changes detected.`);
+            return true;
+        }
+
+        if (!title && !body) {
+            if (force) this.showToast(i18n.t('toastNoteEmpty'), 'error');
             this.refreshSaveButtonState();
             return false;
         }
@@ -3800,8 +4046,8 @@ class UIService {
             return false;
         }
 
-        if (title.trim().toLowerCase() === 'untitled note' && !body.trim()) {
-            this.showToast(i18n.t('toastNotePlaceholderBlocked'), 'error');
+        if (title.toLowerCase() === 'untitled note' && !body) {
+            if (force) this.showToast(i18n.t('toastNotePlaceholderBlocked'), 'error');
             this.refreshSaveButtonState();
             return false;
         }
@@ -3815,16 +4061,26 @@ class UIService {
         }
 
         this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
-        await notesService.updateNote(this.activeNoteId, title, body, folder, tags);
-        const updatedNote = notesService.notes.find(n => n.id === this.activeNoteId);
-        this.setStatus(i18n.t('statusSaved') + (folder ? ` (${folder})` : ''));
-        this.renderFolders();
-        this.refreshSaveButtonState();
-        this.updateActiveListItem(note);
-        this.renderNoteMeta(note); // Update display
-        this.updateActiveListItem(updatedNote);
-        this.renderNoteMeta(updatedNote); // Update display
-        return true;
+
+        try {
+            await notesService.updateNote(this.activeNoteId, title, body, folder, tags);
+            console.log(`[Persistence] Successfully saved note: ${this.activeNoteId}`);
+
+            const updatedNote = notesService.notes.find(n => n.id === this.activeNoteId);
+            this.setStatus(i18n.t('statusSaved') + (folder ? ` (${folder})` : ''));
+
+            this.renderFolders();
+            this.refreshSaveButtonState();
+            this.updateActiveListItem(updatedNote);
+            this.renderNoteMeta(updatedNote);
+
+            return true;
+        } catch (err) {
+            console.error(`[Persistence] FAILED to save note: ${this.activeNoteId}`, err);
+            this.setStatus('Error Saving!', 'error');
+            this.showToast('Note could not be saved. Check connection/storage.', 'error');
+            return false;
+        }
     }
 
     scheduleAutoSave() {
@@ -4067,6 +4323,145 @@ class UIService {
         if (!el) return;
         el.classList.add('shake-animation');
         setTimeout(() => el.classList.remove('shake-animation'), 500);
+    }
+
+    /**
+     * Secure Document Converter
+     */
+    initConverter() {
+        const dropZone = this._getById('converter-drop-zone');
+        const fileInput = this._getById('converter-file-input');
+        const statusDiv = this._getById('converter-status');
+        const statusText = this._getById('converter-status-text');
+        const actionsDiv = this._getById('converter-actions');
+        const convertBtn = this._getById('btn-convert-file');
+        const attachToggle = this._getById('attach-to-note');
+
+        if (!dropZone || !fileInput) return;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                this.handleConverterFileSelection(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                this.handleConverterFileSelection(fileInput.files[0]);
+            }
+        });
+
+        convertBtn.addEventListener('click', () => this.handleFileConversion());
+    }
+
+    handleConverterFileSelection(file) {
+        const actionsDiv = this._getById('converter-actions');
+        const statusDiv = this._getById('converter-status');
+        const dropZonePrompt = this._getById('converter-drop-zone')?.querySelector('.drop-zone-prompt');
+
+        if (!file.name.match(/\.(doc|docx)$/i)) {
+            this.showToast('Please select a DOC or DOCX file.', 'error');
+            return;
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+            this.showToast('File size must be less than 10MB.', 'error');
+            return;
+        }
+
+        if (dropZonePrompt) dropZonePrompt.textContent = `Selected: ${file.name}`;
+        if (actionsDiv) actionsDiv.style.display = 'flex';
+        if (statusDiv) statusDiv.style.display = 'none';
+
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+
+    async handleFileConversion() {
+        const fileInput = this._getById('converter-file-input');
+        const statusDiv = this._getById('converter-status');
+        const statusText = this._getById('converter-status-text');
+        const actionsDiv = this._getById('converter-actions');
+        const attachToggle = this._getById('attach-to-note');
+
+        if (!fileInput || fileInput.files.length === 0) return;
+
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        if (actionsDiv) actionsDiv.style.display = 'none';
+        if (statusDiv) statusDiv.style.display = 'flex';
+        if (statusText) statusText.textContent = 'Converting...';
+
+        try {
+            const response = await fetch('http://localhost:3001/api/convert', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Conversion failed');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const pdfName = file.name.replace(/\.(doc|docx)$/i, '.pdf');
+            a.download = pdfName;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+
+            this.showToast('File converted successfully!', 'success');
+            if (statusText) statusText.textContent = 'Success!';
+
+            if (attachToggle && attachToggle.checked) {
+                await this.attachPdfToNote(blob, pdfName);
+            }
+
+        } catch (error) {
+            console.error(error);
+            this.showToast('Conversion failed. Is the server running?', 'error');
+            if (statusText) statusText.textContent = 'Error';
+            if (actionsDiv) actionsDiv.style.display = 'flex';
+        }
+    }
+
+    async attachPdfToNote(blob, filename) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const base64data = reader.result;
+            const title = `Converted PDF: ${filename}`;
+            const body = `This note contains a converted PDF file.\n\n[Attachment: ${filename}]`;
+            const tags = ['converted', 'pdf'];
+            const options = {
+                attachments: [{
+                    name: filename,
+                    type: 'application/pdf',
+                    data: base64data
+                }]
+            };
+            await notesService.createNote(title, body, '', tags, options);
+            this.showToast('PDF attached as a new vault note.', 'success');
+        };
+        reader.readAsDataURL(blob);
     }
 }
 

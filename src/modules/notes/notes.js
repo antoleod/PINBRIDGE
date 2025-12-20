@@ -35,10 +35,10 @@ class NotesService {
             this.notes = [];
             return this.notes;
         }
-        
+
         const vaultNotes = vaultService.getNotes();
         console.log('Vault notes from getNotes():', vaultNotes?.length || 0);
-        
+
         this.notes = (vaultNotes || []).map(n => ({ ...n }));
         this.sortNotes();
         bus.emit('notes:loaded', this.notes);
@@ -114,7 +114,8 @@ class NotesService {
             pinned: false,
             created: Date.now(),
             updated: Date.now(),
-            isTemplate: options.isTemplate || false
+            isTemplate: options.isTemplate || false,
+            attachments: options.attachments || []
         };
 
         const { persist = true } = options;

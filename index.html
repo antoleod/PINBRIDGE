@@ -507,7 +507,7 @@
             <div class="dashboard-grid">
                 <!-- Stats Cards -->
                 <div class="dashboard-card glass-panel">
-                    <div class="card-icon">??</div>
+                    <div class="card-icon"><i data-feather="file-text"></i></div>
                     <div class="card-content">
                         <h3 id="stat-total-notes">0</h3>
                         <p>Total Notes</p>
@@ -515,7 +515,7 @@
                 </div>
 
                 <div class="dashboard-card glass-panel">
-                    <div class="card-icon">?</div>
+                    <div class="card-icon"><i data-feather="star"></i></div>
                     <div class="card-content">
                         <h3 id="stat-favorites">0</h3>
                         <p>Favorites</p>
@@ -523,7 +523,7 @@
                 </div>
 
                 <div class="dashboard-card glass-panel">
-                    <div class="card-icon">??</div>
+                    <div class="card-icon"><i data-feather="folder"></i></div>
                     <div class="card-content">
                         <h3 id="stat-folders">0</h3>
                         <p>Folders</p>
@@ -531,10 +531,33 @@
                 </div>
 
                 <div class="dashboard-card glass-panel">
-                    <div class="card-icon">???</div>
+                    <div class="card-icon"><i data-feather="tag"></i></div>
                     <div class="card-content">
                         <h3 id="stat-tags">0</h3>
                         <p>Tags</p>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="dashboard-section glass-panel">
+                    <h2>Quick Actions</h2>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" data-action="new-note">
+                            <span class="quick-action-icon"><i data-feather="plus-square"></i></span>
+                            <span>New Note</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="new-template">
+                            <span class="quick-action-icon"><i data-feather="layers"></i></span>
+                            <span>New Template</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-favorites">
+                            <span class="quick-action-icon"><i data-feather="star"></i></span>
+                            <span>Favorites</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-trash">
+                            <span class="quick-action-icon"><i data-feather="trash-2"></i></span>
+                            <span>Trash</span>
+                        </button>
                     </div>
                 </div>
 
@@ -553,29 +576,6 @@
                         <!-- Injected dynamically -->
                     </div>
                 </div>
-
-                <!-- Quick Actions -->
-                <div class="dashboard-section glass-panel">
-                    <h2>Quick Actions</h2>
-                    <div class="quick-actions-grid">
-                        <button class="quick-action-btn" data-action="new-note">
-                            <span>?</span>
-                            <span>New Note</span>
-                        </button>
-                        <button class="quick-action-btn" data-action="new-template">
-                            <span>??</span>
-                            <span>New Template</span>
-                        </button>
-                        <button class="quick-action-btn" data-action="view-favorites">
-                            <span>?</span>
-                            <span>Favorites</span>
-                        </button>
-                        <button class="quick-action-btn" data-action="view-trash">
-                            <span>???</span>
-                            <span>Trash</span>
-                        </button>
-                    </div>
-                </div>
             </div>
         </section>
 
@@ -590,8 +590,39 @@
             <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it
                 somewhere safe. You will need it if you forget your PIN.</p>
             <div class="recovery-key-container">
-                <pre id="recovery-key-display"></pre>
-                <button id="copy-recovery-key" class="btn btn-secondary" data-i18n="recoveryCopy">Copy</button>
+                <div class="recovery-display-wrapper"
+                    style="position: relative; flex: 1; display: flex; align-items: center;">
+                    <pre id="recovery-key-display" class="blurred-text"
+                        style="filter: blur(8px); user-select: none; pointer-events: none; flex: 1; margin: 0;"></pre>
+                    <button type="button" id="toggle-recovery-visibility" class="btn-icon ghost"
+                        aria-label="Toggle Visibility" title="Toggle Visibility"
+                        style="position: absolute; right: 0.5rem;">
+                        <i data-feather="eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="recovery-options-grid mt-1"
+                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+                <button id="copy-recovery-key" class="btn btn-secondary btn-block">
+                    <i data-feather="copy"></i> <span>Copy</span>
+                </button>
+                <button id="btn-download-recovery" class="btn btn-secondary btn-block">
+                    <i data-feather="download"></i> <span>Download</span>
+                </button>
+                <button id="btn-email-recovery-prompt" class="btn btn-secondary btn-block">
+                    <i data-feather="mail"></i> <span>Email</span>
+                </button>
+            </div>
+
+            <!-- Email Prompt Section -->
+            <div id="recovery-email-section" class="hidden mt-1 p-1 border-subtle rounded"
+                style="background: rgba(255,255,255,0.05);">
+                <div class="form-group">
+                    <label for="recovery-temp-email">Send by Email (Manual Entry)</label>
+                    <input type="email" id="recovery-temp-email" class="input-field" placeholder="your@email.com">
+                </div>
+                <button id="btn-confirm-send-email" class="btn btn-primary btn-block mt-1">Confirm & Send</button>
             </div>
             <button id="close-recovery-modal" class="btn btn-primary btn-block" data-i18n="recoveryClose">I have
                 saved
@@ -650,15 +681,15 @@
         </div>
     </dialog>
 
-        <!-- SETTINGS MODAL (Main) -->
-        <dialog id="settings-modal" class="modal-overlay hidden">
-            <div class="modal-content glass-panel settings-modal">
-                <div class="modal-header">
-                    <h2>Settings</h2>
-                    <button id="close-settings-modal" class="btn-icon ghost">×</button>
-                </div>
-                <p class="hint">Vault Settings (post-login). Requires an unlocked vault.</p>
-                <div class="settings-tabs">
+    <!-- SETTINGS MODAL (Main) -->
+    <dialog id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel settings-modal">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings-modal" class="btn-icon ghost">×</button>
+            </div>
+            <p class="hint">Vault Settings (post-login). Requires an unlocked vault.</p>
+            <div class="settings-tabs">
                 <button class="settings-tab active" data-tab="general">General</button>
                 <button class="settings-tab" data-tab="security">Security</button>
                 <button class="settings-tab" data-tab="tools">Tools</button>
@@ -735,7 +766,7 @@
                     <div class="recovery-actions">
                         <div class="recovery-action-card">
                             <div class="action-header">
-                                <span class="action-icon">??</span>
+                                <span class="action-icon"><i data-feather="file-text"></i></span>
                                 <div>
                                     <strong>Backup Codes</strong>
                                     <p>Generate one-time codes to use if you lose your PIN.</p>
@@ -745,7 +776,7 @@
                         </div>
                         <div class="recovery-action-card">
                             <div class="action-header">
-                                <span class="action-icon">?</span>
+                                <span class="action-icon"><i data-feather="help-circle"></i></span>
                                 <div>
                                     <strong>Secret Question</strong>
                                     <p>Set up a question only you can answer.</p>
@@ -755,7 +786,7 @@
                         </div>
                         <div class="recovery-action-card">
                             <div class="action-header">
-                                <span class="action-icon">??</span>
+                                <span class="action-icon"><i data-feather="file"></i></span>
                                 <div>
                                     <strong>Recovery File</strong>
                                     <p>Generate an encrypted file to recover your vault on a new device.</p>
@@ -765,7 +796,7 @@
                         </div>
                         <div class="recovery-action-card">
                             <div class="action-header">
-                                <span class="action-icon">??</span>
+                                <span class="action-icon"><i data-feather="smartphone"></i></span>
                                 <div>
                                     <strong>Link New Device</strong>
                                     <p>Securely sync your vault to another device using a QR code.</p>
@@ -777,43 +808,43 @@
                 </div>
                 <div id="settings-tools" class="settings-content hidden">
                     <h3>Tools</h3>
-                        <h4>Password Generator</h4>
-                        <div class="generated-password-container">
-                            <div class="input-wrapper">
-                                <input type="password" id="generated-password-display" class="input-field" readonly
-                                    placeholder="Your new password will appear here...">
-                                <button type="button" class="btn-toggle-visibility" data-target="generated-password-display" data-label="password"
-                                    aria-label="Show password" title="Show password">
-                                    <!-- Icon will be injected by JS -->
-                                </button>
-                            </div>
-                            <button id="btn-copy-password" class="btn btn-secondary">Copy</button>
+                    <h4>Password Generator</h4>
+                    <div class="generated-password-container">
+                        <div class="input-wrapper">
+                            <input type="password" id="generated-password-display" class="input-field" readonly
+                                placeholder="Your new password will appear here...">
+                            <button type="button" class="btn-toggle-visibility" data-target="generated-password-display"
+                                data-label="password" aria-label="Show password" title="Show password">
+                                <!-- Icon will be injected by JS -->
+                            </button>
                         </div>
-                        <div class="password-options-grid">
-                            <div class="form-group">
-                                <label>Length</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="pw-length" value="8"> 8</label>
-                                    <label><input type="radio" name="pw-length" value="12" checked> 12</label>
-                                    <label><input type="radio" name="pw-length" value="16"> 16</label>
-                                    <label><input type="radio" name="pw-length" value="20"> 20</label>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <label>Options</label>
-                                <div class="checkbox-group">
-                                    <label><input type="checkbox" id="pw-opt-uppercase" checked> Uppercase</label>
-                                    <label><input type="checkbox" id="pw-opt-numbers" checked> Numbers</label>
-                                    <label><input type="checkbox" id="pw-opt-symbols"> Symbols</label>
-                                    <label><input type="checkbox" id="pw-opt-no-ambiguous"> Exclude I, l, O, 0</label>
-                                    <label><input type="checkbox" id="pw-opt-autoclear"> Autoclear clipboard (30s)</label>
-                                </div>
+                        <button id="btn-copy-password" class="btn btn-secondary">Copy</button>
+                    </div>
+                    <div class="password-options-grid">
+                        <div class="form-group">
+                            <label>Length</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="pw-length" value="8"> 8</label>
+                                <label><input type="radio" name="pw-length" value="12" checked> 12</label>
+                                <label><input type="radio" name="pw-length" value="16"> 16</label>
+                                <label><input type="radio" name="pw-length" value="20"> 20</label>
                             </div>
                         </div>
-                        <div class="form-group" style="display:flex; gap:0.5rem; align-items:center;">
-                            <button id="btn-generate-password" class="btn btn-primary mt-1">Generate Password</button>
-                            <button id="btn-regenerate-password" class="btn btn-secondary mt-1">Regenerate</button>
+                        <div class="form-group">
+                            <label>Options</label>
+                            <div class="checkbox-group">
+                                <label><input type="checkbox" id="pw-opt-uppercase" checked> Uppercase</label>
+                                <label><input type="checkbox" id="pw-opt-numbers" checked> Numbers</label>
+                                <label><input type="checkbox" id="pw-opt-symbols"> Symbols</label>
+                                <label><input type="checkbox" id="pw-opt-no-ambiguous"> Exclude I, l, O, 0</label>
+                                <label><input type="checkbox" id="pw-opt-autoclear"> Autoclear clipboard (30s)</label>
+                            </div>
                         </div>
+                    </div>
+                    <div class="form-group" style="display:flex; gap:0.5rem; align-items:center;">
+                        <button id="btn-generate-password" class="btn btn-primary mt-1">Generate Password</button>
+                        <button id="btn-regenerate-password" class="btn btn-secondary mt-1">Regenerate</button>
+                    </div>
                     <div class="divider"></div>
                     <h4>Data Management</h4>
                     <div class="settings-item">
@@ -839,6 +870,53 @@
                     </div>
                     <button id="btn-find-duplicates" class="btn btn-secondary mt-1">Find All
                         Duplicates</button>
+
+                    <div class="divider"></div>
+                    <h4>Secure Document Tools</h4>
+                    <div class="converter-container glass-panel mt-1"
+                        style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-subtle); background: rgba(255, 255, 255, 0.02);">
+                        <div class="converter-header"
+                            style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                            <span class="action-icon"
+                                style="background: rgba(255,255,255,0.05); width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center;"><i
+                                    data-feather="file-text"></i></span>
+                            <div>
+                                <strong style="display: block; font-size: 1.05rem; letter-spacing: -0.01em;">PDF
+                                    Conversion</strong>
+                                <p style="font-size: 0.85rem; opacity: 0.7; margin: 0.15rem 0 0;">Convert DOC/DOCX files
+                                    securely. No data is stored.</p>
+                            </div>
+                        </div>
+
+                        <div id="converter-drop-zone" class="drop-zone mt-1"
+                            style="border: 2px dashed rgba(255,255,255,0.1); padding: 2.5rem; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: rgba(0,0,0,0.15);">
+                            <span class="drop-zone-prompt" style="font-size: 0.95rem; opacity: 0.8;">Drop file here or
+                                click to upload</span>
+                            <input type="file" id="converter-file-input" accept=".doc,.docx" style="display: none;">
+                        </div>
+
+                        <div id="converter-status" class="converter-status hidden mt-1"
+                            style="display: none; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.03); font-size: 0.9rem;">
+                            <div class="loader-pulse small"></div>
+                            <span id="converter-status-text" style="opacity: 0.9;">Uploading...</span>
+                        </div>
+
+                        <div id="converter-actions" class="converter-actions hidden mt-1"
+                            style="display: none; flex-direction: column; gap: 0.75rem;">
+                            <div class="settings-item"
+                                style="padding: 0.5rem 0; border: none; background: transparent; cursor: default;">
+                                <div class="settings-item-content">
+                                    <span class="settings-item-title" style="font-size: 0.95rem;">Attach to Note</span>
+                                </div>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="attach-to-note" class="toggle-input">
+                                    <label for="attach-to-note" class="toggle-label"></label>
+                                </div>
+                            </div>
+                            <button id="btn-convert-file" class="btn btn-primary btn-block"
+                                style="padding: 0.85rem;">Convert to PDF</button>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- ADDITIVE: Session Activity Panel (Requires PIN verification via UI logic) -->
@@ -865,59 +943,75 @@
                     </div>
                 </div>
             </div>
-            </div>
-        </dialog>
+        </div>
+    </dialog>
 
-        <!-- GENERATED PASSWORD DECISION MODAL -->
-        <dialog id="generated-password-modal" class="modal-overlay hidden" aria-labelledby="generated-password-title">
-            <div class="modal-content glass-panel">
-                <div class="modal-header">
-                    <h2 id="generated-password-title">Generated Password</h2>
+    <!-- GENERATED PASSWORD DECISION MODAL -->
+    <section id="generated-password-modal" class="floating-panel hidden" role="dialog" aria-modal="false"
+        aria-labelledby="generated-password-title">
+        <div class="floating-panel-header" id="generated-password-drag-handle">
+            <div>
+                <h2 id="generated-password-title">Generated Password</h2>
+                <p class="floating-panel-subtitle">Take an action to keep or discard it.</p>
+            </div>
+        </div>
+        <div class="floating-panel-body glass-panel">
+            <div class="form-group">
+                <label for="generated-password-panel-display">Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="generated-password-panel-display" class="input-field" readonly
+                        placeholder="Generate a password to view it" data-label="password">
+                    <button type="button" class="btn-toggle-visibility" data-target="generated-password-panel-display"
+                        data-label="password" aria-label="Show password" title="Show password">
+                        <!-- Icon will be injected by JS -->
+                    </button>
                 </div>
+            </div>
+            <div class="form-group">
+                <label for="generated-password-note-title">Note Title</label>
+                <input type="text" id="generated-password-note-title" class="input-field"
+                    placeholder="Title required to save">
+            </div>
+            <div class="modal-actions">
+                <button id="btn-save-generated-password" class="btn btn-primary">Save as Secure Vault Note</button>
+                <button id="btn-copy-generated-password" class="btn btn-secondary">Copy to Clipboard</button>
+                <button id="btn-discard-generated-password" class="btn btn-text">Discard</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- PASSWORD HISTORY DELETE CONFIRMATION -->
+    <dialog id="password-history-delete-modal" class="modal-overlay hidden"
+        aria-labelledby="password-history-delete-title">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2 id="password-history-delete-title">Delete Password History</h2>
+            </div>
+            <div id="password-history-delete-step-1">
+                <p>This will delete your entire password history.</p>
+                <div class="modal-actions">
+                    <button id="btn-password-delete-cancel" class="btn btn-secondary">Cancel</button>
+                    <button id="btn-password-delete-continue" class="btn btn-primary">Continue</button>
+                </div>
+            </div>
+            <div id="password-history-delete-step-2" class="hidden">
+                <p>This action is irreversible.</p>
+                <div class="modal-actions">
+                    <button id="btn-password-delete-back" class="btn btn-secondary">Go Back</button>
+                    <button id="btn-password-delete-confirm" class="btn btn-primary">Yes, delete</button>
+                </div>
+            </div>
+            <div id="password-history-delete-step-3" class="hidden">
+                <p>Type DELETE to confirm.</p>
                 <div class="form-group">
-                    <label for="generated-password-note-title">Note Title</label>
-                    <input type="text" id="generated-password-note-title" class="input-field"
-                        placeholder="Title required to save">
+                    <input type="text" id="password-history-delete-input" class="input-field" placeholder="DELETE">
                 </div>
                 <div class="modal-actions">
-                    <button id="btn-save-generated-password" class="btn btn-primary">Save as Secure Vault Note</button>
-                    <button id="btn-copy-generated-password" class="btn btn-secondary">Copy to Clipboard</button>
-                    <button id="btn-discard-generated-password" class="btn btn-text">Discard</button>
+                    <button id="btn-password-delete-final" class="btn btn-primary">Delete</button>
                 </div>
             </div>
-        </dialog>
-
-        <!-- PASSWORD HISTORY DELETE CONFIRMATION -->
-        <dialog id="password-history-delete-modal" class="modal-overlay hidden" aria-labelledby="password-history-delete-title">
-            <div class="modal-content glass-panel">
-                <div class="modal-header">
-                    <h2 id="password-history-delete-title">Delete Password History</h2>
-                </div>
-                <div id="password-history-delete-step-1">
-                    <p>This will delete your entire password history.</p>
-                    <div class="modal-actions">
-                        <button id="btn-password-delete-cancel" class="btn btn-secondary">Cancel</button>
-                        <button id="btn-password-delete-continue" class="btn btn-primary">Continue</button>
-                    </div>
-                </div>
-                <div id="password-history-delete-step-2" class="hidden">
-                    <p>This action is irreversible.</p>
-                    <div class="modal-actions">
-                        <button id="btn-password-delete-back" class="btn btn-secondary">Go Back</button>
-                        <button id="btn-password-delete-confirm" class="btn btn-primary">Yes, delete</button>
-                    </div>
-                </div>
-                <div id="password-history-delete-step-3" class="hidden">
-                    <p>Type DELETE to confirm.</p>
-                    <div class="form-group">
-                        <input type="text" id="password-history-delete-input" class="input-field" placeholder="DELETE">
-                    </div>
-                    <div class="modal-actions">
-                        <button id="btn-password-delete-final" class="btn btn-primary">Delete</button>
-                    </div>
-                </div>
-            </div>
-        </dialog>
+        </div>
+    </dialog>
 
     <!-- NOTE PROTECTION / SELF-DESTRUCT MODAL -->
     <dialog id="note-protection-modal" class="modal-overlay hidden">
@@ -995,12 +1089,14 @@
                     <!-- Codes injected here -->
                 </div>
             </div>
-            <div class="modal-actions">
-                <button id="copy-backup-codes" class="btn btn-secondary"><i data-feather="copy"></i> Copy All</button>
+            <div class="modal-actions" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                <button id="copy-backup-codes" class="btn btn-secondary"><i data-feather="copy"></i> Copy</button>
                 <button id="download-backup-codes" class="btn btn-secondary"><i data-feather="download"></i>
                     Download</button>
-                <button id="confirm-backup-codes" class="btn btn-primary"><i data-feather="check-circle"></i> I've Saved
-                    Them</button>
+                <button id="email-backup-codes-prompt" class="btn btn-secondary"><i data-feather="mail"></i>
+                    Email</button>
+                <button id="confirm-backup-codes" class="btn btn-primary"><i data-feather="check-circle"></i>
+                    Confirm</button>
             </div>
         </div>
     </dialog>
