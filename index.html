@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>PINBRIDGE | Secure Vault</title>
     <meta name="theme-color" content="#0f1115">
     <link rel="manifest" href="manifest.json">
@@ -20,7 +20,94 @@
         rel="stylesheet">
     <link rel="stylesheet" href="./src/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/legacy/build/pdf.min.js"></script>
+    <style>
+        /* 
+         * RECOVERY KEY MODAL - RESPONSIVE LAYOUT
+         * Handles desktop centering and mobile fullscreen behavior
+         */
+
+        /* Shared / Functional Styles (Mobile Default) */
+        .recovery-display-wrapper {
+            position: relative;
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        #recovery-key-display {
+            flex: 1;
+            margin: 0;
+            filter: blur(8px);
+            user-select: none;
+            pointer-events: none;
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        #toggle-recovery-visibility {
+            position: absolute;
+            right: 0.5rem;
+        }
+
+        .recovery-options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        #recovery-email-section {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Desktop Layout (min-width: 768px) */
+        @media (min-width: 768px) {
+            #recovery-key-modal {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 1rem;
+                background: rgba(0, 0, 0, 0.75);
+                /* Darker backdrop for focus */
+                backdrop-filter: blur(4px);
+            }
+
+            #recovery-key-modal .modal-content {
+                width: 100%;
+                max-width: 480px;
+                /* Controlled width */
+                height: auto;
+                /* Content-based height */
+                min-height: auto;
+                border-radius: 16px;
+                padding: 2.5rem;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                display: flex;
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            #recovery-key-modal h2 {
+                text-align: center;
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+            }
+
+            #recovery-key-modal .warning-text {
+                text-align: center;
+                margin-bottom: 1.5rem;
+                font-size: 0.95rem;
+                opacity: 0.9;
+            }
+
+            #recovery-key-modal .recovery-options-grid {
+                gap: 0.75rem;
+            }
+
+            #recovery-key-modal .btn-block {
+                margin-top: 1rem;
+            }
+        }
+    </style>
 </head>
 
 <body>
@@ -482,6 +569,10 @@
                         <i data-feather="paperclip"></i>
                         <span>Attach</span>
                     </button>
+                    <button class="btn-tool-minimal" id="btn-voice-note" title="Voice Note"
+                        aria-label="Record voice note">
+                        <i data-feather="mic"></i>
+                    </button>
                     <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode"
                         aria-label="Toggle Focus Mode">
                         <i data-feather="maximize"></i>
@@ -513,8 +604,7 @@
                         </button>
                     </div>
                     <input type="file" id="note-attachment-input"
-                        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.csv,.zip,.json"
-                        class="hidden">
+                        accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.csv,.zip,.json" class="hidden">
                     <div id="note-attachments-list" class="attachments-list"></div>
                     <div id="note-attachments-empty" class="attachments-empty">No files attached yet.</div>
                 </div>
@@ -611,7 +701,8 @@
                                 </div>
                                 <div class="share-field">
                                     <label for="share-answer">Paste Answer</label>
-                                    <textarea id="share-answer" rows="4" placeholder="Paste the answer from the receiver."></textarea>
+                                    <textarea id="share-answer" rows="4"
+                                        placeholder="Paste the answer from the receiver."></textarea>
                                     <button class="btn btn-secondary" id="share-apply-answer">Activate Link</button>
                                 </div>
                             </div>
@@ -620,7 +711,8 @@
                                 <p class="hint">Paste the invite code and return the answer.</p>
                                 <div class="share-field">
                                     <label for="share-join-offer">Invite Code</label>
-                                    <textarea id="share-join-offer" rows="4" placeholder="Paste the invite code."></textarea>
+                                    <textarea id="share-join-offer" rows="4"
+                                        placeholder="Paste the invite code."></textarea>
                                     <button class="btn btn-primary" id="share-join">Join with Invite</button>
                                 </div>
                                 <div class="share-field">
@@ -700,7 +792,64 @@
             </div>
         </section>
 
+        <!-- MOBILE FOOTER -->
+        <nav id="mobile-footer" class="mobile-footer glass-panel">
+            <button class="nav-item active" data-view="all" aria-label="Notes">
+                <i data-feather="file-text"></i>
+                <span class="label">Notes</span>
+            </button>
+            <button class="nav-item" data-view="dashboard" aria-label="Dashboard">
+                <i data-feather="grid"></i>
+                <span class="label">Dash</span>
+            </button>
+            <button class="nav-item primary" id="mobile-footer-new-note" aria-label="New Note">
+                <i data-feather="plus"></i>
+                <span class="label">New</span>
+            </button>
+            <button class="nav-item" data-view="favorites" aria-label="Favorites">
+                <i data-feather="star"></i>
+                <span class="label">Favs</span>
+            </button>
+            <button class="nav-item" id="mobile-footer-menu" aria-label="Menu">
+                <i data-feather="menu"></i>
+                <span class="label">Menu</span>
+            </button>
+        </nav>
+
     </section>
+
+    <!-- MOBILE FOOTER MENU -->
+    <dialog id="mobile-footer-menu-modal" class="modal-overlay hidden" aria-labelledby="mobile-footer-menu-title">
+        <div class="modal-content glass-panel mobile-footer-menu-sheet">
+            <div class="modal-header">
+                <h2 id="mobile-footer-menu-title">Quick Menu</h2>
+                <button id="mobile-footer-menu-close" class="btn-icon ghost" aria-label="Close menu">x</button>
+            </div>
+            <div class="mobile-footer-menu-content">
+                <button class="settings-action" id="mobile-footer-open-settings">
+                    <span class="settings-action-icon"><i data-feather="settings"></i></span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Settings</span>
+                        <span class="settings-action-desc">Preferences, sync, and tools.</span>
+                    </div>
+                </button>
+                <button class="settings-action" id="mobile-footer-open-tags">
+                    <span class="settings-action-icon"><i data-feather="tag"></i></span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Tags</span>
+                        <span class="settings-action-desc">Manage tag colors and names.</span>
+                    </div>
+                </button>
+                <button class="settings-action" id="mobile-footer-lock">
+                    <span class="settings-action-icon"><i data-feather="lock"></i></span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Lock Vault</span>
+                        <span class="settings-action-desc">Secure your vault instantly.</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </dialog>
 
     <!-- COMMAND PALETTE (Dynamically injected but CSS ready) -->
 
@@ -711,20 +860,16 @@
             <p class="warning-text" data-i18n="recoveryMessage">This is the ONLY time you will see this key. Save it
                 somewhere safe. You will need it if you forget your PIN.</p>
             <div class="recovery-key-container">
-                <div class="recovery-display-wrapper"
-                    style="position: relative; flex: 1; display: flex; align-items: center;">
-                    <pre id="recovery-key-display" class="blurred-text"
-                        style="filter: blur(8px); user-select: none; pointer-events: none; flex: 1; margin: 0;"></pre>
+                <div class="recovery-display-wrapper">
+                    <pre id="recovery-key-display" class="blurred-text"></pre>
                     <button type="button" id="toggle-recovery-visibility" class="btn-icon ghost"
-                        aria-label="Toggle Visibility" title="Toggle Visibility"
-                        style="position: absolute; right: 0.5rem;">
+                        aria-label="Toggle Visibility" title="Toggle Visibility">
                         <i data-feather="eye"></i>
                     </button>
                 </div>
             </div>
 
-            <div class="recovery-options-grid mt-1"
-                style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;">
+            <div class="recovery-options-grid mt-1">
                 <button id="copy-recovery-key" class="btn btn-secondary btn-block">
                     <i data-feather="copy"></i> <span>Copy</span>
                 </button>
@@ -737,8 +882,7 @@
             </div>
 
             <!-- Email Prompt Section -->
-            <div id="recovery-email-section" class="hidden mt-1 p-1 border-subtle rounded"
-                style="background: rgba(255,255,255,0.05);">
+            <div id="recovery-email-section" class="hidden mt-1 p-1 border-subtle rounded">
                 <div class="form-group">
                     <label for="recovery-temp-email">Send by Email (Manual Entry)</label>
                     <input type="email" id="recovery-temp-email" class="input-field" placeholder="your@email.com">
@@ -997,7 +1141,8 @@
                     <div class="settings-item diagnostics-panel">
                         <div class="settings-item-content">
                             <span class="settings-item-title">Vault Persistence Check</span>
-                            <span class="settings-item-desc">Run a local verification for note creation and updates.</span>
+                            <span class="settings-item-desc">Run a local verification for note creation and
+                                updates.</span>
                         </div>
                         <button id="btn-run-diagnostics" class="btn btn-secondary">Run</button>
                     </div>

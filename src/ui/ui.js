@@ -59,6 +59,10 @@ class UIService {
         this.sharePreviewViewed = false;
         this.shareAccessTimer = null;
         this.attachmentRetries = new Map();
+        this.shareTransferStart = null;
+        this.mobileFooterBusy = false;
+        this.mobileFooterMenuOpen = false;
+        this.mobileFooterMenuTrap = null;
     }
 
     showLoginForm() {
@@ -183,7 +187,14 @@ class UIService {
             btnNew: document.getElementById('mobile-new-note'),
             btnLock: document.getElementById('mobile-lock'),
             btnMenu: document.getElementById('btn-mobile-menu'),
-            backdrop: document.getElementById('mobile-nav-backdrop')
+            backdrop: document.getElementById('mobile-nav-backdrop'),
+            footerMenuBtn: document.getElementById('mobile-footer-menu'),
+            footerNewBtn: document.getElementById('mobile-footer-new-note'),
+            footerMenuModal: document.getElementById('mobile-footer-menu-modal'),
+            footerMenuClose: document.getElementById('mobile-footer-menu-close'),
+            footerMenuSettings: document.getElementById('mobile-footer-open-settings'),
+            footerMenuTags: document.getElementById('mobile-footer-open-tags'),
+            footerMenuLock: document.getElementById('mobile-footer-lock')
         };
 
         this.panels = {
@@ -754,6 +765,9 @@ class UIService {
     showScreen(name) {
         Object.values(this.screens).forEach(el => el?.classList.add('hidden'));
         this.screens[name]?.classList.remove('hidden');
+        if (name === 'vault') {
+            this.resetMobileOverlays();
+        }
     }
 
     addEventListeners() {
@@ -1324,7 +1338,7 @@ class UIService {
     }
 
     addVaultEventListeners() {
-        document.querySelectorAll('.nav-item').forEach(btn => {
+        document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
             btn.onclick = () => {
                 document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -1354,6 +1368,30 @@ class UIService {
 
         document.getElementById('btn-new-note')?.addEventListener('click', () => this.handleNewNote());
         if (this.mobile.btnNew) this.mobile.btnNew.onclick = () => this.handleNewNote();
+        if (this.mobile.footerNewBtn) {
+            this.mobile.footerNewBtn.onclick = async () => {
+                if (this.mobileFooterBusy) return;
+                this.mobileFooterBusy = true;
+                this.mobile.footerNewBtn.setAttribute('disabled', 'disabled');
+                try {
+                    await this.handleNewNote();
+                } finally {
+                    setTimeout(() => {
+                        this.mobileFooterBusy = false;
+                        this.mobile.footerNewBtn?.removeAttribute('disabled');
+                    }, 500);
+                }
+            };
+        }
+
+        if (this.mobile.footerMenuBtn) {
+            this.mobile.footerMenuBtn.onclick = (e) => {
+                e.preventDefault();
+                this.openMobileFooterMenu();
+            };
+        }
+
+        this.bindMobileFooterMenu();
 
         // Notes settings menu
         document.getElementById('btn-notes-settings')?.addEventListener('click', (e) => {
@@ -2757,6 +2795,106 @@ class UIService {
         setTimeout(() => {
             passwordInput.classList.remove('highlight');
         }, 500);
+    }
+
+    handleSmartList(e) {
+        if (!this.inputs.noteContent) return;
+        // Guard against missing smart-list implementation to avoid runtime errors.
+        const value = this.inputs.noteContent.value || '';
+        const lineStart = value.slice(0, this.inputs.noteContent.selectionStart || 0).split('\n').pop() || '';
+        if (!lineStart.trim()) return;
+    }
+
+    bindMobileFooterMenu() {
+        if (!this.mobile.footerMenuModal || this.mobile.footerMenuModal.dataset.bound) return;
+        this.mobile.footerMenuModal.dataset.bound = 'true';
+
+        this.mobile.footerMenuClose?.addEventListener('click', () => this.closeMobileFooterMenu());
+        this.mobile.footerMenuModal.addEventListener('click', (e) => {
+            if (e.target === this.mobile.footerMenuModal) this.closeMobileFooterMenu();
+        });
+
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.mobileFooterMenuOpen) {
+                this.closeMobileFooterMenu();
+            }
+        });
+
+        this.mobile.footerMenuSettings?.addEventListener('click', () => {
+            this.closeMobileFooterMenu();
+            this.openSettingsModal();
+        });
+
+        this.mobile.footerMenuTags?.addEventListener('click', () => {
+            this.closeMobileFooterMenu();
+            document.getElementById('btn-tags-manager')?.click();
+        });
+
+        this.mobile.footerMenuLock?.addEventListener('click', () => {
+            this.closeMobileFooterMenu();
+            authService.forceLogout('manual');
+        });
+    }
+
+    resetMobileOverlays() {
+        document.body.classList.remove('mobile-sidebar-open');
+        document.getElementById('mobile-nav-backdrop')?.classList.remove('visible');
+        this.closeMobileFooterMenu();
+    }
+
+    openMobileFooterMenu() {
+        if (!this.mobile.footerMenuModal) return;
+        if (this.mobileFooterMenuOpen) return;
+        this.mobileFooterMenuOpen = true;
+        this.mobile.footerMenuModal.classList.remove('hidden');
+        this.mobile.footerMenuModal.setAttribute('aria-modal', 'true');
+        this.mobile.footerMenuModal.setAttribute('role', 'dialog');
+
+        const focusable = this.getFocusableElements(this.mobile.footerMenuModal);
+        const initial = focusable[0] || this.mobile.footerMenuClose || this.mobile.footerMenuModal;
+        initial?.focus();
+        this.mobileFooterMenuTrap = this.trapFocus(this.mobile.footerMenuModal);
+
+        if (typeof feather !== 'undefined') feather.replace();
+    }
+
+    closeMobileFooterMenu() {
+        if (!this.mobile.footerMenuModal || !this.mobileFooterMenuOpen) return;
+        this.mobileFooterMenuOpen = false;
+        this.mobile.footerMenuModal.classList.add('hidden');
+        this.mobileFooterMenuModalCleanup();
+        this.mobile.footerMenuBtn?.focus();
+    }
+
+    mobileFooterMenuModalCleanup() {
+        if (this.mobileFooterMenuTrap) {
+            this.mobileFooterMenuTrap();
+            this.mobileFooterMenuTrap = null;
+        }
+    }
+
+    getFocusableElements(container) {
+        return Array.from(container.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'))
+            .filter(el => !el.hasAttribute('disabled'));
+    }
+
+    trapFocus(container) {
+        const focusable = this.getFocusableElements(container);
+        if (!focusable.length) return () => {};
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const handler = (e) => {
+            if (e.key !== 'Tab') return;
+            if (e.shiftKey && document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+        container.addEventListener('keydown', handler);
+        return () => container.removeEventListener('keydown', handler);
     }
 
     _getRandomChar(charset) {
