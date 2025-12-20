@@ -20,6 +20,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="./src/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.js"></script>
 </head>
 
 <body>
@@ -558,6 +559,130 @@
                             <span class="quick-action-icon"><i data-feather="trash-2"></i></span>
                             <span>Trash</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- Secure Share -->
+                <div class="dashboard-section glass-panel share-panel">
+                    <div class="share-header">
+                        <div>
+                            <h2>Secure Share</h2>
+                            <p class="hint">Direct device-to-device transfer. No files are uploaded or stored.</p>
+                        </div>
+                        <div class="share-badges">
+                            <span class="share-badge">End-to-End Encrypted</span>
+                            <span class="share-badge neutral">P2P</span>
+                        </div>
+                    </div>
+                    <div class="share-grid">
+                        <div class="share-column">
+                            <h3>Host Transfer</h3>
+                            <p class="hint">Create a session and share the invite code.</p>
+                            <button class="btn btn-primary" id="share-create-offer">Create Secure Session</button>
+                            <div class="share-field">
+                                <label for="share-offer">Invite Code</label>
+                                <textarea id="share-offer" rows="4" readonly
+                                    placeholder="Generate a session to reveal the invite code."></textarea>
+                                <button class="btn btn-secondary" id="share-copy-offer">Copy Invite</button>
+                            </div>
+                            <div class="share-field">
+                                <label for="share-answer">Paste Answer</label>
+                                <textarea id="share-answer" rows="4" placeholder="Paste the answer from the receiver."></textarea>
+                                <button class="btn btn-secondary" id="share-apply-answer">Activate Link</button>
+                            </div>
+                        </div>
+                        <div class="share-column">
+                            <h3>Join Transfer</h3>
+                            <p class="hint">Paste the invite code and return the answer.</p>
+                            <div class="share-field">
+                                <label for="share-join-offer">Invite Code</label>
+                                <textarea id="share-join-offer" rows="4" placeholder="Paste the invite code."></textarea>
+                                <button class="btn btn-primary" id="share-join">Join Secure Session</button>
+                            </div>
+                            <div class="share-field">
+                                <label for="share-join-answer">Answer</label>
+                                <textarea id="share-join-answer" rows="4" readonly
+                                    placeholder="Your answer appears here after joining."></textarea>
+                                <button class="btn btn-secondary" id="share-copy-answer">Copy Answer</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="share-transfer">
+                        <div class="share-drop" id="share-file-drop">
+                            <div>
+                                <strong>Drop a file or click to select</strong>
+                                <p class="hint">Images, PDFs, documents (10-200MB+).</p>
+                            </div>
+                            <input type="file" id="share-file-input" accept="image/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md">
+                        </div>
+                        <p class="hint">Secure WebRTC transfer over encrypted channels. Optimized for corporate networks.</p>
+
+                        <div class="share-options">
+                            <div class="share-option">
+                                <label for="share-permission">Access</label>
+                                <select id="share-permission" class="settings-select">
+                                    <option value="download">Download allowed</option>
+                                    <option value="view">View only</option>
+                                </select>
+                            </div>
+                            <div class="share-option">
+                                <label for="share-expiry">Access expires</label>
+                                <select id="share-expiry" class="settings-select">
+                                    <option value="never">Never</option>
+                                    <option value="15">15 minutes</option>
+                                    <option value="60">1 hour</option>
+                                    <option value="240">4 hours</option>
+                                </select>
+                            </div>
+                            <div class="share-option">
+                                <label for="share-destruct-rule">Auto-destruction</label>
+                                <select id="share-destruct-rule" class="settings-select">
+                                    <option value="never">Never</option>
+                                    <option value="after_download">After download</option>
+                                    <option value="after_view">After first view</option>
+                                    <option value="after_minutes">After X minutes</option>
+                                </select>
+                            </div>
+                            <div class="share-option inline">
+                                <label for="share-destruct-minutes">Minutes</label>
+                                <input type="number" id="share-destruct-minutes" min="1" value="5">
+                            </div>
+                            <label class="share-option toggle-row">
+                                <input type="checkbox" id="share-auto-clear">
+                                <span>Auto-clear after transfer</span>
+                            </label>
+                        </div>
+
+                        <div class="share-status">
+                            <div class="share-state" id="share-state">Idle</div>
+                            <div class="share-progress">
+                                <div class="share-progress-bar">
+                                    <span id="share-progress-fill"></span>
+                                </div>
+                                <div class="share-progress-meta">
+                                    <span id="share-progress-text">0%</span>
+                                    <span id="share-progress-bytes">Waiting for a file.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="share-receiver hidden" id="share-receiver">
+                            <div class="share-receiver-header">
+                                <div>
+                                    <div class="share-file-name" id="share-receiver-name">Pending file</div>
+                                    <div class="share-file-meta" id="share-receiver-meta"></div>
+                                </div>
+                                <div class="share-permission-badges" id="share-permission-badges"></div>
+                            </div>
+                            <div class="share-preview" id="share-preview"></div>
+                            <div class="share-actions">
+                                <button class="btn btn-primary" id="share-accept">Download</button>
+                                <button class="btn btn-secondary" id="share-view">View</button>
+                                <button class="btn btn-text" id="share-reject">Decline</button>
+                            </div>
+                            <div class="share-lifetime" id="share-lifetime"></div>
+                        </div>
                     </div>
                 </div>
 

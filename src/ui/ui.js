@@ -11,6 +11,7 @@ import { storageService } from '../storage/db.js';
 import { recoveryService } from '../modules/recovery/recovery.js';
 import { cryptoService } from '../crypto/crypto.js';
 import { pairingService } from '../modules/pairing/pairing.js'; // To be created
+import { shareService } from '../modules/share/share.js';
 
 
 class UIService {
@@ -49,6 +50,13 @@ class UIService {
         this.ocrWorker = null;
         this.activityLogs = [];
         this.generatedPassword = null;
+        this.share = {};
+        this.shareCountdown = null;
+        this.shareExpiry = null;
+        this.shareReceiveMeta = null;
+        this.shareReceivePreview = null;
+        this.sharePreviewViewed = false;
+        this.shareAccessTimer = null;
     }
 
     showLoginForm() {
@@ -186,6 +194,38 @@ class UIService {
             offline: document.getElementById('status-offline-indicator'),
             offlineText: document.getElementById('status-offline-text')
         };
+
+        this.share = {
+            createBtn: document.getElementById('share-create-offer'),
+            offerOut: document.getElementById('share-offer'),
+            copyOffer: document.getElementById('share-copy-offer'),
+            answerIn: document.getElementById('share-answer'),
+            applyAnswer: document.getElementById('share-apply-answer'),
+            joinOfferIn: document.getElementById('share-join-offer'),
+            joinBtn: document.getElementById('share-join'),
+            joinAnswerOut: document.getElementById('share-join-answer'),
+            copyAnswer: document.getElementById('share-copy-answer'),
+            fileDrop: document.getElementById('share-file-drop'),
+            fileInput: document.getElementById('share-file-input'),
+            permissionSelect: document.getElementById('share-permission'),
+            expirySelect: document.getElementById('share-expiry'),
+            destructRule: document.getElementById('share-destruct-rule'),
+            destructMinutes: document.getElementById('share-destruct-minutes'),
+            autoClear: document.getElementById('share-auto-clear'),
+            stateText: document.getElementById('share-state'),
+            progressFill: document.getElementById('share-progress-fill'),
+            progressText: document.getElementById('share-progress-text'),
+            progressBytes: document.getElementById('share-progress-bytes'),
+            receiverPanel: document.getElementById('share-receiver'),
+            receiverName: document.getElementById('share-receiver-name'),
+            receiverMeta: document.getElementById('share-receiver-meta'),
+            permissionBadges: document.getElementById('share-permission-badges'),
+            preview: document.getElementById('share-preview'),
+            acceptBtn: document.getElementById('share-accept'),
+            viewBtn: document.getElementById('share-view'),
+            rejectBtn: document.getElementById('share-reject'),
+            lifetime: document.getElementById('share-lifetime')
+        };
     }
 
     _getById(id) {
@@ -252,6 +292,7 @@ class UIService {
         this.setStatus(i18n.t('statusReady'));
         this.updateConnectivityStatus();
         this.logActivity('System Initialized');
+        this.initSecureShare();
 
         // Initialize settings menu values
         const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
@@ -4537,6 +4578,397 @@ class UIService {
             this.showToast('PDF attached as a new vault note.', 'success');
         };
         reader.readAsDataURL(blob);
+    }
+
+    /* --- Secure Share --- */
+    initSecureShare() {
+        if (!this.share.createBtn) return;
+
+        shareService.setCallbacks({
+            onChannelOpen: () => this.setShareStatus('Connected. Ready to share.', 'success'),
+            onChannelClose: () => this.setShareStatus('Session closed.', 'info'),
+            onConnectionState: (state) => {
+                if (state === 'connected') this.setShareStatus('Secure channel established.', 'success');
+                if (state === 'failed' || state === 'disconnected') this.setShareStatus('Connection lost.', 'error');
+            },
+            onMeta: (meta) => this.renderIncomingShare(meta),
+            onPreview: (payload) => this.renderSharePreview(payload),
+            onTransferStart: (total) => {
+                this.setShareStatus('Transferring...', 'info');
+                this.setShareProgress(0, total);
+            },
+            onProgress: ({ direction, transferred, total }) => {
+                this.setShareProgress(transferred, total);
+                if (direction === 'send') {
+                    this.setShareStatus('Uploading...', 'info');
+                } else {
+                    this.setShareStatus('Downloading...', 'info');
+                }
+            },
+            onTransferComplete: (payload, meta) => {
+                if (meta) {
+                    this.handleIncomingComplete(payload, meta);
+                } else {
+                    this.setShareStatus('Transfer completed.', 'success');
+                    if (this.share.autoClear?.checked) {
+                        this.clearShareFileSelection();
+                    }
+                    this.logActivity('File sent successfully');
+                }
+            },
+            onError: (err) => {
+                console.error(err);
+                this.setShareStatus('Transfer failed.', 'error');
+                this.showToast('Secure transfer failed. Try again.', 'error');
+            }
+        });
+
+        this.share.createBtn.addEventListener('click', async () => {
+            try {
+                this.setShareStatus('Preparing secure session...', 'info');
+                const offer = await shareService.createOffer();
+                this.share.offerOut.value = offer;
+                this.showToast('Invite created. Share it securely.', 'success');
+            } catch (err) {
+                this.setShareStatus('Failed to create session.', 'error');
+            }
+        });
+
+        this.share.applyAnswer.addEventListener('click', async () => {
+            const answer = this.share.answerIn.value.trim();
+            if (!answer) return;
+            try {
+                await shareService.acceptAnswer(answer);
+                this.setShareStatus('Answer accepted. Connecting...', 'info');
+            } catch (err) {
+                this.setShareStatus('Answer rejected.', 'error');
+            }
+        });
+
+        this.share.joinBtn.addEventListener('click', async () => {
+            const offer = this.share.joinOfferIn.value.trim();
+            if (!offer) return;
+            try {
+                this.setShareStatus('Joining secure session...', 'info');
+                const answer = await shareService.joinWithOffer(offer);
+                this.share.joinAnswerOut.value = answer;
+                this.showToast('Answer generated. Send it back.', 'success');
+            } catch (err) {
+                this.setShareStatus('Failed to join session.', 'error');
+            }
+        });
+
+        this.share.copyOffer.addEventListener('click', () => this.copyShareText(this.share.offerOut));
+        this.share.copyAnswer.addEventListener('click', () => this.copyShareText(this.share.joinAnswerOut));
+
+        this.share.fileDrop.addEventListener('click', () => this.share.fileInput.click());
+        this.share.fileDrop.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            this.share.fileDrop.classList.add('drag-over');
+        });
+        this.share.fileDrop.addEventListener('dragleave', () => {
+            this.share.fileDrop.classList.remove('drag-over');
+        });
+        this.share.fileDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            this.share.fileDrop.classList.remove('drag-over');
+            const file = e.dataTransfer.files?.[0];
+            if (file) this.prepareShareFile(file);
+        });
+        this.share.fileInput.addEventListener('change', () => {
+            const file = this.share.fileInput.files?.[0];
+            if (file) this.prepareShareFile(file);
+        });
+
+        this.share.permissionSelect.addEventListener('change', () => this.syncShareOptions());
+        this.share.expirySelect.addEventListener('change', () => this.syncShareOptions());
+        this.share.destructRule.addEventListener('change', () => this.syncShareOptions());
+        this.share.destructMinutes.addEventListener('change', () => this.syncShareOptions());
+
+        this.share.acceptBtn.addEventListener('click', () => this.acceptIncomingShare());
+        this.share.viewBtn.addEventListener('click', () => this.viewIncomingShare());
+        this.share.rejectBtn.addEventListener('click', () => this.rejectIncomingShare());
+
+        this.syncShareOptions();
+    }
+
+    copyShareText(el) {
+        if (!el?.value) return;
+        navigator.clipboard.writeText(el.value).then(() => {
+            this.showToast('Copied to clipboard.', 'success');
+        }).catch(() => {
+            this.showToast('Copy failed. Select and copy manually.', 'error');
+        });
+    }
+
+    prepareShareFile(file) {
+        if (!file) return;
+        this.setShareStatus(`Ready to share ${file.name}`, 'info');
+        this.setShareProgress(0, file.size);
+        const options = this.getShareOptions();
+        shareService.setFile(file, options);
+    }
+
+    syncShareOptions() {
+        const rule = this.share.destructRule?.value;
+        if (this.share.destructMinutes) {
+            this.share.destructMinutes.disabled = rule !== 'after_minutes';
+        }
+        if (!this.share.fileInput?.files?.length) return;
+        const file = this.share.fileInput.files[0];
+        shareService.setFile(file, this.getShareOptions());
+    }
+
+    getShareOptions() {
+        const permissionMode = this.share.permissionSelect?.value || 'download';
+        const expiryMinutes = this.share.expirySelect?.value;
+        const expiresAt = expiryMinutes && expiryMinutes !== 'never'
+            ? Date.now() + Number(expiryMinutes) * 60 * 1000
+            : null;
+
+        const destructRule = this.share.destructRule?.value || 'never';
+        const destructMinutes = Number(this.share.destructMinutes?.value || 5);
+
+        return {
+            permissions: {
+                mode: permissionMode,
+                expiresAt
+            },
+            destruct: {
+                rule: destructRule,
+                minutes: destructRule === 'after_minutes' ? destructMinutes : null
+            }
+        };
+    }
+
+    renderIncomingShare(meta) {
+        this.shareReceiveMeta = meta;
+        this.sharePreviewViewed = false;
+        this.share.receiverPanel?.classList.remove('hidden');
+        this.share.receiverName.textContent = meta.name || 'Shared file';
+        this.share.receiverMeta.textContent = `${this.formatBytes(meta.size)} · ${meta.type || 'File'}`;
+        this.share.preview.innerHTML = '<span class="hint">Preview loading...</span>';
+        this.share.permissionBadges.innerHTML = '';
+        if (this.shareAccessTimer) {
+            clearInterval(this.shareAccessTimer);
+            this.shareAccessTimer = null;
+        }
+
+        const badges = [];
+        if (meta.permissions?.mode === 'view') badges.push('View Only');
+        if (meta.permissions?.mode === 'download') badges.push('Download Allowed');
+        if (meta.permissions?.expiresAt) badges.push('Time Limited');
+
+        badges.forEach(label => {
+            const span = document.createElement('span');
+            span.className = 'share-badge neutral';
+            span.textContent = label;
+            this.share.permissionBadges.appendChild(span);
+        });
+
+        const now = Date.now();
+        if (meta.permissions?.expiresAt && now > meta.permissions.expiresAt) {
+            this.setShareStatus('Access expired.', 'error');
+            this.disableIncomingActions();
+            return;
+        }
+
+        if (meta.permissions?.mode === 'view') {
+            this.share.acceptBtn.disabled = true;
+            this.share.acceptBtn.textContent = 'Download Disabled';
+        } else {
+            this.share.acceptBtn.disabled = false;
+            this.share.acceptBtn.textContent = 'Download';
+        }
+
+        this.share.viewBtn.disabled = false;
+        this.share.rejectBtn.disabled = false;
+        this.setShareStatus('Preview available.', 'info');
+        this.updateShareLifetime();
+
+        if (meta.permissions?.expiresAt) {
+            this.shareAccessTimer = setInterval(() => this.updateShareLifetime(), 30000);
+        }
+    }
+
+    renderSharePreview(payload) {
+        if (!payload) {
+            this.share.preview.innerHTML = '<span class="hint">No preview available.</span>';
+            return;
+        }
+
+        this.shareReceivePreview = payload;
+        if (payload.dataUrl) {
+            const img = document.createElement('img');
+            img.src = payload.dataUrl;
+            img.alt = 'Preview';
+            this.share.preview.innerHTML = '';
+            this.share.preview.appendChild(img);
+        } else {
+            this.share.preview.innerHTML = '<span class="hint">Preview unavailable for this file.</span>';
+        }
+    }
+
+    acceptIncomingShare() {
+        if (!this.shareReceiveMeta) return;
+        if (this.shareReceiveMeta.permissions?.mode === 'view') return;
+
+        if (this.shareReceiveMeta.permissions?.expiresAt &&
+            Date.now() > this.shareReceiveMeta.permissions.expiresAt) {
+            this.setShareStatus('Access expired.', 'error');
+            this.disableIncomingActions();
+            return;
+        }
+
+        this.setShareStatus('Requesting file...', 'info');
+        shareService.sendTransferRequest('download');
+        this.startShareCountdown('download');
+    }
+
+    viewIncomingShare() {
+        if (!this.shareReceiveMeta) return;
+        this.sharePreviewViewed = true;
+        this.setShareStatus('Preview opened.', 'info');
+        this.logActivity('File previewed');
+        this.startShareCountdown('view');
+    }
+
+    rejectIncomingShare() {
+        this.setShareStatus('Transfer declined.', 'info');
+        this.clearIncomingShare();
+    }
+
+    handleIncomingComplete(blob, meta) {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = meta?.name || 'pinbridge-file';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        this.setShareStatus('Download completed.', 'success');
+        this.logActivity('File downloaded');
+        this.startShareCountdown('downloaded');
+    }
+
+    setShareStatus(text, tone) {
+        if (!this.share.stateText) return;
+        this.share.stateText.textContent = text;
+        this.share.stateText.dataset.tone = tone || 'info';
+    }
+
+    setShareProgress(transferred, total) {
+        const percent = total ? Math.min(100, Math.round((transferred / total) * 100)) : 0;
+        if (this.share.progressFill) {
+            this.share.progressFill.style.width = `${percent}%`;
+        }
+        if (this.share.progressText) {
+            this.share.progressText.textContent = `${percent}%`;
+        }
+        if (this.share.progressBytes) {
+            if (!total) {
+                this.share.progressBytes.textContent = 'Waiting for a file.';
+            } else {
+                this.share.progressBytes.textContent = `${this.formatBytes(transferred)} of ${this.formatBytes(total)}`;
+            }
+        }
+    }
+
+    updateShareLifetime() {
+        if (!this.shareReceiveMeta?.permissions?.expiresAt) {
+            this.share.lifetime.textContent = 'No expiration set.';
+            return;
+        }
+
+        const remaining = Math.max(0, this.shareReceiveMeta.permissions.expiresAt - Date.now());
+        if (remaining === 0) {
+            this.share.lifetime.textContent = 'Access expired.';
+            this.disableIncomingActions();
+            return;
+        }
+
+        const minutes = Math.ceil(remaining / 60000);
+        this.share.lifetime.textContent = `Access expires in ${minutes} minute${minutes === 1 ? '' : 's'}.`;
+    }
+
+    startShareCountdown(trigger) {
+        const destruct = this.shareReceiveMeta?.destruct;
+        if (!destruct || destruct.rule === 'never') return;
+
+        if (destruct.rule === 'after_view' && !this.sharePreviewViewed && trigger !== 'view') {
+            return;
+        }
+        if (destruct.rule === 'after_download' && trigger !== 'downloaded') {
+            return;
+        }
+
+        let expireAt = null;
+        if (destruct.rule === 'after_minutes' && destruct.minutes) {
+            expireAt = Date.now() + destruct.minutes * 60 * 1000;
+        } else if (destruct.rule === 'after_view' || destruct.rule === 'after_download') {
+            expireAt = Date.now() + 2 * 60 * 1000;
+        }
+
+        if (!expireAt) return;
+        this.shareExpiry = expireAt;
+
+        if (this.shareCountdown) clearInterval(this.shareCountdown);
+        this.shareCountdown = setInterval(() => {
+            const remaining = Math.max(0, this.shareExpiry - Date.now());
+            if (remaining === 0) {
+                clearInterval(this.shareCountdown);
+                this.shareCountdown = null;
+                this.share.lifetime.textContent = 'Access expired. File cleared from memory.';
+                this.clearIncomingShare();
+                return;
+            }
+            const seconds = Math.ceil(remaining / 1000);
+            this.share.lifetime.textContent = `Auto-clear in ${seconds}s.`;
+        }, 1000);
+    }
+
+    disableIncomingActions() {
+        this.share.acceptBtn.disabled = true;
+        this.share.viewBtn.disabled = true;
+        this.share.rejectBtn.disabled = true;
+    }
+
+    clearIncomingShare() {
+        this.shareReceiveMeta = null;
+        this.shareReceivePreview = null;
+        this.sharePreviewViewed = false;
+        this.share.receiverPanel?.classList.add('hidden');
+        this.share.preview.innerHTML = '';
+        this.share.permissionBadges.innerHTML = '';
+        if (this.shareCountdown) {
+            clearInterval(this.shareCountdown);
+            this.shareCountdown = null;
+        }
+        if (this.shareAccessTimer) {
+            clearInterval(this.shareAccessTimer);
+            this.shareAccessTimer = null;
+        }
+    }
+
+    clearShareFileSelection() {
+        if (this.share.fileInput) {
+            this.share.fileInput.value = '';
+        }
+        this.setShareProgress(0, 0);
+        this.setShareStatus('Ready for a new file.', 'info');
+    }
+
+    formatBytes(bytes) {
+        if (!bytes) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        let size = bytes;
+        let unit = 0;
+        while (size >= 1024 && unit < units.length - 1) {
+            size /= 1024;
+            unit += 1;
+        }
+        return `${size.toFixed(size >= 10 || unit === 0 ? 0 : 1)} ${units[unit]}`;
     }
 }
 
