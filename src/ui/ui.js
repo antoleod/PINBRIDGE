@@ -645,6 +645,11 @@ class UIService {
             this.handleLockedSession(reason);
         });
 
+        bus.on('notes:updated', (notes) => {
+            if (this.currentView === 'dashboard') return;
+            this.renderCurrentView(notes);
+        });
+
         // Session Timeout UI
         bus.on('auth:session-warning', (seconds) => this.updateSessionTimer(seconds));
         bus.on('auth:activity', () => this.hideSessionTimer());
