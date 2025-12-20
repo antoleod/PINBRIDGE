@@ -57,20 +57,6 @@ class AuthService {
   }
 
   async init() {
-    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-    if (isLocalDev) {
-      console.warn('Forcing offline-only mode for local development.');
-      this.offlineMode = true;
-      vaultService.setSyncEnabled(false);
-      const offlineUid = this._getOfflineUid();
-      this.uid = offlineUid;
-      this._resolveReady(offlineUid);
-      this._bindActivityWatchers();
-      bus.emit('sync:disabled', 'local-dev');
-      return this.ready;
-    }
-
     try {
       await ensureAnonymousSession();
       onAuth(async (user) => {
