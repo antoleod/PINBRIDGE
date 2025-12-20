@@ -12,6 +12,7 @@ import { recoveryService } from '../modules/recovery/recovery.js';
 import { cryptoService } from '../crypto/crypto.js';
 import { pairingService } from '../modules/pairing/pairing.js'; // To be created
 import { shareService } from '../modules/share/share.js';
+import { diagnosticsService } from '../modules/diagnostics/diagnostics.js';
 
 
 class UIService {
@@ -207,10 +208,6 @@ class UIService {
             copyAnswer: document.getElementById('share-copy-answer'),
             fileDrop: document.getElementById('share-file-drop'),
             fileInput: document.getElementById('share-file-input'),
-            permissionSelect: document.getElementById('share-permission'),
-            expirySelect: document.getElementById('share-expiry'),
-            destructRule: document.getElementById('share-destruct-rule'),
-            destructMinutes: document.getElementById('share-destruct-minutes'),
             autoClear: document.getElementById('share-auto-clear'),
             stateText: document.getElementById('share-state'),
             progressFill: document.getElementById('share-progress-fill'),
@@ -224,7 +221,13 @@ class UIService {
             acceptBtn: document.getElementById('share-accept'),
             viewBtn: document.getElementById('share-view'),
             rejectBtn: document.getElementById('share-reject'),
-            lifetime: document.getElementById('share-lifetime')
+            lifetime: document.getElementById('share-lifetime'),
+            resetBtn: document.getElementById('share-reset')
+        };
+
+        this.diagnostics = {
+            runBtn: document.getElementById('btn-run-diagnostics'),
+            output: document.getElementById('diagnostics-output')
         };
     }
 
@@ -293,6 +296,7 @@ class UIService {
         this.updateConnectivityStatus();
         this.logActivity('System Initialized');
         this.initSecureShare();
+        this.initDiagnostics();
 
         // Initialize settings menu values
         const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
@@ -698,9 +702,14 @@ class UIService {
         // ADDITIVE: Connectivity and Sync Status
         bus.on('sync:status', (status) => {
             this.updateConnectivityStatus(status);
-            if (status === 'online' || status === 'offline') {
-                this.logActivity(`Connection: ${status}`);
+            const loggable = ['online', 'offline', 'syncing', 'synced', 'error', 'local_saved'];
+            if (loggable.includes(status)) {
+                this.logActivity(`Sync: ${status}`);
             }
+        });
+
+        bus.on('sync:retry', ({ type, retry, delay }) => {
+            this.logActivity(`Sync retry ${retry} (${type}) in ${Math.round(delay / 1000)}s`);
         });
 
         bus.on('vault:saved-local-only', () => {
@@ -4183,7 +4192,8 @@ class UIService {
             console.log(`[Persistence] Successfully saved note: ${this.activeNoteId}`);
 
             const updatedNote = notesService.notes.find(n => n.id === this.activeNoteId);
-            this.setStatus(i18n.t('statusSaved') + (folder ? ` (${folder})` : ''));
+            const savedAt = new Date().toLocaleTimeString();
+            this.setStatus(`${i18n.t('statusSaved')} ${savedAt}${folder ? ` (${folder})` : ''}`);
 
             this.renderFolders();
             this.refreshSaveButtonState();
@@ -4680,16 +4690,10 @@ class UIService {
             if (file) this.prepareShareFile(file);
         });
 
-        this.share.permissionSelect.addEventListener('change', () => this.syncShareOptions());
-        this.share.expirySelect.addEventListener('change', () => this.syncShareOptions());
-        this.share.destructRule.addEventListener('change', () => this.syncShareOptions());
-        this.share.destructMinutes.addEventListener('change', () => this.syncShareOptions());
-
         this.share.acceptBtn.addEventListener('click', () => this.acceptIncomingShare());
         this.share.viewBtn.addEventListener('click', () => this.viewIncomingShare());
         this.share.rejectBtn.addEventListener('click', () => this.rejectIncomingShare());
-
-        this.syncShareOptions();
+        this.share.resetBtn?.addEventListener('click', () => this.resetShareSession());
     }
 
     copyShareText(el) {
@@ -4710,24 +4714,16 @@ class UIService {
     }
 
     syncShareOptions() {
-        const rule = this.share.destructRule?.value;
-        if (this.share.destructMinutes) {
-            this.share.destructMinutes.disabled = rule !== 'after_minutes';
-        }
         if (!this.share.fileInput?.files?.length) return;
         const file = this.share.fileInput.files[0];
         shareService.setFile(file, this.getShareOptions());
     }
 
     getShareOptions() {
-        const permissionMode = this.share.permissionSelect?.value || 'download';
-        const expiryMinutes = this.share.expirySelect?.value;
-        const expiresAt = expiryMinutes && expiryMinutes !== 'never'
-            ? Date.now() + Number(expiryMinutes) * 60 * 1000
-            : null;
-
-        const destructRule = this.share.destructRule?.value || 'never';
-        const destructMinutes = Number(this.share.destructMinutes?.value || 5);
+        const permissionMode = 'download';
+        const expiresAt = null;
+        const destructRule = 'never';
+        const destructMinutes = null;
 
         return {
             permissions: {
@@ -4746,7 +4742,7 @@ class UIService {
         this.sharePreviewViewed = false;
         this.share.receiverPanel?.classList.remove('hidden');
         this.share.receiverName.textContent = meta.name || 'Shared file';
-        this.share.receiverMeta.textContent = `${this.formatBytes(meta.size)} · ${meta.type || 'File'}`;
+        this.share.receiverMeta.textContent = `${this.formatBytes(meta.size)} - ${meta.type || 'File'}`;
         this.share.preview.innerHTML = '<span class="hint">Preview loading...</span>';
         this.share.permissionBadges.innerHTML = '';
         if (this.shareAccessTimer) {
@@ -4957,6 +4953,43 @@ class UIService {
         }
         this.setShareProgress(0, 0);
         this.setShareStatus('Ready for a new file.', 'info');
+    }
+
+    resetShareSession() {
+        shareService.cancelSession();
+        this.share.offerOut.value = '';
+        this.share.answerIn.value = '';
+        this.share.joinOfferIn.value = '';
+        this.share.joinAnswerOut.value = '';
+        this.clearShareFileSelection();
+        this.clearIncomingShare();
+        this.setShareStatus('Session ended.', 'info');
+    }
+
+    /* --- Diagnostics --- */
+    initDiagnostics() {
+        if (!this.diagnostics.runBtn) return;
+        this.diagnostics.runBtn.addEventListener('click', async () => {
+            if (!this.ensureAuthenticated()) return;
+            this.diagnostics.output.classList.remove('hidden');
+            this.diagnostics.output.textContent = 'Running checks...';
+            try {
+                const results = await diagnosticsService.runPersistenceChecks();
+                this.renderDiagnostics(results);
+            } catch (err) {
+                this.diagnostics.output.textContent = 'Diagnostics failed to run.';
+                this.showToast(err.message || 'Diagnostics failed.', 'error');
+            }
+        });
+    }
+
+    renderDiagnostics(results) {
+        if (!this.diagnostics.output) return;
+        this.diagnostics.output.innerHTML = results.map(result => {
+            const statusClass = result.ok ? 'ok' : 'fail';
+            const details = result.details ? ` (${result.details})` : '';
+            return `<div class="${statusClass}">${result.ok ? 'PASS' : 'FAIL'}: ${result.name}${details}</div>`;
+        }).join('');
     }
 
     formatBytes(bytes) {

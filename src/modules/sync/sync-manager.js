@@ -6,6 +6,8 @@ class SyncManager {
     constructor() {
         this.isProcessing = false;
         this.isOnline = navigator.onLine;
+        this.maxRetries = 3;
+        this.baseRetryDelayMs = 2000;
 
         window.addEventListener('online', () => {
             this.isOnline = true;
@@ -104,9 +106,21 @@ class SyncManager {
                     await storageService.removeFromSyncQueue(task.id);
                 } catch (e) {
                     console.error('Sync task failed', e);
-                    // Leave in queue, stop processing this batch
-                    // In a real robust system, we would handle backoff here
+                    const retry = (task.retry || 0) + 1;
+                    await storageService.addToSyncQueue({
+                        id: task.id,
+                        type: task.type,
+                        payload: task.payload,
+                        uid: task.uid,
+                        retry,
+                        created: task.created || Date.now()
+                    });
                     bus.emit('sync:status', 'error');
+                    if (retry <= this.maxRetries && this.isOnline) {
+                        const delay = Math.min(30000, this.baseRetryDelayMs * retry);
+                        bus.emit('sync:retry', { type: task.type, retry, delay });
+                        setTimeout(() => this.processQueue(), delay);
+                    }
                     this.isProcessing = false;
                     return;
                 }

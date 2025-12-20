@@ -120,6 +120,10 @@ class NotesService {
 
         const { persist = true } = options;
         const contentPresent = (note.title || '').trim() || (note.body || '').trim();
+        if (persist && !contentPresent) {
+            console.warn('Skipping empty note creation');
+            return null;
+        }
         if (persist && contentPresent) {
             const persisted = await this.persistNote(note);
             if (persisted) Object.assign(note, persisted);
@@ -136,6 +140,12 @@ class NotesService {
     async updateNote(id, title, body, folder = "", tags = []) {
         const note = this.notes.find(n => n.id === id);
         if (!note) return;
+        const trimmedTitle = (title || '').trim();
+        const trimmedBody = (body || '').trim();
+        if (!trimmedTitle && !trimmedBody) {
+            console.warn(`Skipping empty update for ${id}`);
+            return;
+        }
 
         // Auto-extract tags from new body
         const extractedTags = this.extractTags(body || '');

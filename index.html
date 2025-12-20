@@ -618,41 +618,10 @@
                         </div>
                         <p class="hint">Secure WebRTC transfer over encrypted channels. Optimized for corporate networks.</p>
 
-                        <div class="share-options">
-                            <div class="share-option">
-                                <label for="share-permission">Access</label>
-                                <select id="share-permission" class="settings-select">
-                                    <option value="download">Download allowed</option>
-                                    <option value="view">View only</option>
-                                </select>
-                            </div>
-                            <div class="share-option">
-                                <label for="share-expiry">Access expires</label>
-                                <select id="share-expiry" class="settings-select">
-                                    <option value="never">Never</option>
-                                    <option value="15">15 minutes</option>
-                                    <option value="60">1 hour</option>
-                                    <option value="240">4 hours</option>
-                                </select>
-                            </div>
-                            <div class="share-option">
-                                <label for="share-destruct-rule">Auto-destruction</label>
-                                <select id="share-destruct-rule" class="settings-select">
-                                    <option value="never">Never</option>
-                                    <option value="after_download">After download</option>
-                                    <option value="after_view">After first view</option>
-                                    <option value="after_minutes">After X minutes</option>
-                                </select>
-                            </div>
-                            <div class="share-option inline">
-                                <label for="share-destruct-minutes">Minutes</label>
-                                <input type="number" id="share-destruct-minutes" min="1" value="5">
-                            </div>
-                            <label class="share-option toggle-row">
-                                <input type="checkbox" id="share-auto-clear">
-                                <span>Auto-clear after transfer</span>
-                            </label>
-                        </div>
+                        <label class="share-option toggle-row">
+                            <input type="checkbox" id="share-auto-clear">
+                            <span>Auto-clear after transfer</span>
+                        </label>
 
                         <div class="share-status">
                             <div class="share-state" id="share-state">Idle</div>
@@ -665,6 +634,7 @@
                                     <span id="share-progress-bytes">Waiting for a file.</span>
                                 </div>
                             </div>
+                            <button class="btn btn-secondary" id="share-reset">End Session</button>
                         </div>
 
                         <div class="share-receiver hidden" id="share-receiver">
@@ -996,6 +966,16 @@
                     </div>
                     <button id="btn-find-duplicates" class="btn btn-secondary mt-1">Find All
                         Duplicates</button>
+                    <div class="divider"></div>
+                    <h4>Diagnostics</h4>
+                    <div class="settings-item diagnostics-panel">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Vault Persistence Check</span>
+                            <span class="settings-item-desc">Run a local verification for note creation and updates.</span>
+                        </div>
+                        <button id="btn-run-diagnostics" class="btn btn-secondary">Run</button>
+                    </div>
+                    <div id="diagnostics-output" class="diagnostics-output hidden"></div>
 
                     <div class="divider"></div>
                     <h4>Secure Document Tools</h4>

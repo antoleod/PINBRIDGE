@@ -1893,6 +1893,29 @@ button.btn:active {
     color: var(--text-secondary);
 }
 
+.diagnostics-panel {
+    align-items: center;
+}
+
+.diagnostics-output {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border-radius: 10px;
+    border: 1px solid var(--border-subtle);
+    background: rgba(0, 0, 0, 0.2);
+    font-size: 0.85rem;
+    display: grid;
+    gap: 0.4rem;
+}
+
+.diagnostics-output .ok {
+    color: var(--text-success);
+}
+
+.diagnostics-output .fail {
+    color: var(--text-danger);
+}
+
 
 /* List Panel */
 .count-badge {
