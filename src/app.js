@@ -92,6 +92,9 @@ async function init() {
     }
 
     uiService.init();
+    window.addEventListener('online', () => {
+        vaultService.ensureSyncActive();
+    });
 
     try {
         const uid = await authService.init();
@@ -121,6 +124,7 @@ async function init() {
 bus.on('auth:unlock', async () => {
     console.log('auth:unlock event fired');
     uiService.showScreen('vault');
+    vaultService.ensureSyncActive();
 
     // Show skeleton loaders while loading
     uiService.renderNoteList([], true);

@@ -23,6 +23,18 @@ class VaultService {
     this.localUpdatedAt = (await storageService.getEncryptedVault())?.updatedAt || null;
   }
 
+  ensureSyncActive() {
+    if (!this.syncEnabled || !this.uid || !this.dataKey) return false;
+    if (!navigator.onLine) {
+      bus.emit('sync:status', 'offline');
+      return false;
+    }
+    this._startRealtime();
+    syncManager.processQueue();
+    bus.emit('sync:status', 'online');
+    return true;
+  }
+
   setSyncEnabled(enabled) {
     this.syncEnabled = enabled;
     if (!enabled) {

@@ -4084,13 +4084,17 @@ input[type="file"]::file-selector-button {
         border-right: none;
         text-align: left;
         /* Ensure content is left-aligned */
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+        height: calc(100dvh - var(--mobile-topbar-height) - var(--mobile-footer-height) - env(safe-area-inset-top) - env(safe-area-inset-bottom));
     }
 
     .list-header {
         padding: 0.85rem 1rem;
         text-align: left;
         position: sticky;
-        top: calc(var(--mobile-topbar-height) + env(safe-area-inset-top));
+        top: 0;
         z-index: 10;
         background: rgba(9, 9, 11, 0.85);
         backdrop-filter: blur(16px);
@@ -4199,6 +4203,7 @@ input[type="file"]::file-selector-button {
 
     .scroll-container {
         -webkit-overflow-scrolling: touch;
+        min-height: 0;
     }
 
     .note-item {
@@ -4963,13 +4968,13 @@ input[type="file"]::file-selector-button {
         bottom: 0;
         left: 0;
         right: 0;
-        top: auto;
+        top: 0;
         width: 100%;
         max-width: 100%;
-        height: 85vh;
-        height: 85dvh;
-        max-height: 85vh;
-        border-radius: 24px 24px 0 0;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 100vh;
+        border-radius: 0;
         margin: 0;
         transform: translateY(100%);
         display: flex;
@@ -4988,14 +4993,69 @@ input[type="file"]::file-selector-button {
         flex-shrink: 0;
         cursor: grab;
         /* Hint for swipe */
+        padding-top: calc(1rem + env(safe-area-inset-top));
     }
 
     .settings-modal .settings-content-container {
         flex: 1;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
-        padding-bottom: 2rem;
+        padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
         /* Safe area */
+    }
+
+    .settings-tabs {
+        display: none;
+    }
+
+    .settings-accordion {
+        display: grid;
+        gap: 0.75rem;
+        padding: 0 1rem 1rem;
+    }
+
+    .settings-accordion-item {
+        border: 1px solid var(--border-subtle);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.02);
+        overflow: hidden;
+    }
+
+    .settings-accordion-toggle {
+        width: 100%;
+        padding: 0.9rem 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .settings-accordion-toggle span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .settings-accordion-toggle i {
+        transition: transform 0.2s ease;
+    }
+
+    .settings-accordion-item.open .settings-accordion-toggle i {
+        transform: rotate(180deg);
+    }
+
+    .settings-accordion-content {
+        padding: 0 1rem 1rem;
+    }
+
+    .settings-accordion-content.hidden {
+        display: none;
     }
 }
 

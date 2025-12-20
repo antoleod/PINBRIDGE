@@ -299,6 +299,7 @@ class UIService {
         this.refreshSaveButtonState();
         this.refreshUsernameRecommendation();
         this.setupMobileUX();
+        this.setupSettingsAccordion();
         this.renderMarkdownToolbar();
         this.setupSmartSuggestions();
         this.setupSecurityFeatures();
@@ -516,14 +517,72 @@ class UIService {
                 document.getElementById('mobile-back-btn')?.classList.add('hidden');
                 this.mobile.btnMenu?.classList.remove('hidden');
                 document.body.classList.remove('mobile-list-active', 'mobile-editor-active');
+                this.setupSettingsAccordion();
                 return;
             }
 
             this.exitMobileEditor();
+            this.setupSettingsAccordion();
         });
 
         if (window.innerWidth < 900) {
             this.exitMobileEditor();
+        }
+    }
+
+    setupSettingsAccordion() {
+        const container = document.querySelector('.settings-content-container');
+        if (!container) return;
+
+        const isMobile = window.matchMedia('(max-width: 900px)').matches;
+        const existingAccordion = container.querySelector('.settings-accordion');
+
+        if (isMobile) {
+            if (existingAccordion) return;
+            const accordion = document.createElement('div');
+            accordion.className = 'settings-accordion';
+
+            const sections = Array.from(container.querySelectorAll('.settings-content'));
+            sections.forEach((section, index) => {
+                const title = section.querySelector('h3')?.textContent?.trim() || 'Settings';
+                const item = document.createElement('div');
+                item.className = 'settings-accordion-item';
+
+                const toggle = document.createElement('button');
+                toggle.type = 'button';
+                toggle.className = 'settings-accordion-toggle';
+                toggle.innerHTML = `<span>${title}</span><i data-feather="chevron-down"></i>`;
+
+                const content = document.createElement('div');
+                content.className = 'settings-accordion-content';
+                content.appendChild(section);
+
+                if (index === 0) {
+                    item.classList.add('open');
+                    content.classList.remove('hidden');
+                } else {
+                    content.classList.add('hidden');
+                }
+
+                toggle.addEventListener('click', () => {
+                    const isOpen = item.classList.toggle('open');
+                    content.classList.toggle('hidden', !isOpen);
+                });
+
+                item.appendChild(toggle);
+                item.appendChild(content);
+                accordion.appendChild(item);
+            });
+
+            container.appendChild(accordion);
+            if (typeof feather !== 'undefined') feather.replace();
+            return;
+        }
+
+        if (existingAccordion) {
+            const sections = Array.from(existingAccordion.querySelectorAll('.settings-content'));
+            sections.forEach(section => container.appendChild(section));
+            existingAccordion.remove();
         }
     }
 
