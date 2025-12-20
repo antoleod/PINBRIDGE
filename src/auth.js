@@ -122,6 +122,11 @@ class AuthService {
   }
 
   async register(username, pin) {
+    await this.ready;
+    const existing = await vaultService.hasExistingVault();
+    if (existing) {
+      throw new Error('USER_EXISTS');
+    }
     return this.createVault(username, pin);
   }
 

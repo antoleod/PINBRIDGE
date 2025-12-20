@@ -13,6 +13,7 @@ import { cryptoService } from '../crypto/crypto.js';
 import { pairingService } from '../modules/pairing/pairing.js'; // To be created
 import { shareService } from '../modules/share/share.js';
 import { diagnosticsService } from '../modules/diagnostics/diagnostics.js';
+import { syncManager } from '../modules/sync/sync-manager.js';
 
 
 class UIService {
@@ -193,6 +194,7 @@ class UIService {
             footerMenuModal: document.getElementById('mobile-footer-menu-modal'),
             footerMenuClose: document.getElementById('mobile-footer-menu-close'),
             footerMenuSettings: document.getElementById('mobile-footer-open-settings'),
+            footerMenuAdmin: document.getElementById('mobile-footer-open-admin'),
             footerMenuTags: document.getElementById('mobile-footer-open-tags'),
             footerMenuLock: document.getElementById('mobile-footer-lock')
         };
@@ -249,6 +251,26 @@ class UIService {
             input: document.getElementById('note-attachment-input'),
             primaryBtn: document.getElementById('btn-attach-file'),
             secondaryBtn: document.getElementById('btn-attach-file-secondary')
+        };
+
+        this.admin = {
+            panel: document.querySelector('.admin-panel'),
+            username: document.getElementById('admin-username'),
+            uid: document.getElementById('admin-uid'),
+            noteCount: document.getElementById('admin-note-count'),
+            updated: document.getElementById('admin-updated'),
+            storage: document.getElementById('admin-storage'),
+            connection: document.getElementById('admin-connection'),
+            syncEnabled: document.getElementById('admin-sync-enabled'),
+            syncTime: document.getElementById('admin-sync-time'),
+            syncQueue: document.getElementById('admin-sync-queue'),
+            usersList: document.getElementById('admin-users-list'),
+            tagsList: document.getElementById('admin-tags-list'),
+            activityList: document.getElementById('admin-activity-list'),
+            openBtn: document.getElementById('btn-open-admin'),
+            exitBtn: document.getElementById('btn-exit-admin'),
+            forceSyncBtn: document.getElementById('admin-force-sync'),
+            lockBtn: document.getElementById('admin-lock-vault')
         };
     }
 
@@ -335,8 +357,8 @@ class UIService {
     }
 
     initGeneratedPasswordPanel() {
-        const panel = this._getById('generated-password-modal');
-        const handle = this._getById('generated-password-drag-handle');
+        const panel = document.getElementById('generated-password-modal');
+        const handle = document.getElementById('generated-password-drag-handle');
         if (!panel || !handle) return;
 
         handle.style.touchAction = 'none';
@@ -539,6 +561,12 @@ class UIService {
         if (window.innerWidth < 900) {
             this.exitMobileEditor();
         }
+    }
+
+    updateDuplicateDetectionUI() {
+        const toggle = document.getElementById('toggle-duplicate-detection');
+        if (!toggle) return;
+        toggle.checked = localStorage.getItem('pinbridge.duplicate_detection') !== 'false';
     }
 
     setupSettingsAccordion() {
@@ -1313,6 +1341,8 @@ class UIService {
                 return i18n.t('authErrorPinRequired');
             case 'RECOVERY_REQUIRED':
                 return i18n.t('authErrorRecoveryRequired');
+            case 'USER_EXISTS':
+                return i18n.t('authErrorUserExists');
             default:
                 return `${i18n.t('loginFormTitle')}: ${code}`;
         }
@@ -1599,6 +1629,18 @@ class UIService {
         document.getElementById('close-settings-modal')?.addEventListener('click', () => {
             document.getElementById('settings-modal').classList.add('hidden');
         });
+        this.admin.openBtn?.addEventListener('click', () => {
+            document.getElementById('settings-modal')?.classList.add('hidden');
+            this.openAdminPanel();
+        });
+        this.admin.exitBtn?.addEventListener('click', () => this.exitAdminPanel());
+        this.admin.forceSyncBtn?.addEventListener('click', () => {
+            vaultService.ensureSyncActive();
+            syncManager.processQueue();
+            this.showToast('Sync queued.', 'info');
+            this.renderAdminPanel();
+        });
+        this.admin.lockBtn?.addEventListener('click', () => authService.forceLogout('manual'));
 
         // Sync toggle
         const syncToggle = document.getElementById('toggle-sync-enabled');
@@ -2825,6 +2867,11 @@ class UIService {
             this.openSettingsModal();
         });
 
+        this.mobile.footerMenuAdmin?.addEventListener('click', () => {
+            this.closeMobileFooterMenu();
+            this.openAdminPanel();
+        });
+
         this.mobile.footerMenuTags?.addEventListener('click', () => {
             this.closeMobileFooterMenu();
             document.getElementById('btn-tags-manager')?.click();
@@ -2834,6 +2881,17 @@ class UIService {
             this.closeMobileFooterMenu();
             authService.forceLogout('manual');
         });
+    }
+
+    openAdminPanel() {
+        if (!this.ensureAuthenticated()) return;
+        this.currentView = 'admin';
+        this.renderCurrentView();
+    }
+
+    exitAdminPanel() {
+        this.currentView = 'all';
+        this.renderCurrentView();
     }
 
     resetMobileOverlays() {
@@ -3747,11 +3805,23 @@ class UIService {
     renderCurrentView(notesOverride) {
         const editorPanel = document.querySelector('.editor-panel');
         const dashboardPanel = document.querySelector('.dashboard-panel');
+        const adminPanel = document.querySelector('.admin-panel');
+
+        if (this.currentView === 'admin') {
+            editorPanel?.classList.add('hidden');
+            dashboardPanel?.classList.add('hidden');
+            adminPanel?.classList.remove('hidden');
+            this.renderAdminPanel();
+            document.querySelectorAll('.nav-item[data-view]').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.mobile-nav-item').forEach(btn => btn.classList.remove('active'));
+            return;
+        }
 
         if (this.currentView === 'dashboard') {
             // Show dashboard, hide editor
             editorPanel?.classList.add('hidden');
             dashboardPanel?.classList.remove('hidden');
+            adminPanel?.classList.add('hidden');
             this.renderDashboard();
         } else {
             // Show editor, hide dashboard with animation
@@ -3760,6 +3830,7 @@ class UIService {
             }
             editorPanel?.classList.remove('hidden');
             dashboardPanel?.classList.add('hidden');
+            adminPanel?.classList.add('hidden');
 
             const notes = notesOverride || notesService.notes;
             const filtered = this.getFilteredNotes(notes);
@@ -4966,6 +5037,86 @@ class UIService {
             const remainingText = remainingSeconds !== null ? ` (${remainingSeconds}s)` : ``;
             text.textContent = `${percent}%${remainingText}`;
         }
+    }
+
+    async renderAdminPanel() {
+        if (!this.admin.panel) return;
+        const meta = await storageService.getCryptoMeta();
+        const username = meta?.username || this.storedUsername || '-';
+        const uid = authService.getUid() || '-';
+        const noteCount = notesService.notes.length;
+        const lastUpdated = vaultService.localUpdatedAt
+            ? new Date(vaultService.localUpdatedAt).toLocaleString()
+            : '-';
+        const encryptedVault = await storageService.getEncryptedVault();
+        const vaultSize = encryptedVault ? `${Math.ceil(JSON.stringify(encryptedVault).length / 1024)} KB` : '-';
+        const syncQueue = await storageService.getSyncQueue();
+
+        if (this.admin.username) this.admin.username.textContent = username;
+        if (this.admin.uid) this.admin.uid.textContent = uid;
+        if (this.admin.noteCount) this.admin.noteCount.textContent = `${noteCount}`;
+        if (this.admin.storage) this.admin.storage.textContent = vaultSize;
+        if (this.admin.updated) this.admin.updated.textContent = lastUpdated;
+
+        if (this.admin.connection) {
+            this.admin.connection.textContent = navigator.onLine ? 'Online' : 'Offline';
+        }
+        if (this.admin.syncEnabled) {
+            this.admin.syncEnabled.textContent = localStorage.getItem('pinbridge.sync_enabled') === 'true' ? 'Enabled' : 'Disabled';
+        }
+        if (this.admin.syncTime) {
+            this.admin.syncTime.textContent = vaultService.localUpdatedAt
+                ? new Date(vaultService.localUpdatedAt).toLocaleTimeString()
+                : '-';
+        }
+        if (this.admin.syncQueue) {
+            this.admin.syncQueue.textContent = `${syncQueue?.length || 0}`;
+        }
+
+        if (this.admin.usersList) {
+            this.admin.usersList.innerHTML = `
+                <div class="admin-user-row">
+                    <strong>${username}</strong>
+                    <span>User ID: ${uid}</span>
+                    <span>Notes: ${noteCount}</span>
+                </div>
+            `;
+        }
+
+        if (this.admin.tagsList) {
+            const tagCounts = {};
+            notesService.notes.forEach(note => {
+                (note.tags || []).forEach(tag => {
+                    const name = typeof tag === 'string' ? tag : tag.name;
+                    if (!name) return;
+                    tagCounts[name] = (tagCounts[name] || 0) + 1;
+                });
+            });
+            const tagRows = Object.entries(tagCounts)
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, count]) => `
+                    <div class="admin-tag-row">
+                        <span>${name}</span>
+                        <strong>${count}</strong>
+                    </div>
+                `);
+            this.admin.tagsList.innerHTML = tagRows.length
+                ? tagRows.join('')
+                : '<p class="hint">No tags yet.</p>';
+        }
+
+        if (this.admin.activityList) {
+            const items = this.activityLogs.slice(0, 8).map(log => `
+                <div class="admin-activity-item">
+                    <span>${log.action}</span>
+                    <span>${log.time}</span>
+                </div>
+            `);
+            this.admin.activityList.innerHTML = items.length
+                ? items.join('')
+                : '<p class="hint">No recent activity logged.</p>';
+        }
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     updateAttachmentStatus(attachmentId, status, message, { retryMode = 'upload' } = {}) {
