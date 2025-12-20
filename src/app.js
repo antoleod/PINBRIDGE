@@ -14,6 +14,21 @@ import { vaultService } from './vault.js';
 async function init() {
     console.log("PINBRIDGE: Initializing...");
 
+    // Mobile-specific layout toggles rely on a body class for clean CSS branching.
+    function updateViewportMode() {
+        const isMobile = window.matchMedia('(max-width: 900px)').matches;
+        document.body.classList.toggle('is-mobile', isMobile);
+    }
+
+    updateViewportMode();
+    const viewportWatcher = window.matchMedia('(max-width: 900px)');
+    if (typeof viewportWatcher.addEventListener === 'function') {
+        viewportWatcher.addEventListener('change', updateViewportMode);
+    } else if (typeof viewportWatcher.addListener === 'function') {
+        viewportWatcher.addListener(updateViewportMode);
+    }
+    window.addEventListener('resize', updateViewportMode);
+
     // --- UI Enhancements ---
     function initPinVisibilityToggle() {
         const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;

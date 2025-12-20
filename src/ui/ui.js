@@ -500,13 +500,21 @@ class UIService {
 
         // Handle resize events to reset layout
         window.addEventListener('resize', () => {
-            if (window.innerWidth >= 768) {
+            if (window.innerWidth >= 900) {
                 if (this.panels.sidebar) this.panels.sidebar.classList.remove('hidden');
                 if (this.panels.editor) this.panels.editor.classList.remove('hidden');
                 document.getElementById('mobile-back-btn')?.classList.add('hidden');
                 this.mobile.btnMenu?.classList.remove('hidden');
+                document.body.classList.remove('mobile-list-active', 'mobile-editor-active');
+                return;
             }
+
+            this.exitMobileEditor();
         });
+
+        if (window.innerWidth < 900) {
+            this.exitMobileEditor();
+        }
     }
 
     setupFooterAutoHide() {
@@ -587,12 +595,14 @@ class UIService {
     }
 
     enterMobileEditor() {
-        if (window.innerWidth >= 768) return;
+        if (window.innerWidth >= 900) return;
         if (this.panels.sidebar) this.panels.sidebar.classList.add('hidden');
         if (this.panels.editor) this.panels.editor.classList.remove('hidden');
 
         document.getElementById('mobile-back-btn')?.classList.remove('hidden');
         this.mobile.btnMenu?.classList.add('hidden');
+        document.body.classList.add('mobile-editor-active');
+        document.body.classList.remove('mobile-list-active');
         if (typeof feather !== 'undefined') feather.replace();
     }
 
@@ -602,6 +612,8 @@ class UIService {
 
         document.getElementById('mobile-back-btn')?.classList.add('hidden');
         this.mobile.btnMenu?.classList.remove('hidden');
+        document.body.classList.add('mobile-list-active');
+        document.body.classList.remove('mobile-editor-active');
         // Optional: this.activeNoteId = null;
     }
 
