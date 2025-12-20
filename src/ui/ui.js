@@ -657,6 +657,16 @@ class UIService {
             }
         });
 
+        bus.on('vault:saved-local-only', () => {
+            this.showToast('Sync failed. Saved to device.', 'warning');
+            if (this.statusIndicators.offline) {
+                this.statusIndicators.offline.className = 'status-indicator status-warning';
+            }
+            if (this.statusIndicators.offlineText) {
+                this.statusIndicators.offlineText.textContent = 'Unsynced Changes';
+            }
+        });
+
         window.addEventListener('beforeunload', (e) => {
             // Check if save button is enabled (unsaved changes)
             const saveBtn = document.getElementById('btn-save-note');
@@ -2502,67 +2512,98 @@ class UIService {
             return;
         }
         const length = parseInt(lengthInput.value, 10);
-        const includeUppercase = this._getById('pw-opt-uppercase')?.checked;
-        const includeNumbers = this._getById('pw-opt-numbers')?.checked;
-        const includeSymbols = this._getById('pw-opt-symbols')?.checked;
+
+        const allWords = [
+            'love', 'my', 'job', 'build', 'secure', 'future', 'think', 'deep', 'code', 'trust',
+            'focus', 'create', 'guide', 'bright', 'calm', 'clear', 'smart', 'brave', 'strong',
+            'ready', 'steady', 'kind', 'share', 'value', 'honor', 'logic', 'light', 'quick',
+            'sound', 'skill', 'power', 'work', 'grow', 'safe', 'goal', 'truth', 'peace',
+            'order', 'solid', 'fresh', 'prime', 'sharp', 'craft', 'drive', 'dream', 'learn',
+            'adapt', 'solve', 'shift', 'track', 'guard'
+        ];
         const excludeAmbiguous = this._getById('pw-opt-no-ambiguous')?.checked;
+        const words = excludeAmbiguous
+            ? allWords.filter(word => !/[lLoO]/.test(word))
+            : allWords;
+        const symbols = ['!', '@', '#', '$', '%'];
 
-        let lower = 'abcdefghijklmnopqrstuvwxyz';
-        let upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        let numbers = '0123456789';
-        let symbols = '!@#$%&*?_';
-
-        if (excludeAmbiguous) {
-            lower = lower.replace(/l/g, '');
-            upper = upper.replace(/[IO]/g, '');
-            numbers = numbers.replace(/0/g, '');
-        }
-
-        let characterPool = lower;
-        const requiredChars = [];
-
-        if (includeUppercase) {
-            if (!upper.length) {
-                this.showToast('No uppercase characters available.', 'error');
-                return;
-            }
-            characterPool += upper;
-            requiredChars.push(this._getRandomChar(upper));
-        }
-        if (includeNumbers) {
-            if (!numbers.length) {
-                this.showToast('No numeric characters available.', 'error');
-                return;
-            }
-            characterPool += numbers;
-            requiredChars.push(this._getRandomChar(numbers));
-        }
-        if (includeSymbols) {
-            if (!symbols.length) {
-                this.showToast('No symbol characters available.', 'error');
-                return;
-            }
-            characterPool += symbols;
-            requiredChars.push(this._getRandomChar(symbols));
-        }
-
-        if (length < requiredChars.length) {
-            this.showToast('Length too short for selected options.', 'error');
+        if (words.length < 3) {
+            this.showToast('Not enough words available.', 'error');
             return;
         }
 
-        let password = requiredChars.join('');
-        const remainingLength = length - password.length;
+        const wordBuckets = new Map();
+        words.forEach(word => {
+            const len = word.length;
+            if (!wordBuckets.has(len)) wordBuckets.set(len, []);
+            wordBuckets.get(len).push(word);
+        });
 
-        for (let i = 0; i < remainingLength; i++) {
-            password += this._getRandomChar(characterPool);
+        const minWordLen = Math.min(...Array.from(wordBuckets.keys()));
+        const minLength = (minWordLen * 3) + 5; // 1 lead + 2 dots + 1 trailing number + 1 symbol
+        if (length < minLength) {
+            this.showToast('Selected length is too short for this format.', 'error');
+            return;
         }
 
-        const shuffledPassword = this._shuffleString(password);
+        const possibleNumberLengths = [];
+        if (length - 5 - (minWordLen * 3) >= 1) possibleNumberLengths.push(1);
+        if (length - 6 - (minWordLen * 3) >= 0) possibleNumberLengths.push(2);
+        if (!possibleNumberLengths.length) {
+            this.showToast('Selected length is too short for this format.', 'error');
+            return;
+        }
 
-        this.generatedPassword = shuffledPassword;
+        const numberLength = this._getRandomItem(possibleNumberLengths);
+        const wordTarget = length - 4 - numberLength;
+
+        const wordLengths = Array.from(wordBuckets.keys());
+        let chosenLengths = null;
+        for (let attempt = 0; attempt < 200; attempt++) {
+            const l1 = this._getRandomItem(wordLengths);
+            const l2 = this._getRandomItem(wordLengths);
+            const l3 = wordTarget - l1 - l2;
+            if (wordBuckets.has(l3)) {
+                chosenLengths = [l1, l2, l3];
+                break;
+            }
+        }
+
+        if (!chosenLengths) {
+            this.showToast('Could not fit words to selected length.', 'error');
+            return;
+        }
+
+        const pickedWords = [];
+        chosenLengths.forEach(len => {
+            const bucket = wordBuckets.get(len);
+            pickedWords.push(this._getRandomItem(bucket));
+        });
+        const uniqueWords = Array.from(new Set(pickedWords));
+        while (uniqueWords.length < 3) {
+            const randomLen = this._getRandomItem(chosenLengths);
+            const bucket = wordBuckets.get(randomLen);
+            uniqueWords.push(this._getRandomItem(bucket));
+        }
+
+        const [word1, word2, word3] = this._shuffleArray(uniqueWords.slice(0, 3))
+            .map(word => this._capitalizeWord(word));
+        const leadingNumber = this._getSecureRandomInt(1, 9);
+        const trailingNumber = numberLength === 1
+            ? this._getSecureRandomInt(1, 9)
+            : this._getSecureRandomInt(10, 99);
+        const symbol = this._getRandomItem(symbols);
+
+        const passphrase = `${leadingNumber}${word1}.${word2}.${word3}${trailingNumber}${symbol}`;
+
+        if (passphrase.length !== length) {
+            this.showToast('Length mismatch. Try again.', 'error');
+            return;
+        }
+
+        this.generatedPassword = passphrase;
         const passwordInput = this._getById('generated-password-display');
-        passwordInput.value = shuffledPassword;
+        passwordInput.value = passphrase;
 
         // UX Feedback
         passwordInput.classList.add('highlight');
@@ -2570,14 +2611,43 @@ class UIService {
         setTimeout(() => {
             passwordInput.classList.remove('highlight');
         }, 500);
-
-        this.openGeneratedPasswordModal();
     }
 
     _getRandomChar(charset) {
         const randomValues = new Uint32Array(1);
         crypto.getRandomValues(randomValues);
         return charset[randomValues[0] % charset.length];
+    }
+
+    _getSecureRandomInt(min, max) {
+        const range = max - min + 1;
+        const maxUint = 0x100000000;
+        const limit = Math.floor(maxUint / range) * range;
+        let value;
+        do {
+            const randomValues = new Uint32Array(1);
+            crypto.getRandomValues(randomValues);
+            value = randomValues[0];
+        } while (value >= limit);
+        return min + (value % range);
+    }
+
+    _getRandomItem(items) {
+        const index = this._getSecureRandomInt(0, items.length - 1);
+        return items[index];
+    }
+
+    _shuffleArray(items) {
+        const arr = items.slice();
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = this._getSecureRandomInt(0, i);
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        return arr;
+    }
+
+    _capitalizeWord(word) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
     }
 
     _shuffleString(str) {

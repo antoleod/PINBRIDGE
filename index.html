@@ -818,7 +818,8 @@
                                 <!-- Icon will be injected by JS -->
                             </button>
                         </div>
-                        <button id="btn-copy-password" class="btn btn-secondary">Copy</button>
+                        <button id="btn-copy-password" class="btn btn-secondary">Copy Password</button>
+                        <button id="btn-save-generated-password" class="btn btn-primary">Save Password</button>
                     </div>
                     <div class="password-options-grid">
                         <div class="form-group">
@@ -945,40 +946,6 @@
             </div>
         </div>
     </dialog>
-
-    <!-- GENERATED PASSWORD DECISION MODAL -->
-    <section id="generated-password-modal" class="floating-panel hidden" role="dialog" aria-modal="false"
-        aria-labelledby="generated-password-title">
-        <div class="floating-panel-header" id="generated-password-drag-handle">
-            <div>
-                <h2 id="generated-password-title">Generated Password</h2>
-                <p class="floating-panel-subtitle">Take an action to keep or discard it.</p>
-            </div>
-        </div>
-        <div class="floating-panel-body glass-panel">
-            <div class="form-group">
-                <label for="generated-password-panel-display">Password</label>
-                <div class="input-wrapper">
-                    <input type="password" id="generated-password-panel-display" class="input-field" readonly
-                        placeholder="Generate a password to view it" data-label="password">
-                    <button type="button" class="btn-toggle-visibility" data-target="generated-password-panel-display"
-                        data-label="password" aria-label="Show password" title="Show password">
-                        <!-- Icon will be injected by JS -->
-                    </button>
-                </div>
-            </div>
-            <div class="form-group">
-                <label for="generated-password-note-title">Note Title</label>
-                <input type="text" id="generated-password-note-title" class="input-field"
-                    placeholder="Title required to save">
-            </div>
-            <div class="modal-actions">
-                <button id="btn-save-generated-password" class="btn btn-primary">Save as Secure Vault Note</button>
-                <button id="btn-copy-generated-password" class="btn btn-secondary">Copy to Clipboard</button>
-                <button id="btn-discard-generated-password" class="btn btn-text">Discard</button>
-            </div>
-        </div>
-    </section>
 
     <!-- PASSWORD HISTORY DELETE CONFIRMATION -->
     <dialog id="password-history-delete-modal" class="modal-overlay hidden"

@@ -152,10 +152,30 @@ bus.on('auth:locked', (reason) => {
 });
 
 bus.on('vault:remote-update', async () => {
+    const listContainer = document.getElementById('notes-list')?.parentElement;
+    const scrollTop = listContainer ? listContainer.scrollTop : 0;
+
     const notes = await notesService.loadAll();
     searchService.buildIndex(notes);
     uiService.showToast('Your vault was updated from another device.', 'info');
-    uiService.renderCurrentView(notes);
+
+    const searchInput = document.getElementById('search-input');
+    const query = searchInput ? searchInput.value.trim() : '';
+
+    if (query) {
+        const results = searchService.search(query);
+        const viewResults = uiService.currentView === 'trash' ? results.filter(n => n.trash) : results.filter(n => !n.trash);
+        uiService.renderNoteList(viewResults);
+    } else {
+        uiService.renderCurrentView(notes);
+    }
+
+    if (listContainer) listContainer.scrollTop = scrollTop;
+
+    if (uiService.activeNoteId) {
+        const activeNote = notes.find(n => n.id === uiService.activeNoteId);
+        if (activeNote) uiService.renderNoteMeta(activeNote);
+    }
 });
 
 bus.on('sync:disabled', () => {

@@ -146,6 +146,7 @@ class VaultService {
   }
 
   async upsertNote(note) {
+    if (!this.vault.notes) this.vault.notes = [];
     const existingIndex = this.vault.notes.findIndex(n => n.id === note.id);
     if (existingIndex >= 0) {
       this.vault.notes[existingIndex] = note;
@@ -177,7 +178,12 @@ class VaultService {
 
     if (this.syncEnabled) {
       // Use Queue with optimization
-      syncManager.enqueueOrUpdate('PUSH_VAULT', record, this.uid);
+      try {
+        if (typeof syncManager !== 'undefined') syncManager.enqueueOrUpdate('PUSH_VAULT', record, this.uid);
+      } catch (e) {
+        console.warn('Sync push failed, but local saved', e);
+        bus.emit('vault:saved-local-only', now);
+      }
     }
     bus.emit('vault:saved', now);
   }
@@ -233,7 +239,16 @@ class VaultService {
     let localData, remoteData;
     try {
       localData = await cryptoService.decryptObject(localRecord.payload, this.dataKey);
-    } catch (e) { console.error('Local decrypt fail', e); return { mergedRecord: remoteRecord, mergedData: await cryptoService.decryptObject(remoteRecord.payload, this.dataKey) }; }
+    } catch (e) {
+      console.error('Local decrypt fail', e);
+      if (remoteRecord) {
+        try {
+          const data = await cryptoService.decryptObject(remoteRecord.payload, this.dataKey);
+          return { mergedRecord: remoteRecord, mergedData: data };
+        } catch (re) { console.error('Remote decrypt fail', re); }
+      }
+      return { mergedRecord: null, mergedData: null };
+    }
 
     try {
       remoteData = await cryptoService.decryptObject(remoteRecord.payload, this.dataKey);
@@ -241,10 +256,10 @@ class VaultService {
 
     // Map merge
     const noteMap = new Map();
-    localData.notes.forEach(n => noteMap.set(n.id, n));
+    (localData.notes || []).forEach(n => noteMap.set(n.id, n));
 
     // Merge remote into local
-    remoteData.notes.forEach(rNote => {
+    (remoteData.notes || []).forEach(rNote => {
       const lNote = noteMap.get(rNote.id);
       if (!lNote) {
         // Remote has new note, add it

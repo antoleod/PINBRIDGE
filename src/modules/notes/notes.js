@@ -294,7 +294,8 @@ class NotesService {
             console.warn(`Skipping empty note persistence for ${note.id}`);
             return;
         }
-        if (trimmedTitle.toLowerCase() === 'untitled note' && !trimmedBody) {
+        const untitledPatterns = ['untitled note', 'nota sin título', 'note sans titre', 'unbenannte notiz'];
+        if (untitledPatterns.includes(trimmedTitle.toLowerCase()) && !trimmedBody) {
             console.warn(`Skipping placeholder note persistence for ${note.id}`);
             return;
         }
