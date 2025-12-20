@@ -1712,6 +1712,35 @@ button.btn:active {
     gap: 1.5rem;
 }
 
+.share-panel.share-external {
+    padding: 0;
+}
+
+.share-panel.share-external[open] .share-summary {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.share-summary {
+    list-style: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.5rem;
+    cursor: pointer;
+}
+
+.share-summary::-webkit-details-marker {
+    display: none;
+}
+
+.share-panel-body {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
 .share-header {
     display: flex;
     justify-content: space-between;
@@ -2642,6 +2671,18 @@ body.compact-notes .note-item p {
     padding: 0;
 }
 
+.btn-tool-minimal.btn-attach-file {
+    width: auto;
+    padding: 0 0.6rem;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.btn-tool-minimal.btn-attach-file span {
+    display: inline-block;
+}
+
 .btn-tool-minimal:hover {
     background: rgba(255, 255, 255, 0.08);
     color: var(--text-primary);
@@ -2833,6 +2874,100 @@ body.compact-notes .note-item p {
 
 .editor-input-body:focus::placeholder {
     opacity: 0.3;
+}
+
+/* Attachments */
+.note-attachments {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: grid;
+    gap: 1rem;
+}
+
+.attachments-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.attachments-header h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.btn-attach-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.9rem;
+}
+
+.attachments-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.attachments-empty {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.attachment-item {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.attachment-meta {
+    display: grid;
+    gap: 0.3rem;
+}
+
+.attachment-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.attachment-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.attachment-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.attachment-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.attachment-progress-bar {
+    width: 80px;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    overflow: hidden;
+}
+
+.attachment-progress-bar span {
+    display: block;
+    height: 100%;
+    background: var(--brand-primary);
+    width: 0%;
+    transition: width 0.2s ease;
 }
 
 /* Command Palette */
@@ -4040,6 +4175,26 @@ input[type="file"]::file-selector-button {
         min-height: 40vh;
         font-size: 1.05rem;
         line-height: 1.7;
+    }
+
+    .attachments-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .btn-attach-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .attachment-item {
+        grid-template-columns: 1fr;
+        align-items: flex-start;
+    }
+
+    .attachment-actions {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .scroll-container {

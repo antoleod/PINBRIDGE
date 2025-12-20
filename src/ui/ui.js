@@ -58,6 +58,7 @@ class UIService {
         this.shareReceivePreview = null;
         this.sharePreviewViewed = false;
         this.shareAccessTimer = null;
+        this.attachmentRetries = new Map();
     }
 
     showLoginForm() {
@@ -228,6 +229,15 @@ class UIService {
         this.diagnostics = {
             runBtn: document.getElementById('btn-run-diagnostics'),
             output: document.getElementById('diagnostics-output')
+        };
+
+        this.attachments = {
+            container: document.getElementById('note-attachments'),
+            list: document.getElementById('note-attachments-list'),
+            empty: document.getElementById('note-attachments-empty'),
+            input: document.getElementById('note-attachment-input'),
+            primaryBtn: document.getElementById('btn-attach-file'),
+            secondaryBtn: document.getElementById('btn-attach-file-secondary')
         };
     }
 
@@ -1442,6 +1452,16 @@ class UIService {
         // Minimal toolbar actions
         document.getElementById('btn-pin-note')?.addEventListener('click', () => this.handlePinNote());
 
+        if (this.attachments?.primaryBtn) {
+            this.attachments.primaryBtn.addEventListener('click', () => this.handleAttachmentPick());
+        }
+        if (this.attachments?.secondaryBtn) {
+            this.attachments.secondaryBtn.addEventListener('click', () => this.handleAttachmentPick());
+        }
+        if (this.attachments?.input) {
+            this.attachments.input.addEventListener('change', (e) => this.handleAttachmentSelection(e));
+        }
+
         // History
         document.getElementById('btn-history')?.addEventListener('click', () => this.showHistoryModal());
         document.getElementById('close-history-modal')?.addEventListener('click', () => {
@@ -1769,7 +1789,7 @@ class UIService {
                 statusEl.innerText = `Confidence: ${data.confidence.toFixed(0)}%`;
                 previewEl.textContent = processedText;
             } else {
-                statusEl.innerText = "Text not clear yet — adjust angle or lighting";
+                statusEl.innerText = "Text not clear yet ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â adjust angle or lighting";
             }
         } catch (err) {
             console.error(err);
@@ -2373,7 +2393,7 @@ class UIService {
         let html = `
             <div class="recovery-method-item active">
                 <div class="method-info">
-                    <span class="method-icon">🔑</span>
+                    <span class="method-icon">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Ëœ</span>
                     <div>
                         <strong>Recovery Key</strong>
                         <p>Created on vault setup</p>
@@ -3968,6 +3988,7 @@ class UIService {
 
         this.updatePinButtonState(note.pinned);
         this.startNoteSession(note);
+        this.renderAttachments(note);
 
         document.querySelectorAll('.note-item.active').forEach(el => el.classList.remove('active'));
         const newActiveEl = document.querySelector(`.note-item[data-id="${note.id}"]`);
@@ -4146,6 +4167,7 @@ class UIService {
         if (this.inputs.noteContent) this.inputs.noteContent.value = '';
         if (this.inputs.noteFolder) this.inputs.noteFolder.value = '';
         if (this.inputs.noteTags) this.inputs.noteTags.value = '';
+        this.renderAttachments(null);
         this.refreshSaveButtonState();
         this.setStatus(i18n.t('statusReady'));
     }
@@ -4602,13 +4624,218 @@ class UIService {
         reader.readAsDataURL(blob);
     }
 
+    async handleAttachmentPick() {
+        if (!this.ensureAuthenticated()) return;
+        if (!this.activeNoteId) {
+            await this.handleNewNote();
+        }
+        if (!this.activeNoteId) {
+            this.showToast('Create a note before attaching a file.', 'error');
+            return;
+        }
+        this.attachments?.input?.click();
+    }
+
+    async handleAttachmentSelection(e) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        await this.attachFileToActiveNote(file);
+        e.target.value = '';
+    }
+
+    async attachFileToActiveNote(file) {
+        if (!this.activeNoteId) return;
+        const note = notesService.notes.find(n => n.id === this.activeNoteId);
+        if (!note) {
+            this.showToast('Please select a note before attaching.', 'error');
+            return;
+        }
+
+        const attachmentId = Utils.generateId();
+        const pendingId = `pending-${attachmentId}`;
+        this.renderAttachmentItem({
+            id: pendingId,
+            name: file.name,
+            type: file.type || 'file',
+            size: file.size,
+            status: 'uploading',
+            progress: 0
+        }, { pending: true });
+
+        const reader = new FileReader();
+        const startTime = Date.now();
+        reader.onprogress = (event) => {
+            if (!event.lengthComputable) return;
+            const percent = Math.round((event.loaded / event.total) * 100);
+            const elapsed = (Date.now() - startTime) / 1000;
+            const remaining = percent > 0 ? Math.max(0, Math.round((elapsed * (100 - percent)) / percent)) : null;
+            this.updateAttachmentProgress(pendingId, percent, remaining);
+        };
+        reader.onerror = () => {
+            this.attachmentRetries.set(pendingId, file);
+            this.updateAttachmentStatus(pendingId, 'error', 'Upload failed. Tap retry.');
+        };
+        reader.onloadend = async () => {
+            if (reader.error) return;
+            try {
+                const data = reader.result;
+                if (!(note.title || note.body)) {
+                    note.title = file.name;
+                    note.body = `Attached file: ${file.name}`;
+                }
+                const attachments = Array.isArray(note.attachments) ? [...note.attachments] : [];
+                attachments.push({
+                    id: attachmentId,
+                    name: file.name,
+                    type: file.type || 'application/octet-stream',
+                    size: file.size,
+                    data
+                });
+                note.attachments = attachments;
+                await notesService.persistNote(note);
+                this.renderAttachments(note);
+                this.showToast('File attached to note.', 'success');
+            } catch (err) {
+                console.error('Attach failed', err);
+                this.attachmentRetries.set(pendingId, file);
+                this.updateAttachmentStatus(pendingId, 'error', 'Attach failed. Tap retry.');
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    renderAttachments(note) {
+        if (!this.attachments?.list || !this.attachments?.empty) return;
+        this.attachments.list.innerHTML = '';
+        const attachments = note?.attachments || [];
+        if (!attachments.length) {
+            this.attachments.empty.classList.remove('hidden');
+            return;
+        }
+        this.attachments.empty.classList.add('hidden');
+        attachments.forEach(att => this.renderAttachmentItem(att));
+    }
+
+    renderAttachmentItem(attachment, { pending = false } = {}) {
+        if (!this.attachments?.list) return;
+        const item = document.createElement('div');
+        item.className = 'attachment-item';
+        item.dataset.attachmentId = attachment.id;
+
+        const subtitleText = pending ? 'Uploading...' : 'Ready to download';
+        item.innerHTML = `
+            <div class="attachment-meta">
+                <div class="attachment-name">${attachment.name}</div>
+                <div class="attachment-subtitle">${subtitleText}</div>
+                <div class="attachment-progress">
+                    <div class="attachment-progress-bar"><span></span></div>
+                    <span class="attachment-progress-text">0%</span>
+                </div>
+            </div>
+            <div class="attachment-actions">
+                <button class="btn btn-secondary attachment-download" ${pending ? 'disabled' : ''}>Download</button>
+                <button class="btn btn-text attachment-retry hidden">Retry</button>
+            </div>
+        `;
+
+        const progressRow = item.querySelector('.attachment-progress');
+        if (!pending) {
+            progressRow.classList.add('hidden');
+        }
+
+        const downloadBtn = item.querySelector('.attachment-download');
+        const retryBtn = item.querySelector('.attachment-retry');
+
+        if (downloadBtn && !pending) {
+            downloadBtn.addEventListener('click', () => this.downloadAttachment(attachment, item));
+        }
+
+        if (retryBtn) {
+            retryBtn.addEventListener('click', () => this.retryAttachment(attachment.id, item));
+        }
+
+        this.attachments.list.appendChild(item);
+    }
+
+    updateAttachmentProgress(attachmentId, percent, remainingSeconds = null) {
+        const item = this.attachments?.list?.querySelector(`[data-attachment-id="${attachmentId}"]`);
+        if (!item) return;
+        const bar = item.querySelector('.attachment-progress-bar span');
+        const text = item.querySelector('.attachment-progress-text');
+        const row = item.querySelector('.attachment-progress');
+        if (row) row.classList.remove('hidden');
+        if (bar) bar.style.width = `${percent}%`;
+        if (text) {
+            const remainingText = remainingSeconds !== null ? ` (${remainingSeconds}s)` : ``;
+            text.textContent = `${percent}%${remainingText}`;
+        }
+    }
+
+    updateAttachmentStatus(attachmentId, status, message, { retryMode = 'upload' } = {}) {
+        const item = this.attachments?.list?.querySelector(`[data-attachment-id="${attachmentId}"]`);
+        if (!item) return;
+        const subtitle = item.querySelector('.attachment-subtitle');
+        const retryBtn = item.querySelector('.attachment-retry');
+        const downloadBtn = item.querySelector('.attachment-download');
+        if (subtitle && message) subtitle.textContent = message;
+        if (status === 'error') {
+            retryBtn?.classList.remove('hidden');
+            if (retryBtn) retryBtn.dataset.retryMode = retryMode;
+            downloadBtn?.setAttribute('disabled', 'disabled');
+        }
+    }
+
+    async retryAttachment(attachmentId, item) {
+        const retryMode = item?.querySelector('.attachment-retry')?.dataset.retryMode || 'upload';
+        if (retryMode === 'download') {
+            const note = notesService.notes.find(n => n.id === this.activeNoteId);
+            const attachment = note?.attachments?.find(att => att.id === attachmentId);
+            if (attachment) {
+                item?.querySelector('.attachment-retry')?.classList.add('hidden');
+                item?.querySelector('.attachment-download')?.removeAttribute('disabled');
+                await this.downloadAttachment(attachment, item);
+            }
+            return;
+        }
+        const file = this.attachmentRetries.get(attachmentId);
+        if (!file) return;
+        this.attachmentRetries.delete(attachmentId);
+        item?.remove();
+        await this.attachFileToActiveNote(file);
+    }
+
+    async downloadAttachment(attachment, item) {
+        try {
+            this.updateAttachmentProgress(attachment.id, 0);
+            const start = Date.now();
+            const dataUrl = attachment.data;
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+            const elapsed = (Date.now() - start) / 1000;
+            const remaining = elapsed > 0 ? Math.max(0, Math.round((100 - 100) / elapsed)) : null;
+            this.updateAttachmentProgress(attachment.id, 100, remaining);
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = attachment.name || 'pinbridge-file';
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Download failed', err);
+            this.updateAttachmentStatus(attachment.id, 'error', 'Download failed. Tap retry.', { retryMode: 'download' });
+        }
+    }
+
     /* --- Secure Share --- */
     initSecureShare() {
         if (!this.share.createBtn) return;
 
         shareService.setCallbacks({
             onChannelOpen: () => this.setShareStatus('Connected. Ready to share.', 'success'),
-            onChannelClose: () => this.setShareStatus('Session closed.', 'info'),
+            onChannelClose: () => this.setShareStatus('Transfer closed.', 'info'),
             onConnectionState: (state) => {
                 if (state === 'connected') this.setShareStatus('Secure channel established.', 'success');
                 if (state === 'failed' || state === 'disconnected') this.setShareStatus('Connection lost.', 'error');
@@ -4617,6 +4844,7 @@ class UIService {
             onPreview: (payload) => this.renderSharePreview(payload),
             onTransferStart: (total) => {
                 this.setShareStatus('Transferring...', 'info');
+                this.shareTransferStart = Date.now();
                 this.setShareProgress(0, total);
             },
             onProgress: ({ direction, transferred, total }) => {
@@ -4647,12 +4875,12 @@ class UIService {
 
         this.share.createBtn.addEventListener('click', async () => {
             try {
-                this.setShareStatus('Preparing secure session...', 'info');
+                this.setShareStatus('Preparing secure transfer...', 'info');
                 const offer = await shareService.createOffer();
                 this.share.offerOut.value = offer;
                 this.showToast('Invite created. Share it securely.', 'success');
             } catch (err) {
-                this.setShareStatus('Failed to create session.', 'error');
+                this.setShareStatus('Failed to start transfer.', 'error');
             }
         });
 
@@ -4671,12 +4899,12 @@ class UIService {
             const offer = this.share.joinOfferIn.value.trim();
             if (!offer) return;
             try {
-                this.setShareStatus('Joining secure session...', 'info');
+                this.setShareStatus('Connecting securely...', 'info');
                 const answer = await shareService.joinWithOffer(offer);
                 this.share.joinAnswerOut.value = answer;
                 this.showToast('Answer generated. Send it back.', 'success');
             } catch (err) {
-                this.setShareStatus('Failed to join session.', 'error');
+                this.setShareStatus('Failed to connect.', 'error');
             }
         });
 
@@ -4759,8 +4987,9 @@ class UIService {
         this.share.permissionBadges.innerHTML = '';
         if (this.shareAccessTimer) {
             clearInterval(this.shareAccessTimer);
-            this.shareAccessTimer = null;
-        }
+        this.shareAccessTimer = null;
+        this.shareTransferStart = null;
+    }
 
         const badges = [];
         if (meta.permissions?.mode === 'view') badges.push('View Only');
@@ -4878,7 +5107,10 @@ class UIService {
             if (!total) {
                 this.share.progressBytes.textContent = 'Waiting for a file.';
             } else {
-                this.share.progressBytes.textContent = `${this.formatBytes(transferred)} of ${this.formatBytes(total)}`;
+                const elapsed = this.shareTransferStart ? (Date.now() - this.shareTransferStart) / 1000 : 0;
+                const rate = elapsed > 0 ? transferred / elapsed : 0;
+                const remaining = rate > 0 ? Math.round((total - transferred) / rate) : null;
+                this.share.progressBytes.textContent = remaining !== null ? `${remaining}s remaining` : '';
             }
         }
     }
@@ -4964,6 +5196,7 @@ class UIService {
             this.share.fileInput.value = '';
         }
         this.setShareProgress(0, 0);
+        this.shareTransferStart = null;
         this.setShareStatus('Ready for a new file.', 'info');
     }
 
@@ -4975,7 +5208,8 @@ class UIService {
         this.share.joinAnswerOut.value = '';
         this.clearShareFileSelection();
         this.clearIncomingShare();
-        this.setShareStatus('Session ended.', 'info');
+        this.shareTransferStart = null;
+        this.setShareStatus('Transfer ended.', 'info');
     }
 
     /* --- Diagnostics --- */
