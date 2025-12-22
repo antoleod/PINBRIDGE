@@ -5,6 +5,7 @@ import { uiService } from './ui/ui.js';
 import { storageService } from './storage/db.js';
 import { isAdminUsername } from './core/rbac.js';
 import { validatePin, validateUsername } from './core/validation.js';
+import { syncService } from './sync.js';
 
 /**
  * SECURITY ARCHITECT NOTE:
@@ -69,6 +70,12 @@ class AuthService {
 
   async restoreSession() {
     await this.ready;
+    const sessionVaultId = sessionStorage.getItem('pb_session_vault_id');
+    if (!sessionVaultId) {
+      bus.emit('auth:locked', 'no-session');
+      return false;
+    }
+    vaultService.uid = sessionVaultId;
     const restored = await vaultService.tryRestoreSession();
     if (restored) {
       this._bindActivityWatchers();
@@ -80,10 +87,10 @@ class AuthService {
     return false;
   }
 
-  async createVault(username, pin, role = 'user') {
+  async createVault(username, pin, role = 'user', vaultId = null) {
     await this.ready;
     const recoveryKey = await vaultService.createNewVault({
-      uid: this.uid,
+      uid: vaultId || this.uid,
       username,
       pin,
       role
@@ -105,10 +112,11 @@ class AuthService {
     if (!pinCheck.ok) {
       throw new Error(pinCheck.code);
     }
-    const existing = await vaultService.hasExistingVault();
-    if (existing) {
-      throw new Error('USER_EXISTS');
+    if (this.offlineMode) {
+      throw new Error('SYNC_DISABLED');
     }
+    const existingVaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (existingVaultId) throw new Error('USER_EXISTS');
     let role = 'user';
     if (isAdminUsername(username)) {
       const invite = await storageService.getMeta('admin_invite');
@@ -118,13 +126,19 @@ class AuthService {
       }
       role = 'admin';
     }
-    return this.createVault(usernameCheck.value, pinCheck.value, role);
+    const vaultId = (crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+    await syncService.createUsernameMapping(usernameCheck.value, vaultId);
+    return this.createVault(usernameCheck.value, pinCheck.value, role, vaultId);
   }
 
-  async unlockWithPin(pin) {
+  async unlockWithPin(username, pin) {
     await this.ready;
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) throw new Error(usernameCheck.code);
+    const vaultId = this.offlineMode ? (vaultService.uid || this.uid) : await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithPin({
-      uid: this.uid,
+      uid: vaultId,
       pin
     });
     await vaultService.saveSession();
@@ -133,10 +147,14 @@ class AuthService {
     bus.emit('auth:unlock');
   }
 
-  async unlockWithRecovery(recoveryKey) {
+  async unlockWithRecovery(username, recoveryKey) {
     await this.ready;
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) throw new Error(usernameCheck.code);
+    const vaultId = this.offlineMode ? (vaultService.uid || this.uid) : await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithRecovery({
-      uid: this.uid,
+      uid: vaultId,
       recoveryKey
     });
     await vaultService.saveSession();
@@ -184,10 +202,14 @@ class AuthService {
    */
   async unlockWithRecoveryFile(fileContent, username, partialPin) {
     await this.ready;
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) throw new Error(usernameCheck.code);
+    const vaultId = this.offlineMode ? (vaultService.uid || this.uid) : await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithRecoveryFile({
-      uid: this.uid,
+      uid: vaultId,
       fileContent,
-      username,
+      username: usernameCheck.value,
       partialPin
     });
     await vaultService.saveSession();
@@ -198,8 +220,10 @@ class AuthService {
 
   async unlockWithDataKey(dataKey) {
     await this.ready;
+    const sessionVaultId = sessionStorage.getItem('pb_session_vault_id');
+    if (sessionVaultId) vaultService.uid = sessionVaultId;
     await vaultService.unlockWithDataKey({
-      uid: this.uid,
+      uid: vaultService.uid,
       dataKey
     });
     await vaultService.saveSession();

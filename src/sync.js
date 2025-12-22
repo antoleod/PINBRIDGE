@@ -2,11 +2,44 @@ import {
   doc,
   getDoc,
   onSnapshot,
+  runTransaction,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 import { db } from './firebase.js';
 
+function normalizeUsername(username) {
+  return (username || '').trim().toLowerCase();
+}
+
 class SyncService {
+  async resolveVaultIdByUsername(username) {
+    const key = normalizeUsername(username);
+    if (!key) return null;
+    const snap = await getDoc(doc(db, 'userDirectory', key));
+    if (!snap.exists()) return null;
+    const data = snap.data() || {};
+    return data.vaultId || null;
+  }
+
+  async createUsernameMapping(username, vaultId) {
+    const key = normalizeUsername(username);
+    if (!key) throw new Error('USERNAME_REQUIRED');
+    if (!vaultId) throw new Error('VAULT_ID_REQUIRED');
+
+    await runTransaction(db, async (tx) => {
+      const ref = doc(db, 'userDirectory', key);
+      const snap = await tx.get(ref);
+      if (snap.exists()) {
+        throw new Error('USER_EXISTS');
+      }
+      tx.set(ref, {
+        username: (username || '').trim(),
+        vaultId,
+        createdAt: new Date().toISOString()
+      });
+    });
+  }
+
   async fetchMeta(uid) {
     const snap = await getDoc(doc(db, 'users', uid, 'config', 'meta'));
     return snap.exists() ? snap.data() : null;

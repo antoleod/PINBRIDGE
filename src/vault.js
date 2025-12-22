@@ -12,13 +12,15 @@ class VaultService {
     this.meta = null;
     this.vault = { notes: [], meta: {} };
     this.uid = null;
+    this.authUid = null;
     this.localUpdatedAt = null;
     this.realtimeUnsub = null;
     this.syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
   }
 
   async init(uid) {
-    this.uid = uid;
+    this.authUid = uid;
+    this.uid = sessionStorage.getItem('pb_session_vault_id') || null;
     await storageService.init('pinbridge_db');
     this.meta = await storageService.getCryptoMeta();
     this.localUpdatedAt = (await storageService.getEncryptedVault())?.updatedAt || null;
@@ -56,7 +58,7 @@ class VaultService {
 
   async hasExistingVault() {
     if (this.meta) return true;
-    if (!this.syncEnabled) return false;
+    if (!this.syncEnabled || !this.uid) return false;
     try {
       const remoteMeta = await syncService.fetchMeta(this.uid);
       if (remoteMeta) {
@@ -363,6 +365,7 @@ class VaultService {
       const exported = await cryptoService.exportKeyBytes(this.dataKey);
       const b64 = Utils.bufferToBase64(exported);
       sessionStorage.setItem('pb_session_key', b64);
+      if (this.uid) sessionStorage.setItem('pb_session_vault_id', this.uid);
     } catch (e) {
       console.warn('Session save failed', e);
     }
@@ -388,12 +391,14 @@ class VaultService {
     } catch (e) {
       console.warn('Session restore failed', e);
       sessionStorage.removeItem('pb_session_key');
+      sessionStorage.removeItem('pb_session_vault_id');
       return false;
     }
   }
 
   clearSession() {
     sessionStorage.removeItem('pb_session_key');
+    sessionStorage.removeItem('pb_session_vault_id');
   }
 
   async fileRecoveryResetRequest() {

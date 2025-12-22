@@ -35,7 +35,9 @@ class UIService {
             localStorage.setItem('pinbridge.auto_save', 'true');
         }
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
-        this.footerAutoHide = localStorage.getItem('pinbridge.footer_autohide') === 'true';
+        // Footer must stay fixed + always visible across views.
+        this.footerAutoHide = false;
+        localStorage.setItem('pinbridge.footer_autohide', 'false');
         this.saveTimeout = null;
         this.isFocusMode = false;
         this.isReadOnly = false; // Read-only mode state
@@ -431,7 +433,6 @@ class UIService {
         this.setupMobileUX();
         this.setupSettingsAccordion();
         this.renderMarkdownToolbar();
-        this.setupSmartSuggestions();
         this.setupSecurityFeatures();
         this.setStatus(i18n.t('statusReady'));
         this.updateConnectivityStatus();
@@ -581,39 +582,6 @@ class UIService {
         if (typeof feather !== 'undefined') feather.replace();
     }
 
-    setupSmartSuggestions() {
-        // Inject Sidebar
-        const editorPanel = document.querySelector('.editor-panel');
-        if (!editorPanel || document.querySelector('.suggestions-sidebar')) return;
-
-        const sidebar = document.createElement('div');
-        sidebar.className = 'suggestions-sidebar';
-        sidebar.innerHTML = `
-            <div class="suggestions-header">
-                <h3>Smart Suggestions</h3>
-                <button class="btn-icon-minimal" id="close-suggestions"><i data-feather="x"></i></button>
-            </div>
-            <div id="suggestions-content" class="suggestions-content"></div>
-        `;
-        editorPanel.appendChild(sidebar);
-
-        // Inject Toolbar Button
-        const toolbar = document.querySelector('.editor-actions-minimal');
-        if (toolbar && !document.getElementById('btn-smart-suggest')) {
-            const btn = document.createElement('button');
-            btn.className = 'btn-tool-minimal';
-            btn.id = 'btn-smart-suggest';
-            btn.title = 'Smart Suggestions';
-            btn.innerHTML = '<i data-feather="zap"></i>';
-            btn.onclick = () => this.toggleSmartSuggestions();
-            // Insert before Zen Mode or at start
-            toolbar.insertBefore(btn, toolbar.firstChild);
-        }
-
-        if (typeof feather !== 'undefined') feather.replace();
-        document.getElementById('close-suggestions')?.addEventListener('click', () => this.toggleSmartSuggestions(false));
-    }
-
     setupSecurityFeatures() {
         // Blur on app switch
         const blurEnabled = localStorage.getItem('pinbridge.security_blur') === 'true';
@@ -650,7 +618,7 @@ class UIService {
             this.renderMobileFooter();
         }
 
-        this.setupFooterAutoHide();
+        document.getElementById('mobile-footer')?.classList.remove('footer-hidden');
 
         // Handle resize events to reset layout
         window.addEventListener('resize', () => {
@@ -748,6 +716,8 @@ class UIService {
     }
 
     setupFooterAutoHide() {
+        // Deprecated: footer must remain visible and fixed.
+        return;
         const scrollContainers = [
             document.querySelector('.editor-canvas'),
             document.getElementById('notes-list')?.parentElement,
@@ -795,9 +765,14 @@ class UIService {
                 e.preventDefault();
 
                 if (item.action === 'settings') {
+                    this.closeMobileSidebar();
+                    this.closeMobileFooterMenu();
                     this.openSettingsModal();
                     return;
                 }
+
+                this.closeMobileSidebar();
+                this.closeMobileFooterMenu();
 
                 // Visual update
                 document.querySelectorAll('.mobile-nav-item').forEach(b => b.classList.remove('active'));
@@ -1218,13 +1193,18 @@ class UIService {
 
     async handleRecoveryKeySubmit() {
         const recoveryKey = document.getElementById('recovery-key-input').value.trim();
+        const username = document.getElementById('recovery-key-username')?.value?.trim?.() || '';
         if (!recoveryKey) {
             this.showToast('Please enter your recovery key', 'error');
             return;
         }
+        if (!username) {
+            this.showToast('Please enter your username', 'error');
+            return;
+        }
 
         try {
-            await authService.unlockWithRecovery(recoveryKey);
+            await authService.unlockWithRecovery(username, recoveryKey);
             this.showToast('Account recovered successfully!', 'success');
         } catch (err) {
             console.error('Recovery key failed', err);
@@ -1342,18 +1322,13 @@ class UIService {
         }
 
         try {
-            const storedName = await this._fetchStoredUsername();
             const usernameCheck = validateUsername(username);
-            if (!storedName && !usernameCheck.ok) {
+            if (!usernameCheck.ok) {
                 this.showToast(usernameCheck.message, 'error');
                 return;
             }
-            if (storedName && storedName.toLowerCase() !== username.toLowerCase()) {
-                this.showToast('Username does not match the stored vault.', 'error');
-                return;
-            }
 
-            await authService.unlockWithPin(pin);
+            await authService.unlockWithPin(usernameCheck.value, pin);
             this.logActivity(`Vault Unlocked: ${username}`);
 
             const welcomeName = vaultService.meta?.username || await storageService.getMeta('vault_username');
@@ -1487,6 +1462,8 @@ class UIService {
                 document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.currentView = btn.dataset.view;
+                this.closeMobileSidebar();
+                this.closeMobileFooterMenu();
                 this.renderCurrentView();
             };
         });
@@ -1496,6 +1473,8 @@ class UIService {
                 this.mobile.navPills.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.currentView = btn.dataset.view;
+                this.closeMobileSidebar();
+                this.closeMobileFooterMenu();
                 this.renderCurrentView();
             };
         });
@@ -1585,16 +1564,27 @@ class UIService {
     }
 
     toggleMobileSidebar() {
-        const isOpen = document.body.classList.toggle('mobile-sidebar-open');
+        const shouldOpen = !document.body.classList.contains('mobile-sidebar-open');
+        if (shouldOpen) this.openMobileSidebar();
+        else this.closeMobileSidebar();
+    }
+
+    openMobileSidebar() {
+        document.body.classList.add('mobile-sidebar-open');
         let backdrop = document.getElementById('mobile-nav-backdrop');
         if (!backdrop) {
             backdrop = document.createElement('div');
             backdrop.id = 'mobile-nav-backdrop';
             backdrop.className = 'mobile-nav-backdrop';
             document.body.appendChild(backdrop);
-            backdrop.addEventListener('click', () => this.toggleMobileSidebar());
+            backdrop.addEventListener('click', () => this.closeMobileSidebar());
         }
-        backdrop.classList.toggle('visible', isOpen);
+        backdrop.classList.add('visible');
+    }
+
+    closeMobileSidebar() {
+        document.body.classList.remove('mobile-sidebar-open');
+        document.getElementById('mobile-nav-backdrop')?.classList.remove('visible');
     }
 
     showSettingsModal() {
@@ -1667,7 +1657,6 @@ class UIService {
         this.inputs.noteTitle?.addEventListener('input', () => {
             this.scheduleAutoSave();
             this.refreshSaveButtonState();
-            this.updateSmartSuggestions();
         });
 
         this.inputs.noteContent?.addEventListener('input', () => {
@@ -1675,7 +1664,6 @@ class UIService {
             this.refreshSaveButtonState();
             this.updateWordCount();
             this.autoResizeTextarea(this.inputs.noteContent);
-            this.updateSmartSuggestions();
         });
 
         this.inputs.noteContent?.addEventListener('keydown', (e) => {
@@ -1687,7 +1675,6 @@ class UIService {
         this.inputs.noteFolder?.addEventListener('input', () => this.scheduleAutoSave());
         this.inputs.noteTags?.addEventListener('input', () => {
             this.scheduleAutoSave();
-            this.updateSmartSuggestions();
         });
 
         document.getElementById('btn-delete')?.addEventListener('click', () => this.handleDelete());
@@ -2236,105 +2223,6 @@ class UIService {
         }
     }
 
-    toggleSmartSuggestions(forceState) {
-        const sidebar = document.querySelector('.suggestions-sidebar');
-        const btn = document.getElementById('btn-smart-suggest');
-        if (!sidebar) return;
-
-        const isVisible = typeof forceState === 'boolean' ? forceState : !sidebar.classList.contains('visible');
-
-        sidebar.classList.toggle('visible', isVisible);
-        if (btn) btn.classList.toggle('active', isVisible);
-
-        if (isVisible) {
-            this.updateSmartSuggestions();
-        }
-    }
-
-    updateSmartSuggestions() {
-        const sidebar = document.querySelector('.suggestions-sidebar');
-        if (!sidebar || !sidebar.classList.contains('visible')) return;
-
-        const contentContainer = document.getElementById('suggestions-content');
-        if (!contentContainer) return;
-
-        const title = (this.inputs.noteTitle?.value || '').toLowerCase();
-        const body = (this.inputs.noteContent?.value || '').toLowerCase();
-        const fullText = title + " " + body;
-        const currentTags = (this.inputs.noteTags?.value || '').split(',').map(t => t.trim().toLowerCase()).filter(t => t);
-
-        const allNotes = notesService.notes;
-        const tagCounts = {};
-        const coOccurring = {};
-
-        // 1. Analyze Vault Tags
-        allNotes.forEach(n => {
-            if (n.tags) n.tags.forEach(t => {
-                const lower = t.toLowerCase();
-                tagCounts[lower] = (tagCounts[lower] || 0) + 1;
-
-                // Co-occurrence analysis
-                if (currentTags.length > 0 && n.tags.some(nt => currentTags.includes(nt.toLowerCase()))) {
-                    if (!currentTags.includes(lower)) {
-                        coOccurring[lower] = (coOccurring[lower] || 0) + 1;
-                    }
-                }
-            });
-        });
-
-        const contentMatches = new Set();
-        const relatedTags = new Set();
-
-        // 2. Find Content Matches
-        Object.keys(tagCounts).forEach(tag => {
-            if (fullText.includes(tag) && !currentTags.includes(tag)) {
-                contentMatches.add(tag);
-            }
-        });
-
-        // 3. Find Related Tags (Top 5 co-occurring)
-        Object.entries(coOccurring)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 5)
-            .forEach(([tag]) => relatedTags.add(tag));
-
-        // Render
-        let html = '';
-
-        if (contentMatches.size > 0) {
-            html += `<div class="suggestion-group"><h4>Found in text</h4><div class="suggestion-chips">`;
-            contentMatches.forEach(tag => {
-                html += `<button class="suggestion-chip" data-tag="${tag}"><i data-feather="plus"></i> ${tag}</button>`;
-            });
-            html += `</div></div>`;
-        }
-
-        if (relatedTags.size > 0) {
-            html += `<div class="suggestion-group"><h4>Related</h4><div class="suggestion-chips">`;
-            relatedTags.forEach(tag => {
-                html += `<button class="suggestion-chip" data-tag="${tag}"><i data-feather="link"></i> ${tag}</button>`;
-            });
-            html += `</div></div>`;
-        }
-
-        if (contentMatches.size === 0 && relatedTags.size === 0) {
-            html = '<p class="hint">No suggestions found based on current content.</p>';
-        }
-
-        contentContainer.innerHTML = html;
-        if (typeof feather !== 'undefined') feather.replace();
-
-        // Bind click events
-        contentContainer.querySelectorAll('.suggestion-chip').forEach(btn => {
-            btn.onclick = () => {
-                const tag = btn.dataset.tag;
-                const newTags = currentTags.concat(tag).join(', ');
-                this.inputs.noteTags.value = newTags;
-                this.inputs.noteTags.dispatchEvent(new Event('input')); // Trigger save & update
-            };
-        });
-    }
-
     autoResizeTextarea(element) {
         if (!element) return;
         element.style.height = 'auto';
@@ -2597,9 +2485,22 @@ class UIService {
                 document.documentElement.style.setProperty('--font-size-base', val === 'lg' ? '18px' : val === 'sm' ? '14px' : '16px');
             });
             this._bindSetting('setting-footer-autohide', 'pinbridge.footer_autohide', 'checkbox', (val) => {
-                this.footerAutoHide = val;
-                document.getElementById('mobile-footer')?.classList.remove('footer-hidden'); // Reset
+                // Footer must remain visible; keep setting disabled for UX consistency.
+                this.footerAutoHide = false;
+                localStorage.setItem('pinbridge.footer_autohide', 'false');
+                const el = document.getElementById('setting-footer-autohide');
+                if (el) {
+                    el.checked = false;
+                    el.setAttribute('disabled', 'disabled');
+                }
+                document.getElementById('mobile-footer')?.classList.remove('footer-hidden');
             });
+            // Apply immediately (callback only runs on change).
+            const footerAutoHideEl = document.getElementById('setting-footer-autohide');
+            if (footerAutoHideEl) {
+                footerAutoHideEl.checked = false;
+                footerAutoHideEl.setAttribute('disabled', 'disabled');
+            }
 
             // Timeout logic would go here (updating authService)
             this._bindSetting('setting-timeout', 'pinbridge.security_timeout', 'value');
