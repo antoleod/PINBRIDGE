@@ -2263,6 +2263,7 @@ class UIService {
         const modal = document.getElementById('settings-modal');
         this.renderSettingsPanel(); // Render full settings UI
         this.renderThemeSwitcher();
+        this.initBackgroundSettingsControls();
         // Set the toggle to the correct initial state
         const syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
         const syncToggle = document.getElementById('toggle-sync-enabled');
@@ -2290,6 +2291,52 @@ class UIService {
                     <div class="form-group">
                         <label>Theme</label>
                         <div id="theme-switcher" class="settings-actions"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Background</label>
+                        <div class="settings-item">
+                            <div class="settings-item-content">
+                                <div class="settings-item-title">Use background image</div>
+                                <div class="settings-item-description">Optional image overlay behind the app.</div>
+                            </div>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="toggle-bg-enabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div id="bg-controls" class="mt-1">
+                            <div id="bg-preview" class="bg-preview">
+                                <div class="bg-preview-label">Preview</div>
+                            </div>
+                            <div class="form-group mt-1">
+                                <label for="bg-file">Choose image</label>
+                                <input id="bg-file" type="file" accept="image/*" class="input-field">
+                                <p class="hint">Stored locally in your browser (data URL). Recommended &lt; 2 MB.</p>
+                            </div>
+                            <div class="form-group">
+                                <label for="bg-fit">Fit</label>
+                                <select id="bg-fit" class="input-field">
+                                    <option value="cover">Cover</option>
+                                    <option value="contain">Contain</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="bg-opacity">Opacity</label>
+                                <input id="bg-opacity" type="range" min="0" max="0.9" step="0.05">
+                            </div>
+                            <div class="form-group">
+                                <label for="bg-blur">Blur</label>
+                                <input id="bg-blur" type="range" min="0" max="18" step="1">
+                            </div>
+                            <div class="settings-actions">
+                                <button id="bg-clear" class="settings-action">
+                                    <div class="settings-action-content">
+                                        <span class="settings-action-title">Clear background</span>
+                                    </div>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="form-group">
@@ -2526,7 +2573,9 @@ class UIService {
             { id: 'light', name: 'Light' },
             { id: 'dark', name: 'Default Dark' },
             { id: 'amoled', name: 'AMOLED Black' },
-            { id: 'low-contrast', name: 'Low Contrast' }
+            { id: 'low-contrast', name: 'Low Contrast' },
+            { id: 'nord', name: 'Nord' },
+            { id: 'rose', name: 'Rose' }
         ];
 
         const currentTheme = localStorage.getItem('pinbridge.theme') || 'dark';
@@ -2554,6 +2603,123 @@ class UIService {
         });
         button.classList.add('active');
         this.hapticFeedback();
+    }
+
+    applyBackgroundFromStorage() {
+        const enabled = localStorage.getItem('pinbridge.bg.enabled') === 'true';
+        const image = localStorage.getItem('pinbridge.bg.image') || '';
+        const opacity = localStorage.getItem('pinbridge.bg.opacity');
+        const blur = localStorage.getItem('pinbridge.bg.blur');
+        const fit = localStorage.getItem('pinbridge.bg.fit');
+
+        if (!enabled || !image) {
+            document.body.style.setProperty('--app-bg-image', 'none');
+            return;
+        }
+
+        document.body.style.setProperty('--app-bg-image', `url("${image}")`);
+        if (opacity !== null) document.body.style.setProperty('--app-bg-opacity', String(opacity));
+        if (blur !== null) document.body.style.setProperty('--app-bg-blur', `${parseInt(blur, 10) || 0}px`);
+        if (fit) document.body.style.setProperty('--app-bg-fit', fit);
+    }
+
+    updateBackgroundPreview() {
+        const preview = document.getElementById('bg-preview');
+        if (!preview) return;
+        const enabled = localStorage.getItem('pinbridge.bg.enabled') === 'true';
+        const image = localStorage.getItem('pinbridge.bg.image') || '';
+        const opacity = localStorage.getItem('pinbridge.bg.opacity') ?? '0.35';
+        const blur = localStorage.getItem('pinbridge.bg.blur') ?? '0';
+        const fit = localStorage.getItem('pinbridge.bg.fit') || 'cover';
+
+        preview.style.setProperty('--preview-bg-image', enabled && image ? `url("${image}")` : 'none');
+        preview.style.setProperty('--preview-bg-opacity', enabled && image ? String(opacity) : '0');
+        preview.style.setProperty('--preview-bg-blur', `${parseInt(blur, 10) || 0}px`);
+        preview.style.setProperty('--preview-bg-fit', fit);
+    }
+
+    initBackgroundSettingsControls() {
+        const toggle = document.getElementById('toggle-bg-enabled');
+        const file = document.getElementById('bg-file');
+        const opacity = document.getElementById('bg-opacity');
+        const blur = document.getElementById('bg-blur');
+        const fit = document.getElementById('bg-fit');
+        const clear = document.getElementById('bg-clear');
+        const controls = document.getElementById('bg-controls');
+        if (!toggle || !file || !opacity || !blur || !fit || !clear) return;
+
+        const enabled = localStorage.getItem('pinbridge.bg.enabled') === 'true';
+        toggle.checked = enabled;
+        if (controls) controls.style.opacity = enabled ? '1' : '0.6';
+
+        opacity.value = localStorage.getItem('pinbridge.bg.opacity') ?? '0.35';
+        blur.value = localStorage.getItem('pinbridge.bg.blur') ?? '0';
+        fit.value = localStorage.getItem('pinbridge.bg.fit') || 'cover';
+
+        const sync = () => {
+            localStorage.setItem('pinbridge.bg.opacity', String(opacity.value));
+            localStorage.setItem('pinbridge.bg.blur', String(blur.value));
+            localStorage.setItem('pinbridge.bg.fit', String(fit.value));
+            this.applyBackgroundFromStorage();
+            this.updateBackgroundPreview();
+        };
+
+        toggle.addEventListener('change', () => {
+            localStorage.setItem('pinbridge.bg.enabled', toggle.checked ? 'true' : 'false');
+            if (controls) controls.style.opacity = toggle.checked ? '1' : '0.6';
+            this.applyBackgroundFromStorage();
+            this.updateBackgroundPreview();
+        });
+
+        opacity.addEventListener('input', sync);
+        blur.addEventListener('input', sync);
+        fit.addEventListener('change', sync);
+
+        file.addEventListener('change', async () => {
+            const selected = file.files?.[0];
+            if (!selected) return;
+            if (!selected.type?.startsWith('image/')) {
+                this.showToast('Please select an image file.', 'error');
+                return;
+            }
+            if (selected.size > 2 * 1024 * 1024) {
+                this.showToast('Image is too large (max 2 MB recommended).', 'error');
+                return;
+            }
+            const dataUrl = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ''));
+                reader.onerror = () => reject(new Error('read_failed'));
+                reader.readAsDataURL(selected);
+            }).catch(() => '');
+
+            if (!dataUrl) {
+                this.showToast('Failed to load image.', 'error');
+                return;
+            }
+
+            localStorage.setItem('pinbridge.bg.image', dataUrl);
+            localStorage.setItem('pinbridge.bg.enabled', 'true');
+            toggle.checked = true;
+            if (controls) controls.style.opacity = '1';
+            this.applyBackgroundFromStorage();
+            this.updateBackgroundPreview();
+            this.showToast('Background updated.', 'success');
+        });
+
+        clear.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('pinbridge.bg.image');
+            localStorage.setItem('pinbridge.bg.enabled', 'false');
+            toggle.checked = false;
+            if (controls) controls.style.opacity = '0.6';
+            this.applyBackgroundFromStorage();
+            this.updateBackgroundPreview();
+            this.showToast('Background cleared.', 'info');
+        });
+
+        this.applyBackgroundFromStorage();
+        this.updateBackgroundPreview();
     }
 
     handleSyncToggle(isEnabled) {
@@ -3724,6 +3890,7 @@ class UIService {
         if (savedTheme !== 'dark') {
             document.body.setAttribute('data-theme', savedTheme);
         }
+        this.applyBackgroundFromStorage();
         document.addEventListener('keydown', (e) => {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
                 e.preventDefault();

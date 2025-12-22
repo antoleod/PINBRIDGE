@@ -48,6 +48,14 @@
     --floating-panel-width: clamp(280px, 40vw, 420px);
     --floating-panel-top: clamp(3.5rem, 12vh, 7rem);
     --floating-panel-margin: 12px;
+
+    /* Background customization */
+    --app-bg-image: none;
+    --app-bg-opacity: 0.35;
+    --app-bg-blur: 0px;
+    --app-bg-fit: cover;
+    --app-bg-position: center;
+    --app-bg-gradient-opacity: 1;
 }
 
 /* Light Theme */
@@ -71,6 +79,7 @@
     --bg-base: #000000;
     --bg-surface: #111111;
     --bg-glass: rgba(17, 17, 17, 0.65);
+    --app-bg-gradient-opacity: 0.75;
 }
 
 /* Low Contrast Theme */
@@ -78,10 +87,49 @@
     --bg-base: #1a1a1c;
     --text-primary: #c1c1c1;
     --text-secondary: #888888;
+    --app-bg-gradient-opacity: 0.55;
     /* Spacing */
     --radius-sm: 6px;
     --radius-md: 12px;
     --radius-lg: 16px;
+}
+
+/* Nord Theme */
+[data-theme="nord"] {
+    --bg-base: #0b1119;
+    --bg-surface: #131c28;
+    --bg-glass: rgba(19, 28, 40, 0.72);
+    --bg-glass-high: rgba(19, 28, 40, 0.46);
+
+    --border-subtle: rgba(236, 239, 244, 0.10);
+    --border-active: rgba(236, 239, 244, 0.16);
+
+    --text-primary: #eceff4;
+    --text-secondary: #9aa6b2;
+    --text-muted: #6b7a8b;
+
+    --brand-primary: #88c0d0;
+    --brand-glow: rgba(136, 192, 208, 0.45);
+    --app-bg-gradient-opacity: 0.95;
+}
+
+/* Rose Theme */
+[data-theme="rose"] {
+    --bg-base: #0f0b10;
+    --bg-surface: #19101b;
+    --bg-glass: rgba(25, 16, 27, 0.72);
+    --bg-glass-high: rgba(25, 16, 27, 0.48);
+
+    --border-subtle: rgba(255, 255, 255, 0.10);
+    --border-active: rgba(255, 255, 255, 0.16);
+
+    --text-primary: #fdf2f8;
+    --text-secondary: #f9a8d4;
+    --text-muted: #a78bfa;
+
+    --brand-primary: #fb7185;
+    --brand-glow: rgba(251, 113, 133, 0.40);
+    --app-bg-gradient-opacity: 1;
 }
 
 * {
@@ -113,8 +161,56 @@ body {
     overflow-x: hidden;
     overflow-y: auto;
     -webkit-font-smoothing: antialiased;
-    /* Animated Deep Background */
-    background: radial-gradient(circle at top left, #1c1c21, #09090b);
+    position: relative;
+    background: var(--bg-base);
+}
+
+/* Layered app background (gradient + optional image) */
+body::before,
+body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body::before {
+    background-image: var(--app-bg-image);
+    background-size: var(--app-bg-fit);
+    background-position: var(--app-bg-position);
+    background-repeat: no-repeat;
+    filter: blur(var(--app-bg-blur));
+    opacity: var(--app-bg-opacity);
+    transform: translateZ(0);
+}
+
+body::after {
+    opacity: var(--app-bg-gradient-opacity);
+    background:
+        radial-gradient(circle at 18% 18%, rgba(59, 130, 246, 0.18), transparent 45%),
+        radial-gradient(circle at 82% 22%, rgba(168, 85, 247, 0.18), transparent 50%),
+        radial-gradient(circle at 42% 88%, rgba(0, 255, 156, 0.12), transparent 55%),
+        radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03), transparent 60%),
+        linear-gradient(180deg, #0b0b10, #09090b);
+    animation: bg-drift 18s ease-in-out infinite;
+    transform: translateZ(0);
+}
+
+@keyframes bg-drift {
+    0% { transform: translate3d(0, 0, 0) scale(1); filter: hue-rotate(0deg); }
+    50% { transform: translate3d(0, -10px, 0) scale(1.02); filter: hue-rotate(12deg); }
+    100% { transform: translate3d(0, 0, 0) scale(1); filter: hue-rotate(0deg); }
+}
+
+/* Keep app layers above background */
+.screen {
+    z-index: 10;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::after { animation: none; }
+    * { scroll-behavior: auto !important; }
 }
 
 /* Mobile touch adjustments */
@@ -2296,11 +2392,12 @@ button.btn:active {
 .quick-drop {
     padding: 1rem;
     border-bottom: 1px solid var(--border-subtle);
-    transition: all 0.3s;
+    transition: background 220ms ease, border-color 220ms ease, padding 220ms ease;
 }
 
 .quick-drop.collapsed input {
     height: 40px;
+    opacity: 0.92;
 }
 
 #quick-drop-input {
@@ -2308,11 +2405,60 @@ button.btn:active {
     border: 1px dashed var(--border-subtle);
     font-size: 0.9rem;
     border-radius: 12px;
+    transition: height 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 220ms ease,
+        transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 220ms ease,
+        background 220ms ease;
+    will-change: height, transform, opacity;
+}
+
+.quick-drop.collapsed #quick-drop-input {
+    transform: translateY(-1px);
 }
 
 #quick-drop-input:focus {
     border-style: solid;
     border-color: var(--brand-primary);
+}
+
+/* Settings: background preview */
+.bg-preview {
+    width: 100%;
+    height: 92px;
+    border-radius: 12px;
+    border: 1px solid var(--border-subtle);
+    background:
+        radial-gradient(circle at 20% 25%, rgba(59, 130, 246, 0.20), transparent 55%),
+        radial-gradient(circle at 80% 35%, rgba(168, 85, 247, 0.20), transparent 55%),
+        rgba(255, 255, 255, 0.03);
+    overflow: hidden;
+    position: relative;
+}
+
+.bg-preview::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: var(--preview-bg-image, none);
+    background-size: var(--preview-bg-fit, cover);
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: var(--preview-bg-opacity, 0.35);
+    filter: blur(var(--preview-bg-blur, 0px));
+}
+
+.bg-preview .bg-preview-label {
+    position: absolute;
+    left: 10px;
+    bottom: 8px;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.35);
+    padding: 0.2rem 0.45rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-subtle);
+    backdrop-filter: blur(8px);
 }
 
 .search-container {
