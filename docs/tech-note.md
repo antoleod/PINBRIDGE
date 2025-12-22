@@ -5,6 +5,7 @@
 - Added input validation for usernames and PINs, plus recovery file flow fixes.
 - Added admin invite management UI and hid admin entry points for non-admin users.
 - Removed the document conversion server and UI (feature cleanup).
+- Stabilized camera/voice lifecycles and added logic-only smart note behaviors (checklists, pin on `!important`, clipboard auto-clear).
 
 ## How To Create/Grant An Admin Account
 1. Sign in to an existing admin vault (username must start with `ADM`).

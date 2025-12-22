@@ -304,7 +304,9 @@ class NotesService {
     async persistNote(note, { bumpUpdated = true } = {}) {
         const trimmedTitle = (note.title || '').trim();
         const trimmedBody = (note.body || '').trim();
-        if (!trimmedTitle && !trimmedBody) {
+        // By default we skip persisting completely empty notes to avoid sync noise and placeholder notes.
+        // Some flows (e.g. explicit "New Note" creation) may opt-in via `allowEmptyPersist`.
+        if (!note?.allowEmptyPersist && !trimmedTitle && !trimmedBody) {
             console.warn(`Skipping empty note persistence for ${note.id}`);
             return;
         }
@@ -313,7 +315,9 @@ class NotesService {
             console.warn(`Skipping placeholder note persistence for ${note.id}`);
             return;
         }
-        const updatedNote = { ...note };
+        // Smart-note transforms are logic-only and must happen before persistence so they sync across devices.
+        // This keeps UI stable while improving behavior predictably.
+        const updatedNote = this._applySmartNoteTransforms({ ...note });
         if (bumpUpdated) {
             updatedNote.updated = Date.now();
         }
@@ -323,6 +327,54 @@ class NotesService {
             this.notes[localIndex] = updatedNote;
         }
         return updatedNote;
+    }
+
+    _applySmartNoteTransforms(note) {
+        if (!note) return note;
+
+        // 1) !important → pin (logic only; no UI change).
+        const body = `${note.body || ''}`;
+        if (/\B!important\b/i.test(body)) {
+            note.pinned = true;
+        }
+
+        // 2) Normalize checklist shorthand: "[] " or "[ ] " at line start -> "- [ ] ".
+        note.body = body
+            .split('\n')
+            .map((line) => line.replace(/^\s*(\[\s?\])\s+/, '- [ ] '))
+            .join('\n');
+
+        // 3) Move completed checklist items to the bottom of their contiguous block.
+        note.body = this._reorderChecklistBlocks(note.body);
+
+        return note;
+    }
+
+    _reorderChecklistBlocks(text) {
+        if (!text) return text;
+        const lines = text.split('\n');
+        const isChecklist = (line) => /^\s*-\s*\[(x| )\]\s+/i.test(line);
+
+        const out = [];
+        for (let i = 0; i < lines.length; i += 1) {
+            if (!isChecklist(lines[i])) {
+                out.push(lines[i]);
+                continue;
+            }
+
+            // Capture contiguous checklist block.
+            const block = [];
+            while (i < lines.length && isChecklist(lines[i])) {
+                block.push(lines[i]);
+                i += 1;
+            }
+            i -= 1;
+
+            const unchecked = block.filter((l) => /^\s*-\s*\[\s\]/i.test(l));
+            const checked = block.filter((l) => /^\s*-\s*\[x\]/i.test(l));
+            out.push(...unchecked, ...checked);
+        }
+        return out.join('\n');
     }
 
     /**

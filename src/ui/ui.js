@@ -68,6 +68,8 @@ class UIService {
         this.ocrScanInterval = null;
         this.isOcrProcessing = false;
         this.ocrWorker = null;
+        // Clipboard safety: keep a single auto-clear timer to avoid overlapping clears.
+        this._clipboardClearTimer = null;
         this.activityLogs = [];
         this.generatedPassword = null;
         this.share = {};
@@ -1892,6 +1894,14 @@ class UIService {
             return;
         }
 
+        // Guard against overlapping recognition instances (common source of inconsistent behavior).
+        if (this.recognition && this.voice.state !== 'idle') {
+            if (this.voice.state === 'listening') {
+                this.stopVoiceRecording();
+            }
+            return;
+        }
+
         if (this.voice.state === 'starting' || this.voice.state === 'stopping') {
             this.showToast('Please wait…', 'info');
             return;
@@ -2054,6 +2064,10 @@ class UIService {
                 this.insertOcrText();
                 this.hideOCRModal();
             };
+            // Close on backdrop click (predictable cleanup of camera + timers).
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) this.hideOCRModal();
+            });
         }
 
         const modal = this._getById('ocr-modal');
@@ -2095,6 +2109,8 @@ class UIService {
     hideOCRModal() {
         this._getById('ocr-modal')?.classList.add('hidden');
         this.stopOCRCamera();
+        // Release OCR processing resources so repeated usage doesn't degrade over time.
+        this.isOcrProcessing = false;
     }
 
     async startOCRCamera() {
@@ -2103,6 +2119,9 @@ class UIService {
         if (this.ocr.isStarting) return;
 
         // Avoid duplicate streams/intervals on repeated opens.
+        // Important: enforce single active camera session (OCR vs QR scanning).
+        // This prevents leaked tracks and "camera already in use" errors after repeated usage.
+        this._stopCameraForQRScan?.();
         this.stopOCRCamera();
         this.ocr.isStarting = true;
 
@@ -2163,8 +2182,18 @@ class UIService {
         this.isOcrProcessing = true;
         statusEl.innerText = 'Capturing...';
 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d', { willReadFrequently: true });
+        // Reuse a single canvas/context to reduce allocations and improve stability on mobile.
+        if (!this.ocr._canvas) {
+            this.ocr._canvas = document.createElement('canvas');
+            this.ocr._context = this.ocr._canvas.getContext('2d', { willReadFrequently: true });
+        }
+        const canvas = this.ocr._canvas;
+        const context = this.ocr._context;
+        if (!context) {
+            this.isOcrProcessing = false;
+            statusEl.innerText = 'Camera error.';
+            return;
+        }
 
         const videoRect = video.getBoundingClientRect();
         const overlayRect = overlay.getBoundingClientRect();
@@ -2958,6 +2987,10 @@ class UIService {
 
         navigator.clipboard.writeText(codes).then(() => {
             this.showToast('Backup codes copied to clipboard', 'success');
+            // Security: auto-clear clipboard after a short delay to reduce accidental leakage.
+            this._scheduleClipboardClear();
+        }).catch(() => {
+            this.showToast('Copy failed. Select and copy manually.', 'error');
         });
     }
 
@@ -3201,10 +3234,37 @@ class UIService {
 
     handleSmartList(e) {
         if (!this.inputs.noteContent) return;
-        // Guard against missing smart-list implementation to avoid runtime errors.
-        const value = this.inputs.noteContent.value || '';
-        const lineStart = value.slice(0, this.inputs.noteContent.selectionStart || 0).split('\n').pop() || '';
-        if (!lineStart.trim()) return;
+        // Logic-only "smart lists": expand checklist shorthand and continue lists on Enter.
+        // Keep UI unchanged; only modify textarea content/cursor to prevent surprises.
+        if (e.key !== 'Enter') return;
+
+        const textarea = this.inputs.noteContent;
+        const value = textarea.value || '';
+        const cursor = textarea.selectionStart || 0;
+        const before = value.slice(0, cursor);
+        const after = value.slice(cursor);
+        const currentLine = before.split('\n').pop() || '';
+
+        // "[] " or "[ ] " at line start -> "- [ ] "
+        const normalizedLine = currentLine.replace(/^\s*(\[\s?\])\s+/, '- [ ] ');
+        if (normalizedLine !== currentLine) {
+            const newBefore = before.slice(0, before.length - currentLine.length) + normalizedLine;
+            textarea.value = newBefore + after;
+            const newCursor = newBefore.length;
+            textarea.setSelectionRange(newCursor, newCursor);
+            return;
+        }
+
+        // Continue checklist items: "- [ ] " or "- [x] "
+        const listMatch = normalizedLine.match(/^(\s*-\s*\[(?: |x)\]\s+)/i);
+        if (!listMatch) return;
+
+        e.preventDefault();
+        const prefix = listMatch[1];
+        const insertion = `\n${prefix}`;
+        textarea.value = before + insertion + after;
+        const nextCursor = cursor + insertion.length;
+        textarea.setSelectionRange(nextCursor, nextCursor);
     }
 
     bindMobileFooterMenu() {
@@ -3375,11 +3435,11 @@ class UIService {
             this._setCopyFeedback(button);
             const autoClearToggle = this._getById('pw-opt-autoclear');
             if (autoClearToggle?.checked) {
-                setTimeout(() => {
-                    navigator.clipboard.writeText(' ').catch(() => { }); // Clear clipboard
-                    this.showToast('Clipboard cleared.', 'info');
-                }, 30000);
+                // Security: auto-clear clipboard after a short delay to reduce accidental leakage.
+                this._scheduleClipboardClear(30000);
             }
+        }).catch(() => {
+            this.showToast('Copy failed. Select and copy manually.', 'error');
         });
     }
 
@@ -3594,6 +3654,9 @@ class UIService {
     }
 
     async _startCameraForQRScan() {
+        // Important: enforce single active camera session (QR scan vs OCR).
+        // OCR holds a stream + interval loop; we must stop it before starting QR scanning.
+        this.stopOCRCamera();
         const video = this._getById('qr-video');
         const statusEl = this._getById('scan-qr-status');
         if (!video || !statusEl) return;
@@ -4988,13 +5051,28 @@ class UIService {
     copyToClipboard(text, btnElement) {
         if (!text) return;
         navigator.clipboard.writeText(text).then(() => {
-            const original = btnElement.innerText;
-            btnElement.innerText = i18n.t('toastCopyOk');
+            const original = btnElement?.innerText;
+            if (btnElement) btnElement.innerText = i18n.t('toastCopyOk');
             this.showToast(i18n.t('toastCopyOk'), 'success');
-            setTimeout(() => { btnElement.innerText = original; }, 1500);
+            // Security: auto-clear clipboard after a short delay to reduce accidental leakage.
+            this._scheduleClipboardClear();
+            if (btnElement && original) setTimeout(() => { btnElement.innerText = original; }, 1500);
         }).catch(() => {
             this.showToast(i18n.t('toastCopyFail'), 'error');
         });
+    }
+
+    _scheduleClipboardClear(delayMs = 30000) {
+        // Best-effort only: browsers can deny clipboard writes in some contexts.
+        if (this._clipboardClearTimer) {
+            clearTimeout(this._clipboardClearTimer);
+            this._clipboardClearTimer = null;
+        }
+        this._clipboardClearTimer = setTimeout(() => {
+            navigator.clipboard.writeText(' ').catch(() => { });
+            this._clipboardClearTimer = null;
+            this.showToast('Clipboard cleared.', 'info');
+        }, delayMs);
     }
 
     createCommandPalette() {
@@ -5331,6 +5409,8 @@ class UIService {
         try {
             await navigator.clipboard.writeText(invite.code);
             this.showToast('Admin invite copied.', 'success');
+            // Security: auto-clear clipboard after a short delay to reduce accidental leakage.
+            this._scheduleClipboardClear();
         } catch (e) {
             this.showToast('Copy failed. Select and copy manually.', 'error');
         }
@@ -5601,6 +5681,8 @@ class UIService {
         if (!el?.value) return;
         navigator.clipboard.writeText(el.value).then(() => {
             this.showToast('Copied to clipboard.', 'success');
+            // Security: auto-clear clipboard after a short delay to reduce accidental leakage.
+            this._scheduleClipboardClear();
         }).catch(() => {
             this.showToast('Copy failed. Select and copy manually.', 'error');
         });
