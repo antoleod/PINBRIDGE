@@ -1406,6 +1406,11 @@ class UIService {
     }
 
     resolveAuthErrorMessage(code) {
+        const raw = `${code || ''}`;
+        const normalized = raw.toLowerCase();
+        if (normalized.includes('missing or insufficient permissions') || normalized.includes('permission-denied')) {
+            return 'Sync permission error. Check Firestore security rules for this project.';
+        }
         switch (code) {
             case 'INVALID_PIN':
             case 'INVALID_USER':

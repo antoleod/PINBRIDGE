@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    // Username -> vaultId mapping (used for cross-device username login).
+    // NOTE: This is a permissive rule set intended for development/prototyping.
+    match /userDirectory/{usernameKey} {
+      allow read: if isAuthed();
+      allow create: if isAuthed() && !exists(/databases/$(database)/documents/userDirectory/$(usernameKey));
+      allow update, delete: if false;
+    }
+
+    // Vault storage keyed by vaultId.
+    // NOTE: Any authenticated user can read/write any vaultId under this rule.
+    // For production you must restrict access (e.g., via server-issued custom auth claims).
+    match /users/{vaultId}/{document=**} {
+      allow read, write: if isAuthed();
+    }
+  }
+}
+
