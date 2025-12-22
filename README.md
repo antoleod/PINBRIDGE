@@ -12,3 +12,7 @@ Quick test (open `index.html` in a mobile emulator or narrow your browser):
 ```
 
 If you want, I can add an animated close button, or move the backdrop element into the HTML markup instead of creating it dynamically.
+
+## Tech Note
+
+See `docs/tech-note.md` for admin setup, RBAC, and responsive testing notes.

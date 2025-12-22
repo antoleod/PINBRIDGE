@@ -18,7 +18,8 @@ class RecoveryService {
      * Generate 10 cryptographically random backup codes
      * Format: XXXX-XXXX-XXXX-XXXX
      */
-    async generateBackupCodes() {
+    async generateBackupCodes(vaultKey) {
+        if (!vaultKey) throw new Error('Vault key required');
         const codes = [];
         for (let i = 0; i < 10; i++) {
             const randomBytes = crypto.getRandomValues(new Uint8Array(8));
@@ -33,11 +34,18 @@ class RecoveryService {
 
         // Hash codes before storing
         const hashedCodes = await Promise.all(
-            codes.map(async code => ({
-                hash: await this.hashCode(code),
-                used: false,
-                createdAt: Date.now()
-            }))
+            codes.map(async code => {
+                const salt = cryptoService.generateSalt();
+                const key = await cryptoService.deriveKeyFromSecret(code, salt);
+                const wrappedKey = await cryptoService.wrapKey(vaultKey, key);
+                return {
+                    hash: await this.hashCode(code),
+                    used: false,
+                    createdAt: Date.now(),
+                    wrappedKey,
+                    salt: Utils.bufferToBase64(salt)
+                };
+            })
         );
 
         // Store hashed codes in IndexedDB
@@ -81,7 +89,7 @@ class RecoveryService {
         stored.codes[codeIndex].usedAt = Date.now();
         await storageService.saveRecoveryMethod('backup_codes', stored);
 
-        return true;
+        return stored.codes[codeIndex];
     }
 
     /**
@@ -148,17 +156,25 @@ class RecoveryService {
     /**
      * Setup secret question
      */
-    async setupSecretQuestion(question, answer) {
+    async setupSecretQuestion(question, answer, vaultKey) {
         if (!question || !answer) {
             throw new Error('Question and answer required');
+        }
+        if (!vaultKey) {
+            throw new Error('Vault key required');
         }
 
         // Hash the answer (case-sensitive)
         const answerHash = await this.hashCode(answer);
+        const salt = cryptoService.generateSalt();
+        const answerKey = await cryptoService.deriveKeyFromSecret(answer, salt);
+        const wrappedKey = await cryptoService.wrapKey(vaultKey, answerKey);
 
         const secretData = {
             question,
             answerHash,
+            wrappedKey,
+            salt: Utils.bufferToBase64(salt),
             createdAt: Date.now()
         };
 
@@ -177,6 +193,20 @@ class RecoveryService {
 
         const inputHash = await this.hashCode(answer);
         return inputHash === stored.answerHash;
+    }
+
+    async recoverFromSecretAnswer(answer) {
+        const stored = await storageService.getRecoveryMethod('secret_question');
+        if (!stored || !stored.answerHash || !stored.wrappedKey || !stored.salt) {
+            throw new Error('No recovery data found');
+        }
+        const isValid = await this.verifySecretAnswer(answer);
+        if (!isValid) {
+            throw new Error('Invalid answer');
+        }
+        const salt = Utils.base64ToBuffer(stored.salt);
+        const answerKey = await cryptoService.deriveKeyFromSecret(answer, salt);
+        return cryptoService.unwrapKey(stored.wrappedKey, answerKey);
     }
 
     /**

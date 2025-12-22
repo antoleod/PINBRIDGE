@@ -124,6 +124,7 @@ async function init() {
 bus.on('auth:unlock', async () => {
     console.log('auth:unlock event fired');
     uiService.showScreen('vault');
+    uiService.applyAdminVisibility();
     vaultService.ensureSyncActive();
 
     // Show skeleton loaders while loading

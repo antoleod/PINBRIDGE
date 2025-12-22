@@ -121,6 +121,10 @@ body {
     display: none !important;
 }
 
+.admin-only.hidden {
+    display: none !important;
+}
+
 .visually-hidden {
     position: absolute;
     width: 1px;
@@ -3374,6 +3378,10 @@ body.safe-view-mode {
     border-radius: var(--radius-md);
     border: 1px solid var(--border-subtle);
     background: rgba(255, 255, 255, 0.02);
+}
+
+.admin-invite .admin-actions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
 }
 
 .admin-card h3 {

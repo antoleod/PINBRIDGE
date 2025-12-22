@@ -14,6 +14,8 @@ import { pairingService } from '../modules/pairing/pairing.js'; // To be created
 import { shareService } from '../modules/share/share.js';
 import { diagnosticsService } from '../modules/diagnostics/diagnostics.js';
 import { syncManager } from '../modules/sync/sync-manager.js';
+import { isAdminUsername } from '../core/rbac.js';
+import { validatePin, validateUsername } from '../core/validation.js';
 
 
 class UIService {
@@ -98,28 +100,60 @@ class UIService {
         document.getElementById('btn-auth-choice-create')?.style.setProperty('display', 'none');
         document.getElementById('btn-auth-choice-existing')?.style.setProperty('display', 'inline-flex');
         this.inputs.registerUsername?.focus();
+        this.toggleAdminInviteVisibility(this.inputs.registerUsername?.value || '');
     }
 
     async handleRegisterSubmit(e) {
         e.preventDefault();
         const username = (this.inputs.registerUsername?.value || '').trim();
         const pin = (this.inputs.registerPin?.value || '').trim();
+        const adminCode = (this.inputs.registerAdminCode?.value || '').trim();
+        const usernameError = document.getElementById('register-username-error');
+        const pinError = document.getElementById('register-pin-error');
+        const adminCodeError = document.getElementById('register-admin-code-error');
 
-        if (!username || !pin) {
-            this.showToast("Username and PIN are required.", 'error');
+        if (usernameError) usernameError.textContent = '';
+        if (pinError) pinError.textContent = '';
+        if (adminCodeError) adminCodeError.textContent = '';
+
+        const usernameCheck = validateUsername(username);
+        if (!usernameCheck.ok) {
+            if (usernameError) usernameError.textContent = usernameCheck.message;
+            this.showToast(usernameCheck.message, 'error');
             return;
         }
 
-        if (pin.length < 4 || pin.length > 6) {
-            this.showToast('PIN must be between 4 and 6 digits.', 'error');
+        const pinCheck = validatePin(pin);
+        if (!pinCheck.ok) {
+            if (pinError) pinError.textContent = pinCheck.message;
+            this.showToast(pinCheck.message, 'error');
+            return;
+        }
+
+        if (isAdminUsername(username) && !adminCode) {
+            if (adminCodeError) adminCodeError.textContent = 'Admin invite code is required.';
+            this.showToast('Admin invite code is required.', 'error');
             return;
         }
 
         try {
-            const recoveryKey = await authService.register(username, pin);
+            const recoveryKey = await authService.register(username, pin, adminCode);
             this.showRecoveryKeyModal(recoveryKey);
         } catch (err) {
+            if ((err?.message || err) === 'ADMIN_INVITE_REQUIRED') {
+                const adminCodeError = document.getElementById('register-admin-code-error');
+                if (adminCodeError) adminCodeError.textContent = 'Admin invite code is required or expired.';
+            }
             this.showToast(this.resolveAuthErrorMessage(err?.message || err), 'error');
+        }
+    }
+
+    toggleAdminInviteVisibility(username) {
+        if (!this.registerAdminGroup) return;
+        const shouldShow = isAdminUsername(username);
+        this.registerAdminGroup.classList.toggle('hidden', !shouldShow);
+        if (!shouldShow && this.inputs.registerAdminCode) {
+            this.inputs.registerAdminCode.value = '';
         }
     }
 
@@ -145,6 +179,7 @@ class UIService {
             loginPin: document.getElementById('login-pin'),
             registerUsername: document.getElementById('register-username'),
             registerPin: document.getElementById('register-pin'),
+            registerAdminCode: document.getElementById('register-admin-code'),
             noteTitle: document.getElementById('note-title'),
             noteContent: document.getElementById('note-content'),
             noteFolder: document.getElementById('note-folder'),
@@ -154,6 +189,7 @@ class UIService {
         };
 
         this.quickDropZone = document.getElementById('quick-drop-zone');
+        this.registerAdminGroup = document.getElementById('register-admin-invite-group');
 
         this.recoveryModal = {
             toggleBtn: document.getElementById('toggle-recovery-visibility'),
@@ -270,7 +306,12 @@ class UIService {
             openBtn: document.getElementById('btn-open-admin'),
             exitBtn: document.getElementById('btn-exit-admin'),
             forceSyncBtn: document.getElementById('admin-force-sync'),
-            lockBtn: document.getElementById('admin-lock-vault')
+            lockBtn: document.getElementById('admin-lock-vault'),
+            inviteCode: document.getElementById('admin-invite-code'),
+            inviteExpiry: document.getElementById('admin-invite-expiry'),
+            inviteGenerate: document.getElementById('admin-invite-generate'),
+            inviteRevoke: document.getElementById('admin-invite-revoke'),
+            inviteCopy: document.getElementById('admin-invite-copy')
         };
     }
 
@@ -304,8 +345,8 @@ class UIService {
 
         container.innerHTML = this.activityLogs.map(log => `
             <div class="log-item">
-                <span class="log-action">${log.action}</span>
-                <span class="log-time">${log.time}</span>
+                <span class="log-action">${Utils.escapeHtml(log.action)}</span>
+                <span class="log-time">${Utils.escapeHtml(log.time)}</span>
             </div>
         `).join('');
     }
@@ -318,6 +359,24 @@ class UIService {
         if (this.statusIndicators.offlineText) {
             this.statusIndicators.offlineText.textContent = isOnline ? 'Cloud Linked' : 'Offline Mode';
         }
+    }
+
+    applyAdminVisibility() {
+        const isAdmin = vaultService.isAdmin();
+        document.querySelectorAll('.admin-only').forEach(el => {
+            el.classList.toggle('hidden', !isAdmin);
+        });
+        if (this.mobile.footerMenuAdmin) {
+            this.mobile.footerMenuAdmin.classList.toggle('hidden', !isAdmin);
+        }
+    }
+
+    ensureAdminAccess() {
+        if (vaultService.isAdmin()) return true;
+        this.showToast('Admin access required.', 'error');
+        this.currentView = 'all';
+        this.applyAdminVisibility();
+        return false;
     }
 
     init() {
@@ -963,6 +1022,9 @@ class UIService {
                 this.forms.registerForm?.dispatchEvent(new Event('submit', { cancelable: true }));
             }
         });
+        this.inputs.registerUsername?.addEventListener('input', (e) => {
+            this.toggleAdminInviteVisibility(e.target.value || '');
+        });
 
         // Auth Settings (pre-login only): recovery/sync/readonly info, no vault data access.
         document.getElementById('btn-settings')?.addEventListener('click', () => this.showSettingsModal());
@@ -1115,27 +1177,16 @@ class UIService {
         }
 
         try {
-            const isValid = await recoveryService.verifyBackupCode(code);
-            if (!isValid) {
+            const record = await recoveryService.verifyBackupCode(code);
+            if (!record) {
                 this.showToast('Invalid or already used backup code', 'error');
                 return;
             }
 
-            // Code is valid, now we need to unlock the vault
-            // For this, we need to get the recovery key from storage
-            const meta = await storageService.getCryptoMeta();
-            if (!meta || !meta.wrappedRecoveryKey) {
-                this.showToast('No recovery data found', 'error');
-                return;
-            }
-
-            // Unlock with recovery key
-            const recoveryKey = await cryptoService.unwrapKey(
-                Utils.base64ToBuffer(meta.wrappedRecoveryKey),
-                code // Use backup code as password
-            );
-
-            await authService.unlockWithRecovery(Utils.bufferToBase64(await crypto.subtle.exportKey('raw', recoveryKey)));
+            const salt = Utils.base64ToBuffer(record.salt || '');
+            const key = await cryptoService.deriveKeyFromSecret(code, salt);
+            const dataKey = await cryptoService.unwrapKey(record.wrappedKey, key);
+            await authService.unlockWithDataKey(dataKey);
             this.showToast('Account recovered successfully!', 'success');
         } catch (err) {
             console.error('Backup code recovery failed', err);
@@ -1151,27 +1202,8 @@ class UIService {
         }
 
         try {
-            const isValid = await recoveryService.verifySecretAnswer(answer);
-            if (!isValid) {
-                this.showToast('Incorrect answer', 'error');
-                return;
-            }
-
-            // Answer is correct, proceed with recovery
-            const meta = await storageService.getCryptoMeta();
-            if (!meta || !meta.wrappedRecoveryKey) {
-                this.showToast('No recovery data found', 'error');
-                return;
-            }
-
-            // Derive key from answer and unwrap recovery key
-            const answerKey = await cryptoService.deriveKey(answer, meta.salt);
-            const recoveryKey = await cryptoService.unwrapKey(
-                Utils.base64ToBuffer(meta.wrappedRecoveryKey),
-                answerKey
-            );
-
-            await authService.unlockWithRecovery(Utils.bufferToBase64(await crypto.subtle.exportKey('raw', recoveryKey)));
+            const dataKey = await recoveryService.recoverFromSecretAnswer(answer);
+            await authService.unlockWithDataKey(dataKey);
             this.showToast('Account recovered successfully!', 'success');
         } catch (err) {
             console.error('Secret question recovery failed', err);
@@ -1194,6 +1226,11 @@ class UIService {
 
         if (!username || !partialPin) {
             this.showToast('Username and Recovery Code are required.', 'error');
+            return;
+        }
+        const usernameCheck = validateUsername(username);
+        if (!usernameCheck.ok) {
+            this.showToast(usernameCheck.message, 'error');
             return;
         }
 
@@ -1243,6 +1280,11 @@ class UIService {
 
         try {
             const storedName = await this._fetchStoredUsername();
+            const usernameCheck = validateUsername(username);
+            if (!storedName && !usernameCheck.ok) {
+                this.showToast(usernameCheck.message, 'error');
+                return;
+            }
             if (storedName && storedName.toLowerCase() !== username.toLowerCase()) {
                 this.showToast('Username does not match the stored vault.', 'error');
                 return;
@@ -1337,12 +1379,20 @@ class UIService {
                 return i18n.t('authErrorCorrupt');
             case 'USERNAME_REQUIRED':
                 return i18n.t('authErrorUsernameRequired');
+            case 'USERNAME_INVALID':
+                return 'Username must be 3-32 characters (letters, numbers, _ or -).';
             case 'PIN_REQUIRED':
                 return i18n.t('authErrorPinRequired');
+            case 'PIN_INVALID':
+                return 'PIN must be 4-6 digits.';
             case 'RECOVERY_REQUIRED':
                 return i18n.t('authErrorRecoveryRequired');
             case 'USER_EXISTS':
                 return i18n.t('authErrorUserExists');
+            case 'ADMIN_INVITE_REQUIRED':
+                return 'Admin invite code is required or expired.';
+            case 'RECOVERY_FILE_INVALID':
+                return 'Recovery file is invalid.';
             default:
                 return `${i18n.t('loginFormTitle')}: ${code}`;
         }
@@ -1359,6 +1409,7 @@ class UIService {
         this.currentView = 'all';
         this.hideSessionTimer();
         document.querySelectorAll('.nav-item, .folder-item').forEach(el => el.classList.remove('active'));
+        this.applyAdminVisibility();
 
         // Don't show a toast on initial load when no session is found
         if (reason === 'no-session') return;
@@ -1641,6 +1692,9 @@ class UIService {
             this.renderAdminPanel();
         });
         this.admin.lockBtn?.addEventListener('click', () => authService.forceLogout('manual'));
+        this.admin.inviteGenerate?.addEventListener('click', () => this.generateAdminInvite());
+        this.admin.inviteRevoke?.addEventListener('click', () => this.revokeAdminInvite());
+        this.admin.inviteCopy?.addEventListener('click', () => this.copyAdminInvite());
 
         // Sync toggle
         const syncToggle = document.getElementById('toggle-sync-enabled');
@@ -2563,7 +2617,12 @@ class UIService {
 
     async generateBackupCodes() {
         try {
-            const codes = await recoveryService.generateBackupCodes();
+            const vaultKey = vaultService.dataKey;
+            if (!vaultKey) {
+                this.showToast('Unlock the vault before generating backup codes.', 'error');
+                return;
+            }
+            const codes = await recoveryService.generateBackupCodes(vaultKey);
 
             // Show codes in modal
             const modal = document.getElementById('backup-codes-modal');
@@ -2641,27 +2700,11 @@ class UIService {
     }
 
     async downloadRecoveryFile() {
-        try {
-            const vaultKey = vaultService.dataKey;
-            if (!vaultKey) {
-                this.showToast('No vault key available', 'error');
-                return;
-            }
-
-            const blob = await recoveryService.generateRecoveryFile(vaultKey);
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `pinbridge-recovery-${Date.now()}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-
-            this.showToast('Recovery file downloaded', 'success');
-            await this.renderActiveRecoveryMethods();
-        } catch (err) {
-            console.error('Failed to download recovery file', err);
-            this.showToast('Failed to download recovery file', 'error');
+        if (!vaultService.dataKey) {
+            this.showToast('No vault key available', 'error');
+            return;
         }
+        this.openGenerateFileModal();
     }
 
     openSecretQuestionModal() {
@@ -2690,7 +2733,12 @@ class UIService {
         }
 
         try {
-            await recoveryService.setupSecretQuestion(question, answer);
+            const vaultKey = vaultService.dataKey;
+            if (!vaultKey) {
+                this.showToast('Unlock the vault before setting a secret question.', 'error');
+                return;
+            }
+            await recoveryService.setupSecretQuestion(question, answer, vaultKey);
             document.getElementById('secret-question-modal').classList.add('hidden');
             this.showToast('Secret question saved successfully', 'success');
             await this.renderActiveRecoveryMethods();
@@ -2885,6 +2933,7 @@ class UIService {
 
     openAdminPanel() {
         if (!this.ensureAuthenticated()) return;
+        if (!this.ensureAdminAccess()) return;
         this.currentView = 'admin';
         this.renderCurrentView();
     }
@@ -3300,11 +3349,11 @@ class UIService {
                 <div class="tag-manager-info">
                     <div class="tag-color-preview" style="background-color: ${TAG_COLORS[tag.color]}"></div>
                     <div class="tag-manager-details">
-                        <strong>#${tag.name}</strong>
+                        <strong>#${Utils.escapeHtml(tag.name)}</strong>
                         <span>${tag.count} note${tag.count !== 1 ? 's' : ''}</span>
                     </div>
                 </div>
-                <div class="tag-color-picker" data-tag="${tag.name}">
+                <div class="tag-color-picker" data-tag="${Utils.escapeHtml(tag.name)}">
                     ${Object.keys(TAG_COLORS).map(colorName => `
                         <div class="color-option ${tag.color === colorName ? 'active' : ''}" 
                              data-color="${colorName}" 
@@ -3808,6 +3857,10 @@ class UIService {
         const adminPanel = document.querySelector('.admin-panel');
 
         if (this.currentView === 'admin') {
+            if (!this.ensureAdminAccess()) {
+                this.currentView = 'all';
+                return;
+            }
             editorPanel?.classList.add('hidden');
             dashboardPanel?.classList.add('hidden');
             adminPanel?.classList.remove('hidden');
@@ -5039,6 +5092,50 @@ class UIService {
         }
     }
 
+    async generateAdminInvite() {
+        if (!this.ensureAdminAccess()) return;
+        const code = Utils.generateId().replace(/-/g, '').slice(0, 12).toUpperCase();
+        const expiresAt = Date.now() + (24 * 60 * 60 * 1000);
+        await storageService.setMeta('admin_invite', { code, expiresAt });
+        await this.renderAdminInvite();
+        this.showToast('Admin invite created (valid for 24h).', 'success');
+    }
+
+    async revokeAdminInvite() {
+        if (!this.ensureAdminAccess()) return;
+        await storageService.setMeta('admin_invite', null);
+        await this.renderAdminInvite();
+        this.showToast('Admin invite revoked.', 'info');
+    }
+
+    async copyAdminInvite() {
+        if (!this.ensureAdminAccess()) return;
+        const invite = await storageService.getMeta('admin_invite');
+        if (!invite?.code) {
+            this.showToast('No active admin invite.', 'error');
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(invite.code);
+            this.showToast('Admin invite copied.', 'success');
+        } catch (e) {
+            this.showToast('Copy failed. Select and copy manually.', 'error');
+        }
+    }
+
+    async renderAdminInvite() {
+        if (!this.admin.inviteCode || !this.admin.inviteExpiry) return;
+        const invite = await storageService.getMeta('admin_invite');
+        const isValid = invite?.code && invite.expiresAt > Date.now();
+        if (!isValid) {
+            this.admin.inviteCode.textContent = 'Not active';
+            this.admin.inviteExpiry.textContent = '-';
+            return;
+        }
+        this.admin.inviteCode.textContent = invite.code;
+        this.admin.inviteExpiry.textContent = new Date(invite.expiresAt).toLocaleString();
+    }
+
     async renderAdminPanel() {
         if (!this.admin.panel) return;
         const meta = await storageService.getCryptoMeta();
@@ -5051,6 +5148,8 @@ class UIService {
         const encryptedVault = await storageService.getEncryptedVault();
         const vaultSize = encryptedVault ? `${Math.ceil(JSON.stringify(encryptedVault).length / 1024)} KB` : '-';
         const syncQueue = await storageService.getSyncQueue();
+        const safeUsername = Utils.escapeHtml(username);
+        const safeUid = Utils.escapeHtml(uid);
 
         if (this.admin.username) this.admin.username.textContent = username;
         if (this.admin.uid) this.admin.uid.textContent = uid;
@@ -5076,8 +5175,8 @@ class UIService {
         if (this.admin.usersList) {
             this.admin.usersList.innerHTML = `
                 <div class="admin-user-row">
-                    <strong>${username}</strong>
-                    <span>User ID: ${uid}</span>
+                    <strong>${safeUsername}</strong>
+                    <span>User ID: ${safeUid}</span>
                     <span>Notes: ${noteCount}</span>
                 </div>
             `;
@@ -5096,7 +5195,7 @@ class UIService {
                 .sort((a, b) => b[1] - a[1])
                 .map(([name, count]) => `
                     <div class="admin-tag-row">
-                        <span>${name}</span>
+                        <span>${Utils.escapeHtml(name)}</span>
                         <strong>${count}</strong>
                     </div>
                 `);
@@ -5108,14 +5207,15 @@ class UIService {
         if (this.admin.activityList) {
             const items = this.activityLogs.slice(0, 8).map(log => `
                 <div class="admin-activity-item">
-                    <span>${log.action}</span>
-                    <span>${log.time}</span>
+                    <span>${Utils.escapeHtml(log.action)}</span>
+                    <span>${Utils.escapeHtml(log.time)}</span>
                 </div>
             `);
             this.admin.activityList.innerHTML = items.length
                 ? items.join('')
                 : '<p class="hint">No recent activity logged.</p>';
         }
+        await this.renderAdminInvite();
         if (typeof feather !== 'undefined') feather.replace();
     }
 

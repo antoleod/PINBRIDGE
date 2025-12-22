@@ -4,6 +4,7 @@ import { syncService } from './sync.js';
 import { Utils } from './utils/helpers.js';
 import { bus } from './core/bus.js';
 import { syncManager } from './modules/sync/sync-manager.js';
+import { canAccessAdmin, coerceRole, ROLES } from './core/rbac.js';
 
 class VaultService {
   constructor() {
@@ -69,7 +70,7 @@ class VaultService {
     return false;
   }
 
-  async createNewVault({ uid, username, pin }) {
+  async createNewVault({ uid, username, pin, role = ROLES.USER }) {
     this.uid = uid;
     await storageService.resetAll();
 
@@ -77,6 +78,7 @@ class VaultService {
     const keySalt = cryptoService.generateSalt();
     const recoverySalt = cryptoService.generateSalt();
     const recoveryKey = Utils.bufferToHex(crypto.getRandomValues(new Uint8Array(32)));
+    const safeRole = coerceRole(role, username);
 
     const pinKey = await cryptoService.deriveKeyFromSecret(pin, keySalt);
     const recoveryKeyKey = await cryptoService.deriveKeyFromSecret(recoveryKey, recoverySalt);
@@ -92,11 +94,12 @@ class VaultService {
       wrappedKey,
       recoveryWrappedKey,
       username: username || '',
+      role: safeRole,
       updatedAt: now
     };
 
     this.dataKey = dataKey;
-    this.vault = { notes: [], meta: { createdAt: now, username: username || '' } };
+    this.vault = { notes: [], meta: { createdAt: now, username: username || '', role: safeRole } };
 
     await storageService.saveCryptoMeta(this.meta);
     if (this.syncEnabled) {
@@ -118,6 +121,7 @@ class VaultService {
     if (!this.meta) {
       throw new Error('NO_VAULT');
     }
+    this.meta.role = coerceRole(this.meta.role, this.meta.username);
     try {
       const salt = Utils.base64ToBuffer(this.meta.keySalt);
       const pinKey = await cryptoService.deriveKeyFromSecret(pin, salt);
@@ -136,6 +140,10 @@ class VaultService {
       if (!remoteMeta) throw new Error('NO_VAULT');
       this.meta = remoteMeta;
       await storageService.saveCryptoMeta(remoteMeta);
+    }
+    this.meta = this.meta || null;
+    if (this.meta) {
+      this.meta.role = coerceRole(this.meta.role, this.meta.username);
     }
     try {
       const salt = Utils.base64ToBuffer(this.meta.recoverySalt);
@@ -222,13 +230,20 @@ class VaultService {
     if (mergedData) {
       this.vault = mergedData;
       this.localUpdatedAt = mergedRecord.updatedAt;
+      if (this.meta) {
+        this.meta.role = coerceRole(this.meta.role, this.meta.username);
+      }
+      if (this.vault.meta) {
+        this.vault.meta.role = coerceRole(this.vault.meta.role, this.vault.meta.username || this.meta?.username);
+      }
 
       // If merge changed something or remote was newer, we save local.
       // If we merged remote data in, we should persist.
       await storageService.saveEncryptedVault(mergedRecord);
     } else {
       // Init empty
-      this.vault = { notes: [], meta: { createdAt: new Date().toISOString(), username: this.meta?.username || '' } };
+      const fallbackRole = coerceRole(this.meta?.role, this.meta?.username);
+      this.vault = { notes: [], meta: { createdAt: new Date().toISOString(), username: this.meta?.username || '', role: fallbackRole } };
       await this.persistVault();
     }
   }
@@ -383,6 +398,84 @@ class VaultService {
 
   async fileRecoveryResetRequest() {
     syncManager.enqueue('RECOVERY_REQUEST', {}, this.uid);
+  }
+
+  getRole() {
+    const username = this.meta?.username || this.vault?.meta?.username || '';
+    const role = this.meta?.role || this.vault?.meta?.role || ROLES.USER;
+    return coerceRole(role, username);
+  }
+
+  isAdmin() {
+    return canAccessAdmin(this.meta || this.vault?.meta);
+  }
+
+  async exportRecoveryFile({ username, partialPin }) {
+    if (!this.dataKey) throw new Error('LOCKED');
+    const safeUsername = (username || '').trim();
+    const safePin = (partialPin || '').trim();
+    if (!safeUsername || !safePin) throw new Error('RECOVERY_REQUIRED');
+
+    const salt = cryptoService.generateSalt();
+    const wrappingKey = await cryptoService.deriveKeyFromSecret(`${safeUsername}:${safePin}`, salt);
+    const wrappedKey = await cryptoService.wrapKey(this.dataKey, wrappingKey);
+
+    return JSON.stringify({
+      version: '1.0',
+      type: 'pinbridge-recovery-file',
+      createdAt: new Date().toISOString(),
+      username: safeUsername,
+      salt: Utils.bufferToBase64(salt),
+      wrappedKey
+    });
+  }
+
+  async unlockWithRecoveryFile({ uid, fileContent, username, partialPin }) {
+    this.uid = uid;
+    if (!this.meta && this.syncEnabled) {
+      const remoteMeta = await syncService.fetchMeta(uid);
+      if (!remoteMeta) throw new Error('NO_VAULT');
+      this.meta = remoteMeta;
+      await storageService.saveCryptoMeta(remoteMeta);
+    }
+    if (!this.meta) throw new Error('NO_VAULT');
+
+    let payload;
+    try {
+      payload = typeof fileContent === 'string' ? JSON.parse(fileContent) : fileContent;
+    } catch (e) {
+      throw new Error('RECOVERY_FILE_INVALID');
+    }
+
+    if (!payload || payload.type !== 'pinbridge-recovery-file') {
+      throw new Error('RECOVERY_FILE_INVALID');
+    }
+
+    const salt = Utils.base64ToBuffer(payload.salt || '');
+    const safeUsername = (username || '').trim();
+    const safePin = (partialPin || '').trim();
+    const wrappingKey = await cryptoService.deriveKeyFromSecret(`${safeUsername}:${safePin}`, salt);
+    try {
+      this.dataKey = await cryptoService.unwrapKey(payload.wrappedKey, wrappingKey);
+      await this._loadLatestVault();
+      this._startRealtime();
+    } catch (e) {
+      throw new Error('INVALID_PIN');
+    }
+  }
+
+  async unlockWithDataKey({ uid, dataKey }) {
+    this.uid = uid;
+    if (!this.meta && this.syncEnabled) {
+      const remoteMeta = await syncService.fetchMeta(uid);
+      if (!remoteMeta) throw new Error('NO_VAULT');
+      this.meta = remoteMeta;
+      await storageService.saveCryptoMeta(remoteMeta);
+    }
+    if (!this.meta) throw new Error('NO_VAULT');
+    this.dataKey = dataKey;
+    await this._loadLatestVault();
+    this._startRealtime();
   }
 }
 
