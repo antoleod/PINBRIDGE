@@ -26,47 +26,24 @@ class AuthService {
     this.checkInterval = null;
     this.activityEvents = ['mousemove', 'keydown', 'click', 'touchstart', 'visibilitychange'];
     this.activityHandler = () => this._handleActivity();
-    this.offlineMode = false;
-    this.offlineUidKey = 'pinbridge.offline_uid';
   }
 
   async init() {
-    try {
-      await ensureAnonymousSession();
-      onAuth(async (user) => {
-        if (!user) return;
-        this.offlineMode = false;
-        vaultService.setSyncEnabled(true);
-        this.uid = user.uid;
-        window.__PINBRIDGE_UID = user.uid;
-        console.log('[AUTH] Firebase authed', { uid: user.uid, isAnonymous: user.isAnonymous, providerData: user.providerData });
-        this._resolveReady(user.uid);
-        this._bindActivityWatchers();
-      });
-      return this.ready;
-    } catch (err) {
-      console.warn('Falling back to offline-only mode. Firebase auth unavailable.', err);
-      this.offlineMode = true;
-      vaultService.setSyncEnabled(false);
-      const offlineUid = this._getOfflineUid();
-      this.uid = offlineUid;
-      this._resolveReady(offlineUid);
+    await ensureAnonymousSession();
+    onAuth(async (user) => {
+      if (!user) return;
+      vaultService.setSyncEnabled(true);
+      this.uid = user.uid;
+      window.__PINBRIDGE_UID = user.uid;
+      console.log('[AUTH] Firebase authed', { uid: user.uid, isAnonymous: user.isAnonymous, providerData: user.providerData });
+      this._resolveReady(user.uid);
       this._bindActivityWatchers();
-      bus.emit('sync:disabled', 'auth-unavailable');
-      return this.ready;
-    }
+    });
+    return this.ready;
   }
 
   getUid() {
     return this.uid;
-  }
-
-  _getOfflineUid() {
-    const cached = localStorage.getItem(this.offlineUidKey);
-    if (cached) return cached;
-    const uid = `offline-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(this.offlineUidKey, uid);
-    return uid;
   }
 
   async restoreSession() {
@@ -113,9 +90,6 @@ class AuthService {
     if (!pinCheck.ok) {
       throw new Error(pinCheck.code);
     }
-    if (this.offlineMode) {
-      throw new Error('SYNC_DISABLED');
-    }
     const existingVaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
     if (existingVaultId) throw new Error('USER_EXISTS');
     let role = 'user';
@@ -136,7 +110,7 @@ class AuthService {
     await this.ready;
     const usernameCheck = validateUsername(username);
     if (!usernameCheck.ok) throw new Error(usernameCheck.code);
-    const vaultId = this.offlineMode ? (vaultService.uid || this.uid) : await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    const vaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
     if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithPin({
       uid: vaultId,
@@ -152,7 +126,7 @@ class AuthService {
     await this.ready;
     const usernameCheck = validateUsername(username);
     if (!usernameCheck.ok) throw new Error(usernameCheck.code);
-    const vaultId = this.offlineMode ? (vaultService.uid || this.uid) : await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    const vaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
     if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithRecovery({
       uid: vaultId,
@@ -205,7 +179,7 @@ class AuthService {
     await this.ready;
     const usernameCheck = validateUsername(username);
     if (!usernameCheck.ok) throw new Error(usernameCheck.code);
-    const vaultId = this.offlineMode ? (vaultService.uid || this.uid) : await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    const vaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
     if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithRecoveryFile({
       uid: vaultId,

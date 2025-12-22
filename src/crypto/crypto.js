@@ -124,6 +124,30 @@ class CryptoService {
             arr[i] = 0;
         }
     }
+
+    async generateQRCode(text, options = {}) {
+        const value = typeof text === 'string' ? text : JSON.stringify(text);
+        const size = Number.isFinite(options.size) ? options.size : 220;
+        if (!value) throw new Error('QR_DATA_REQUIRED');
+
+        if (!this._qrLib) {
+            this._qrLib = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm');
+        }
+        const qr = await this._qrLib;
+        const toDataURL = qr?.toDataURL || qr?.default?.toDataURL;
+        if (typeof toDataURL !== 'function') {
+            throw new Error('QR_LIB_UNAVAILABLE');
+        }
+
+        return toDataURL(value, {
+            width: size,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#ffffff'
+            }
+        });
+    }
 }
 
 export const cryptoService = new CryptoService();

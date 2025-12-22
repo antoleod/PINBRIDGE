@@ -596,8 +596,8 @@
                         <i data-feather="paperclip"></i>
                         <span>Attach</span>
                     </button>
-                    <button class="btn-tool-minimal" id="btn-voice-note" title="Voice Note"
-                        aria-label="Record voice note">
+                    <button class="btn-tool-minimal" id="btn-voice-type" title="Voice Typing"
+                        aria-label="Voice typing" aria-pressed="false">
                         <i data-feather="mic"></i>
                     </button>
                     <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode"
@@ -647,7 +647,7 @@
 
             <div class="dashboard-grid">
                 <!-- Stats Cards -->
-                <div class="dashboard-card glass-panel">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-all" aria-label="Open notes">
                     <div class="card-icon"><i data-feather="file-text"></i></div>
                     <div class="card-content">
                         <h3 id="stat-total-notes">0</h3>
@@ -655,7 +655,7 @@
                     </div>
                 </div>
 
-                <div class="dashboard-card glass-panel">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-favorites" aria-label="Open favorites">
                     <div class="card-icon"><i data-feather="star"></i></div>
                     <div class="card-content">
                         <h3 id="stat-favorites">0</h3>
@@ -663,7 +663,7 @@
                     </div>
                 </div>
 
-                <div class="dashboard-card glass-panel">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-folders" aria-label="Open folders">
                     <div class="card-icon"><i data-feather="folder"></i></div>
                     <div class="card-content">
                         <h3 id="stat-folders">0</h3>
@@ -671,7 +671,7 @@
                     </div>
                 </div>
 
-                <div class="dashboard-card glass-panel">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-tags" aria-label="Open tags manager">
                     <div class="card-icon"><i data-feather="tag"></i></div>
                     <div class="card-content">
                         <h3 id="stat-tags">0</h3>
@@ -1307,52 +1307,6 @@
                     </div>
                     <div id="diagnostics-output" class="diagnostics-output hidden"></div>
 
-                    <div class="divider"></div>
-                    <h4>Secure Document Tools</h4>
-                    <div class="converter-container glass-panel mt-1"
-                        style="padding: 1.25rem; border-radius: 12px; border: 1px solid var(--border-subtle); background: rgba(255, 255, 255, 0.02);">
-                        <div class="converter-header"
-                            style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                            <span class="action-icon"
-                                style="background: rgba(255,255,255,0.05); width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center;"><i
-                                    data-feather="file-text"></i></span>
-                            <div>
-                                <strong style="display: block; font-size: 1.05rem; letter-spacing: -0.01em;">PDF
-                                    Conversion</strong>
-                                <p style="font-size: 0.85rem; opacity: 0.7; margin: 0.15rem 0 0;">Convert DOC/DOCX files
-                                    securely. No data is stored.</p>
-                            </div>
-                        </div>
-
-                        <div id="converter-drop-zone" class="drop-zone mt-1"
-                            style="border: 2px dashed rgba(255,255,255,0.1); padding: 2.5rem; border-radius: 10px; text-align: center; cursor: pointer; transition: all 0.2s ease; background: rgba(0,0,0,0.15);">
-                            <span class="drop-zone-prompt" style="font-size: 0.95rem; opacity: 0.8;">Drop file here or
-                                click to upload</span>
-                            <input type="file" id="converter-file-input" accept=".doc,.docx" style="display: none;">
-                        </div>
-
-                        <div id="converter-status" class="converter-status hidden mt-1"
-                            style="display: none; align-items: center; gap: 0.75rem; padding: 0.75rem; border-radius: 8px; background: rgba(255,255,255,0.03); font-size: 0.9rem;">
-                            <div class="loader-pulse small"></div>
-                            <span id="converter-status-text" style="opacity: 0.9;">Uploading...</span>
-                        </div>
-
-                        <div id="converter-actions" class="converter-actions hidden mt-1"
-                            style="display: none; flex-direction: column; gap: 0.75rem;">
-                            <div class="settings-item"
-                                style="padding: 0.5rem 0; border: none; background: transparent; cursor: default;">
-                                <div class="settings-item-content">
-                                    <span class="settings-item-title" style="font-size: 0.95rem;">Attach to Note</span>
-                                </div>
-                                <div class="toggle-switch">
-                                    <input type="checkbox" id="attach-to-note" class="toggle-input">
-                                    <label for="attach-to-note" class="toggle-label"></label>
-                                </div>
-                            </div>
-                            <button id="btn-convert-file" class="btn btn-primary btn-block"
-                                style="padding: 0.85rem;">Convert to PDF</button>
-                        </div>
-                    </div>
                 </div>
 
                 <!-- ADDITIVE: Session Activity Panel (Requires PIN verification via UI logic) -->

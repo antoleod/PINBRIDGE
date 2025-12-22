@@ -6,6 +6,7 @@
 import { cryptoService } from '../../crypto/crypto.js';
 import { Utils } from '../../utils/helpers.js';
 import { vaultService } from '../../vault.js';
+import { authService } from '../../auth.js';
 
 // NOTE: In a real-world scenario, this would be your own signaling server.
 // A simple Glitch.me or similar WebSocket server is sufficient for this.

@@ -397,7 +397,7 @@ class UIService {
             this.statusIndicators.offline.className = `status-indicator ${isOnline ? 'status-online' : 'status-offline'}`;
         }
         if (this.statusIndicators.offlineText) {
-            this.statusIndicators.offlineText.textContent = isOnline ? 'Cloud Linked' : 'Offline Mode';
+            this.statusIndicators.offlineText.textContent = isOnline ? 'Cloud Linked' : 'Offline';
         }
     }
 
@@ -464,7 +464,6 @@ class UIService {
             this._stopCameraForQRScan?.();
             this.stopVoiceRecording(true);
         });
-        this.initConverter();
     }
 
     initGeneratedPasswordPanel() {
@@ -1639,16 +1638,14 @@ class UIService {
 
         // Inject Capture Tools (Voice & OCR)
         if (toolbarActions) {
-            // Voice
-            if (!document.getElementById('btn-voice-type')) {
-                const btn = document.createElement('button');
-                btn.id = 'btn-voice-type';
-                btn.className = 'btn-tool-minimal';
-                btn.title = 'Voice Typing';
-                btn.setAttribute('aria-pressed', 'false');
-                btn.innerHTML = '<i data-feather="mic"></i>';
-                btn.onclick = () => this.toggleVoiceRecording();
-                toolbarActions.insertBefore(btn, toolbarActions.firstChild);
+            // Voice: bind existing button (index.html) once.
+            const voiceBtn = document.getElementById('btn-voice-type');
+            if (voiceBtn && !voiceBtn.dataset.boundVoice) {
+                voiceBtn.dataset.boundVoice = 'true';
+                voiceBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.toggleVoiceRecording();
+                };
             }
             // OCR
             if (!document.getElementById('btn-ocr-scan')) {
@@ -1714,25 +1711,59 @@ class UIService {
         // Read-Only Mode
         document.getElementById('btn-toggle-readonly')?.addEventListener('click', () => this.toggleReadOnly());
 
-        // Dashboard Quick Actions
-        document.querySelectorAll('.quick-action-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const action = e.currentTarget.dataset.action;
+        // Dashboard actions (delegate so icons/cards work too)
+        const dashboardPanel = document.querySelector('.dashboard-panel');
+        if (dashboardPanel && !dashboardPanel.dataset.boundActions) {
+            dashboardPanel.dataset.boundActions = 'true';
+            dashboardPanel.addEventListener('click', (e) => {
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                const action = target.dataset.action;
+                if (!action) return;
+
                 if (action === 'new-note') {
                     this.currentView = 'all';
                     document.querySelector('[data-view="all"]')?.click();
                     this.handleNewNote();
-                } else if (action === 'new-template') {
+                    return;
+                }
+                if (action === 'new-template') {
                     this.currentView = 'templates';
                     document.querySelector('[data-view="templates"]')?.click();
                     this.handleNewNote();
-                } else if (action === 'view-favorites') {
+                    return;
+                }
+                if (action === 'view-favorites') {
                     document.querySelector('[data-view="favorites"]')?.click();
-                } else if (action === 'view-trash') {
+                    return;
+                }
+                if (action === 'view-trash') {
                     document.querySelector('[data-view="trash"]')?.click();
+                    return;
+                }
+                if (action === 'view-all') {
+                    document.querySelector('[data-view="all"]')?.click();
+                    return;
+                }
+                if (action === 'view-folders') {
+                    // No dedicated "folders" view; open notes list with folder nav visible.
+                    document.querySelector('[data-view="all"]')?.click();
+                    return;
+                }
+                if (action === 'view-tags') {
+                    this.openTagsManager();
+                    return;
                 }
             });
-        });
+            dashboardPanel.addEventListener('keydown', (e) => {
+                const isActivation = e.key === 'Enter' || e.key === ' ';
+                if (!isActivation) return;
+                const target = e.target.closest('[data-action]');
+                if (!target) return;
+                e.preventDefault();
+                target.click();
+            });
+        }
 
         // Settings Modal (vault-only)
         document.getElementById('btn-vault-settings')?.addEventListener('click', () => this.openSettingsModal());
@@ -1910,7 +1941,8 @@ class UIService {
             } else if (code === 'audio-capture') {
                 this.showToast('No microphone found or it is unavailable.', 'error');
             } else if (code === 'network') {
-                this.showToast('Speech service unavailable (network). Try again.', 'error');
+                const isSecure = window.isSecureContext || location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname);
+                this.showToast(isSecure ? 'Speech service unavailable. Try Chrome/Edge, then retry.' : 'Speech requires HTTPS (or localhost). Open the app on HTTPS and retry.', 'error');
             } else {
                 this.showToast('Speech recognition error. Try again.', 'error');
             }
@@ -5124,145 +5156,6 @@ class UIService {
         if (!el) return;
         el.classList.add('shake-animation');
         setTimeout(() => el.classList.remove('shake-animation'), 500);
-    }
-
-    /**
-     * Secure Document Converter
-     */
-    initConverter() {
-        const dropZone = this._getById('converter-drop-zone');
-        const fileInput = this._getById('converter-file-input');
-        const statusDiv = this._getById('converter-status');
-        const statusText = this._getById('converter-status-text');
-        const actionsDiv = this._getById('converter-actions');
-        const convertBtn = this._getById('btn-convert-file');
-        const attachToggle = this._getById('attach-to-note');
-
-        if (!dropZone || !fileInput) return;
-
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('drag-over');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-over');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('drag-over');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                this.handleConverterFileSelection(files[0]);
-            }
-        });
-
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                this.handleConverterFileSelection(fileInput.files[0]);
-            }
-        });
-
-        convertBtn.addEventListener('click', () => this.handleFileConversion());
-    }
-
-    handleConverterFileSelection(file) {
-        const actionsDiv = this._getById('converter-actions');
-        const statusDiv = this._getById('converter-status');
-        const dropZonePrompt = this._getById('converter-drop-zone')?.querySelector('.drop-zone-prompt');
-
-        if (!file.name.match(/\.(doc|docx)$/i)) {
-            this.showToast('Please select a DOC or DOCX file.', 'error');
-            return;
-        }
-
-        if (file.size > 10 * 1024 * 1024) {
-            this.showToast('File size must be less than 10MB.', 'error');
-            return;
-        }
-
-        if (dropZonePrompt) dropZonePrompt.textContent = `Selected: ${file.name}`;
-        if (actionsDiv) actionsDiv.style.display = 'flex';
-        if (statusDiv) statusDiv.style.display = 'none';
-
-        if (typeof feather !== 'undefined') {
-            feather.replace();
-        }
-    }
-
-    async handleFileConversion() {
-        const fileInput = this._getById('converter-file-input');
-        const statusDiv = this._getById('converter-status');
-        const statusText = this._getById('converter-status-text');
-        const actionsDiv = this._getById('converter-actions');
-        const attachToggle = this._getById('attach-to-note');
-
-        if (!fileInput || fileInput.files.length === 0) return;
-
-        const file = fileInput.files[0];
-        const formData = new FormData();
-        formData.append('file', file);
-
-        if (actionsDiv) actionsDiv.style.display = 'none';
-        if (statusDiv) statusDiv.style.display = 'flex';
-        if (statusText) statusText.textContent = 'Converting...';
-
-        try {
-            const response = await fetch('http://localhost:3001/api/convert', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) throw new Error('Conversion failed');
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            const pdfName = file.name.replace(/\.(doc|docx)$/i, '.pdf');
-            a.download = pdfName;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-
-            this.showToast('File converted successfully!', 'success');
-            if (statusText) statusText.textContent = 'Success!';
-
-            if (attachToggle && attachToggle.checked) {
-                await this.attachPdfToNote(blob, pdfName);
-            }
-
-        } catch (error) {
-            console.error(error);
-            this.showToast('Conversion failed. Is the server running?', 'error');
-            if (statusText) statusText.textContent = 'Error';
-            if (actionsDiv) actionsDiv.style.display = 'flex';
-        }
-    }
-
-    async attachPdfToNote(blob, filename) {
-        const reader = new FileReader();
-        reader.onloadend = async () => {
-            const base64data = reader.result;
-            const title = `Converted PDF: ${filename}`;
-            const body = `This note contains a converted PDF file.\n\n[Attachment: ${filename}]`;
-            const tags = ['converted', 'pdf'];
-            const options = {
-                attachments: [{
-                    name: filename,
-                    type: 'application/pdf',
-                    data: base64data
-                }]
-            };
-            await notesService.createNote(title, body, '', tags, options);
-            this.showToast('PDF attached as a new vault note.', 'success');
-        };
-        reader.readAsDataURL(blob);
     }
 
     async handleAttachmentPick() {

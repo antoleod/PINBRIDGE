@@ -198,10 +198,6 @@ bus.on('vault:remote-update', async () => {
     }
 });
 
-bus.on('sync:disabled', () => {
-    uiService.showToast('Sync unavailable. Working in offline-only mode.', 'info');
-});
-
 // Start the application
 window.addEventListener('DOMContentLoaded', init);
 

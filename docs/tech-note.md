@@ -4,7 +4,7 @@
 - Hardened admin model with role checks, ADM username enforcement, and admin invite codes for protected admin creation.
 - Added input validation for usernames and PINs, plus recovery file flow fixes.
 - Added admin invite management UI and hid admin entry points for non-admin users.
-- Secured document conversion server with stricter CORS, security headers, and safer process execution.
+- Removed the document conversion server and UI (feature cleanup).
 
 ## How To Create/Grant An Admin Account
 1. Sign in to an existing admin vault (username must start with `ADM`).

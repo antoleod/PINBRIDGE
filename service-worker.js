@@ -17,9 +17,8 @@ const ASSETS_TO_CACHE = [
     './src/modules/search/search.js',
     './src/modules/settings/settings.js',
     './src/ui/ui.js',
-    './crypto.js',
-    './db.js',
-    './helpers.js'
+    './docs/FIRESTORE_RULES_SETUP.md',
+    './firestore.rules'
 ];
 
 const ICONS_CACHE = [
