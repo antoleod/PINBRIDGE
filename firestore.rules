@@ -17,7 +17,7 @@ service cloud.firestore {
     // NOTE: Any authenticated user can read/write any vaultId under this rule.
     // For production you must restrict access (e.g., via server-issued custom auth claims).
     match /users/{vaultId}/{document=**} {
-      allow read, write: if isAuthed();
+      allow read, write: if isAuthed() && request.auth.uid == vaultId;
     }
   }
 }

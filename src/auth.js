@@ -39,6 +39,7 @@ class AuthService {
         vaultService.setSyncEnabled(true);
         this.uid = user.uid;
         window.__PINBRIDGE_UID = user.uid;
+        console.log('[AUTH] Firebase authed', { uid: user.uid, isAnonymous: user.isAnonymous, providerData: user.providerData });
         this._resolveReady(user.uid);
         this._bindActivityWatchers();
       });

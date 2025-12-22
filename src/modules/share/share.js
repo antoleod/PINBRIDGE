@@ -269,7 +269,7 @@ class ShareService {
         }
         window.pdfjsLib.GlobalWorkerOptions.workerSrc =
             window.pdfjsLib.GlobalWorkerOptions.workerSrc ||
-            'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.js';
+            'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/legacy/build/pdf.worker.min.mjs';
 
         const buffer = await file.arrayBuffer();
         const pdf = await window.pdfjsLib.getDocument({ data: buffer }).promise;

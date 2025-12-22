@@ -1408,8 +1408,11 @@ class UIService {
     resolveAuthErrorMessage(code) {
         const raw = `${code || ''}`;
         const normalized = raw.toLowerCase();
+        if (normalized.includes('firestore_')) {
+            return `Sync error: ${raw}`;
+        }
         if (normalized.includes('missing or insufficient permissions') || normalized.includes('permission-denied')) {
-            return 'Sync permission error. Check Firestore security rules for this project.';
+            return 'Sync permission error (Firestore). Confirm you published rules for the same Firebase projectId used by the app, then reload.';
         }
         switch (code) {
             case 'INVALID_PIN':
@@ -4039,8 +4042,8 @@ class UIService {
 
         const isTemplateView = this.currentView === 'templates';
 
-        // 2 Create new empty note (non-persisted until typed in)
-        const id = await notesService.createNote("", "", "", [], { persist: false, isTemplate: isTemplateView });
+        // 2 Create new note and persist immediately so it syncs across devices.
+        const id = await notesService.createNote("", "", "", [], { persist: true, allowEmpty: true, isTemplate: isTemplateView });
 
         // Ensure the new note has a timestamp for sorting
         const newNote = notesService.notes.find(n => n.id === id);

@@ -5297,19 +5297,39 @@ input[type="file"]::file-selector-button {
     }
 
     /* --- MOBILE QUICK MENU (FULLSCREEN) --- */
-    .modal-content.mobile-footer-menu-sheet {
-        position: fixed;
-        inset: 0;
+    /* Ensure <dialog> defaults don't constrain the fullscreen sheet */
+    #mobile-footer-menu-modal.modal-overlay {
+        padding: 0;
+        margin: 0;
+        border: none;
         width: 100%;
         max-width: 100%;
         height: 100vh;
         height: 100dvh;
         max-height: 100vh;
+        max-height: 100dvh;
+        justify-content: stretch;
+        align-items: stretch;
+    }
+
+    #mobile-footer-menu-modal.modal-overlay::backdrop {
+        background: rgba(0, 0, 0, 0.6);
+        backdrop-filter: blur(10px);
+    }
+
+    .modal-content.mobile-footer-menu-sheet {
+        position: relative;
+        inset: auto;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
         border-radius: 0;
         margin: 0;
         display: flex;
         flex-direction: column;
         padding: 0;
+        overflow: hidden;
         transform: translateY(100%);
         transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
@@ -5336,6 +5356,21 @@ input[type="file"]::file-selector-button {
         padding: 0.75rem 1rem calc(1.25rem + env(safe-area-inset-bottom));
         display: grid;
         gap: 0.75rem;
+    }
+
+    /* Make actions easier to read/tap on small screens */
+    .mobile-footer-menu-sheet .settings-action {
+        padding: 1rem;
+        border-radius: 14px;
+    }
+
+    .mobile-footer-menu-sheet .settings-action-title {
+        font-size: 1rem;
+    }
+
+    .mobile-footer-menu-sheet .settings-action-desc {
+        font-size: 0.9rem;
+        line-height: 1.25rem;
     }
 }
 

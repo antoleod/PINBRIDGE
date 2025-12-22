@@ -118,13 +118,17 @@ class NotesService {
             attachments: options.attachments || []
         };
 
-        const { persist = true } = options;
+        const { persist = true, allowEmpty = false } = options;
         const contentPresent = (note.title || '').trim() || (note.body || '').trim();
-        if (persist && !contentPresent) {
+        if (persist && !allowEmpty && !contentPresent) {
             console.warn('Skipping empty note creation');
             return null;
         }
         if (persist && contentPresent) {
+            const persisted = await this.persistNote(note);
+            if (persisted) Object.assign(note, persisted);
+        }
+        if (persist && allowEmpty && !contentPresent) {
             const persisted = await this.persistNote(note);
             if (persisted) Object.assign(note, persisted);
         }
