@@ -26,6 +26,7 @@ class UIService {
         this.recoveryModal = {};
         this.mobile = {};
         this.quickDropZone = null;
+        this._lastWindowWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
         this.activeNoteId = null;
         this.currentView = 'all';
         const autoSaveSetting = localStorage.getItem('pinbridge.auto_save');
@@ -603,7 +604,19 @@ class UIService {
 
         // Handle resize events to reset layout
         window.addEventListener('resize', () => {
-            if (window.innerWidth >= 900) {
+            const currentWidth = window.innerWidth;
+            const prevWidth = this._lastWindowWidth || currentWidth;
+            this._lastWindowWidth = currentWidth;
+
+            // Mobile keyboards often fire `resize` from viewport height changes.
+            // Only react when we actually cross the responsive breakpoint.
+            const crossedBreakpoint = (prevWidth >= 900) !== (currentWidth >= 900);
+            if (!crossedBreakpoint) {
+                this.setupSettingsAccordion();
+                return;
+            }
+
+            if (currentWidth >= 900) {
                 if (this.panels.sidebar) this.panels.sidebar.classList.remove('hidden');
                 if (this.panels.editor) this.panels.editor.classList.remove('hidden');
                 document.getElementById('mobile-back-btn')?.classList.add('hidden');
@@ -3996,6 +4009,11 @@ class UIService {
             `;
 
             div.onclick = (e) => {
+                // Prevent accidental open after long-press context menu on mobile
+                if (div.dataset.longpress === '1') {
+                    div.dataset.longpress = '0';
+                    return;
+                }
                 // Don't select note if clicking on action buttons
                 if (e.target.closest('.note-action-icon')) {
                     e.stopPropagation();
@@ -4003,6 +4021,12 @@ class UIService {
                 }
                 this.selectNote(note);
             };
+
+            // Desktop equivalent for mobile long-press
+            div.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                this.showMobileContextMenu(note);
+            });
 
             // Add event listeners for action buttons
             div.querySelectorAll('.note-action-icon').forEach(btn => {
@@ -4072,6 +4096,7 @@ class UIService {
 
         // Long press vars
         let longPressTimer = null;
+        let longPressTriggered = false;
         const longPressDuration = 500;
 
         el.addEventListener('touchstart', (e) => {
@@ -4079,12 +4104,16 @@ class UIService {
             startY = e.touches[0].clientY;
             isSwiping = false;
             isScrolling = false;
+            longPressTriggered = false;
             el.style.transition = 'none'; // Disable transition for direct 1:1 movement
 
             // Start Long Press Timer
             longPressTimer = setTimeout(() => {
                 this.hapticFeedback();
                 this.showMobileContextMenu(note);
+                longPressTriggered = true;
+                el.dataset.longpress = '1';
+                setTimeout(() => { el.dataset.longpress = '0'; }, 650);
                 isSwiping = false;
                 isScrolling = true; // Prevent swipe logic from continuing
             }, longPressDuration);
@@ -4134,6 +4163,7 @@ class UIService {
 
         el.addEventListener('touchend', async (e) => {
             clearTimeout(longPressTimer);
+            if (longPressTriggered) return;
             if (!isSwiping) return;
 
             el.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -4188,6 +4218,7 @@ class UIService {
         }
 
         const isPinned = note.pinned;
+        const isArchived = note.archived;
         const isTrash = note.trash;
 
         overlay.innerHTML = `
@@ -4205,6 +4236,14 @@ class UIService {
                 <button class="ctx-item" data-action="pin">
                     <i data-feather="${isPinned ? 'star-off' : 'star'}"></i> ${isPinned ? 'Unpin' : 'Pin to Top'}
                 </button>
+
+                <button class="ctx-item" data-action="archive">
+                    <i data-feather="${isArchived ? 'inbox' : 'archive'}"></i> ${isArchived ? 'Unarchive' : 'Archive'}
+                </button>
+
+                <button class="ctx-item" data-action="tags">
+                    <i data-feather="tag"></i> Edit Tags
+                </button>
                 
                 <button class="ctx-item danger" data-action="delete">
                     <i data-feather="${isTrash ? 'trash-2' : 'trash'}"></i> ${isTrash ? 'Delete Forever' : 'Move to Trash'}
@@ -4221,6 +4260,10 @@ class UIService {
                 overlay.classList.remove('visible');
 
                 if (action === 'pin') this.handlePinNote(note.id);
+                if (action === 'archive') {
+                    await this.handleArchiveNote(note.id);
+                    this.renderCurrentView();
+                }
                 if (action === 'delete') {
                     if (isTrash) {
                         let allowed = confirm(i18n.t('confirmDeleteForever'));
@@ -4244,6 +4287,15 @@ class UIService {
                     const folder = prompt('Enter folder name:', note.folder || '');
                     if (folder !== null) {
                         await notesService.updateNote(note.id, note.title, note.body, folder, note.tags);
+                        this.renderCurrentView();
+                    }
+                }
+                if (action === 'tags') {
+                    const existing = (note.tags || []).map(t => typeof t === 'string' ? t : t.name).join(', ');
+                    const tagString = prompt('Tags (comma separated):', existing);
+                    if (tagString !== null) {
+                        const tags = tagString.split(',').map(t => t.trim()).filter(Boolean);
+                        await notesService.updateNote(note.id, note.title, note.body, note.folder, tags);
                         this.renderCurrentView();
                     }
                 }
