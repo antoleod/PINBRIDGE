@@ -1,4 +1,4 @@
-import { ensureAnonymousSession, onAuth, upgradeToEmail } from './firebase.js';
+import { ensureAnonymousSession, onAuth, upgradeToEmail, signOutUser } from './firebase.js';
 import { vaultService } from './vault.js';
 import { bus } from './core/bus.js';
 import { uiService } from './ui/ui.js';
@@ -212,6 +212,16 @@ class AuthService {
     vaultService.lock();
     this._clearActivityWatchers();
     bus.emit('auth:locked', reason);
+  }
+
+  async signOut(reason = 'signout') {
+    try {
+      await signOutUser();
+    } catch (e) {
+      console.warn('[AUTH] Firebase sign out failed', e);
+    } finally {
+      this.forceLogout(reason);
+    }
   }
 
   _handleActivity() {

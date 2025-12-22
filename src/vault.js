@@ -14,8 +14,11 @@ class VaultService {
     this.uid = null;
     this.authUid = null;
     this.localUpdatedAt = null;
+    this.localUpdatedAtMs = 0;
     this.realtimeUnsub = null;
     this.syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
+    this.deviceId = localStorage.getItem('pinbridge.device_id') || (crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+    localStorage.setItem('pinbridge.device_id', this.deviceId);
   }
 
   async init(uid) {
@@ -23,7 +26,26 @@ class VaultService {
     this.uid = sessionStorage.getItem('pb_session_vault_id') || null;
     await storageService.init('pinbridge_db');
     this.meta = await storageService.getCryptoMeta();
-    this.localUpdatedAt = (await storageService.getEncryptedVault())?.updatedAt || null;
+    const stored = await storageService.getEncryptedVault();
+    this.localUpdatedAt = stored?.updatedAt || null;
+    this.localUpdatedAtMs = stored?.updatedAtMs || (this.localUpdatedAt ? Date.parse(this.localUpdatedAt) : 0) || 0;
+  }
+
+  _toEpochMs(updatedAtMs, updatedAtIso) {
+    if (typeof updatedAtMs === 'number' && Number.isFinite(updatedAtMs)) return updatedAtMs;
+    const parsed = Date.parse(updatedAtIso || '');
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  _computeVaultUpdatedMs() {
+    const notes = Array.isArray(this.vault?.notes) ? this.vault.notes : [];
+    let max = 0;
+    for (const note of notes) {
+      const v = typeof note?.updated === 'number' ? note.updated : 0;
+      if (v > max) max = v;
+    }
+    // Fallback to monotonic "now" to cover settings/meta-only updates.
+    return Math.max(max, Date.now());
   }
 
   ensureSyncActive() {
@@ -185,17 +207,21 @@ class VaultService {
 
   async persistVault() {
     if (!this.dataKey) throw new Error('LOCKED');
-    const now = new Date().toISOString();
+    const updatedAtMs = this._computeVaultUpdatedMs();
+    const updatedAt = new Date(updatedAtMs).toISOString();
     this.vault.meta = this.vault.meta || {};
-    this.vault.meta.updatedAt = now;
+    this.vault.meta.updatedAt = updatedAt;
     const payload = await cryptoService.encryptObject(this.vault, this.dataKey);
     const record = {
       version: '1.0',
-      updatedAt: now,
+      updatedAt,
+      updatedAtMs,
+      deviceId: this.deviceId,
       cipher: 'AES-GCM',
       payload
     };
-    this.localUpdatedAt = now;
+    this.localUpdatedAt = updatedAt;
+    this.localUpdatedAtMs = updatedAtMs;
     await storageService.saveEncryptedVault(record);
 
     if (this.syncEnabled) {
@@ -303,19 +329,30 @@ class VaultService {
 
     // Reconstruct
     const mergedNotes = Array.from(noteMap.values());
-    const maxTime = new Date().toISOString();
+    let maxNoteMs = 0;
+    for (const note of mergedNotes) {
+      const v = typeof note?.updated === 'number' ? note.updated : 0;
+      if (v > maxNoteMs) maxNoteMs = v;
+    }
+
+    const localMs = this._toEpochMs(localRecord?.updatedAtMs, localRecord?.updatedAt);
+    const remoteMs = this._toEpochMs(remoteRecord?.updatedAtMs, remoteRecord?.updatedAt);
+    const mergedUpdatedAtMs = Math.max(localMs, remoteMs, maxNoteMs);
+    const mergedUpdatedAt = new Date(mergedUpdatedAtMs).toISOString();
 
     const mergedData = {
       ...localData,
       notes: mergedNotes,
-      meta: { ...localData.meta, updatedAt: maxTime }
+      meta: { ...localData.meta, updatedAt: mergedUpdatedAt }
     };
 
     // Re-encrypt
     const payload = await cryptoService.encryptObject(mergedData, this.dataKey);
     const mergedRecord = {
       version: '1.0',
-      updatedAt: maxTime,
+      updatedAt: mergedUpdatedAt,
+      updatedAtMs: mergedUpdatedAtMs,
+      deviceId: this.deviceId,
       cipher: 'AES-GCM',
       payload
     };
@@ -327,8 +364,8 @@ class VaultService {
     if (!doc || !this.dataKey) return; // Ignore if locked
 
     // Check timestamps to avoid loops
-    const remoteTime = new Date(doc.updatedAt || 0).getTime();
-    const localTime = new Date(this.localUpdatedAt || 0).getTime();
+    const remoteTime = this._toEpochMs(doc.updatedAtMs, doc.updatedAt);
+    const localTime = this.localUpdatedAtMs || this._toEpochMs(null, this.localUpdatedAt);
 
     if (remoteTime <= localTime) return; // We are up to date or ahead
 
@@ -339,6 +376,7 @@ class VaultService {
     if (mergedData) {
       this.vault = mergedData;
       this.localUpdatedAt = mergedRecord.updatedAt;
+      this.localUpdatedAtMs = mergedRecord.updatedAtMs || this._toEpochMs(null, mergedRecord.updatedAt);
       await storageService.saveEncryptedVault(mergedRecord);
       bus.emit('vault:remote-update', mergedRecord.updatedAt);
       bus.emit('notes:loaded', this.vault.notes); // Force UI refresh

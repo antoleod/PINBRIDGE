@@ -486,19 +486,12 @@
                     <span class="sync-dot status-offline"></span>
                     <span class="sync-label" data-i18n="statusOffline">Offline</span>
                 </div>
+                <div id="current-user-display" class="current-user-display" title="Signed in"></div>
                 <button class="nav-item" id="btn-vault-settings" title="Settings" data-i18n-title="settings"
                     aria-label="Open vault settings">
                     <svg viewBox="0 0 24 24" fill="none" class="icon">
                         <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" id="btn-tags-manager" title="Manage Tags" aria-label="Manage Tags">
-                    <svg viewBox="0 0 24 24" fill="none" class="icon">
-                        <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        <line x1="7" y1="7" x2="7.01" y2="7" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </button>
                 <button class="nav-item" id="btn-lock" title="Lock Vault" data-i18n-title="lockVault"
@@ -508,6 +501,16 @@
                             stroke-linecap="round" stroke-linejoin="round" />
                         <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <button class="nav-item" id="btn-signout" title="Sign out" aria-label="Sign out">
+                    <svg viewBox="0 0 24 24" fill="none" class="icon">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <polyline points="16 17 21 12 16 7" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <line x1="21" y1="12" x2="9" y2="12" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
                 </button>
             </div>
@@ -527,9 +530,12 @@
                 <button class="nav-pill" data-view="trash" title="Trash" data-i18n="mobileTrash">Trash</button>
             </div>
             <div class="topbar-utilities">
+                <span id="mobile-user-display" class="mobile-user-display" aria-label="Current user"></span>
                 <button id="mobile-new-note" class="btn-icon-primary" title="New note"
                     data-i18n-title="newNoteTooltip">+</button>
                 <button id="mobile-lock" class="btn-icon ghost" title="Lock"><i data-feather="lock"></i></button>
+                <button id="mobile-signout" class="btn-icon ghost" title="Sign out" aria-label="Sign out"><i
+                        data-feather="log-out"></i></button>
             </div>
         </div>
 
@@ -668,14 +674,6 @@
                     <div class="card-content">
                         <h3 id="stat-folders">0</h3>
                         <p>Folders</p>
-                    </div>
-                </div>
-
-                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-tags" aria-label="Open tags manager">
-                    <div class="card-icon"><i data-feather="tag"></i></div>
-                    <div class="card-content">
-                        <h3 id="stat-tags">0</h3>
-                        <p>Tags</p>
                     </div>
                 </div>
 
@@ -987,18 +985,18 @@
                         <span class="settings-action-desc">Local vault overview.</span>
                     </div>
                 </button>
-                <button class="settings-action" id="mobile-footer-open-tags">
-                    <span class="settings-action-icon"><i data-feather="tag"></i></span>
-                    <div class="settings-action-content">
-                        <span class="settings-action-title">Tags</span>
-                        <span class="settings-action-desc">Manage tag colors and names.</span>
-                    </div>
-                </button>
                 <button class="settings-action" id="mobile-footer-lock">
                     <span class="settings-action-icon"><i data-feather="lock"></i></span>
                     <div class="settings-action-content">
                         <span class="settings-action-title">Lock Vault</span>
                         <span class="settings-action-desc">Secure your vault instantly.</span>
+                    </div>
+                </button>
+                <button class="settings-action" id="mobile-footer-signout">
+                    <span class="settings-action-icon"><i data-feather="log-out"></i></span>
+                    <div class="settings-action-content">
+                        <span class="settings-action-title">Sign out</span>
+                        <span class="settings-action-desc">End this session and return to login.</span>
                     </div>
                 </button>
             </div>
@@ -1482,23 +1480,6 @@
             <div class="modal-actions">
                 <button id="cancel-secret-question" class="btn btn-text">Cancel</button>
                 <button id="save-secret-question" class="btn btn-primary">Save Question</button>
-            </div>
-        </div>
-    </dialog>
-
-    <!-- TAGS MANAGER MODAL -->
-    <dialog id="tags-manager-modal" class="modal-overlay hidden">
-        <div class="modal-content glass-panel settings-modal">
-            <div class="modal-header">
-                <h2><i data-feather="tag"></i> Tags Manager</h2>
-                <button id="close-tags-manager" class="btn-icon ghost">×</button>
-            </div>
-            <p class="hint">Manage colors for your tags. Changes apply to all notes.</p>
-
-            <div class="tags-manager-content">
-                <div id="tags-list" class="tags-list">
-                    <!-- Tags injected here -->
-                </div>
             </div>
         </div>
     </dialog>

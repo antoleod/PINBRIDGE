@@ -11,6 +11,12 @@ function normalizeUsername(username) {
   return (username || '').trim().toLowerCase();
 }
 
+function toEpochMs(updatedAtMs, updatedAtIso) {
+  if (typeof updatedAtMs === 'number' && Number.isFinite(updatedAtMs)) return updatedAtMs;
+  const parsed = Date.parse(updatedAtIso || '');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function rethrowFirestoreError(operation, err) {
   const code = err?.code || err?.name || 'unknown';
   const message = err?.message || `${err}`;
@@ -100,7 +106,17 @@ class SyncService {
 
   async pushVault(uid, vaultDoc) {
     try {
-      await setDoc(doc(db, 'users', uid, 'vault', 'data'), vaultDoc, { merge: true });
+      const incomingMs = toEpochMs(vaultDoc?.updatedAtMs, vaultDoc?.updatedAt);
+      await runTransaction(db, async (tx) => {
+        const ref = doc(db, 'users', uid, 'vault', 'data');
+        const snap = await tx.get(ref);
+        if (snap.exists()) {
+          const existing = snap.data() || {};
+          const existingMs = toEpochMs(existing?.updatedAtMs, existing?.updatedAt);
+          if (existingMs > incomingMs) return; // Remote is newer; let realtime pull handle merge.
+        }
+        tx.set(ref, vaultDoc, { merge: true });
+      });
     } catch (err) {
       rethrowFirestoreError('PUSH_VAULT', err);
     }

@@ -2395,6 +2395,27 @@ button.btn:active {
     transition: background 220ms ease, border-color 220ms ease, padding 220ms ease;
 }
 
+.current-user-display {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    padding: 0.25rem 0.5rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
+}
+
+.mobile-user-display {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    max-width: 10ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-right: 0.25rem;
+}
+
 .quick-drop.collapsed input {
     height: 40px;
     opacity: 0.92;
@@ -3998,78 +4019,6 @@ input[type="file"]::file-selector-button {
     color: white;
     cursor: pointer;
     margin-right: 1rem;
-}
-
-/* Tags Manager */
-.tags-manager-content {
-    padding: 1rem 0;
-    padding: 1rem;
-    max-height: 60vh;
-    overflow-y: auto;
-}
-
-.tags-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.tag-manager-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-}
-
-.tag-manager-info {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex: 1;
-}
-
-.tag-color-preview {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid rgba(255, 255, 255, 0.2);
-}
-
-.tag-manager-details strong {
-    display: block;
-    margin-bottom: 0.25rem;
-}
-
-.tag-manager-details span {
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.tag-color-picker {
-    display: flex;
-    gap: 0.5rem;
-}
-
-.color-option {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 2px solid transparent;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.color-option:hover {
-    transform: scale(1.15);
-    border-color: white;
-}
-
-.color-option.active {
-    border-color: white;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
 }
 
 /* Colored Tag Badges */

@@ -249,8 +249,8 @@ class UIService {
             footerMenuClose: document.getElementById('mobile-footer-menu-close'),
             footerMenuSettings: document.getElementById('mobile-footer-open-settings'),
             footerMenuAdmin: document.getElementById('mobile-footer-open-admin'),
-            footerMenuTags: document.getElementById('mobile-footer-open-tags'),
-            footerMenuLock: document.getElementById('mobile-footer-lock')
+            footerMenuLock: document.getElementById('mobile-footer-lock'),
+            footerMenuSignout: document.getElementById('mobile-footer-signout')
         };
 
         this.panels = {
@@ -674,6 +674,10 @@ class UIService {
 
             const sections = Array.from(container.querySelectorAll('.settings-content'));
             sections.forEach((section, index) => {
+                // On desktop, tabs control visibility with `.hidden`. On mobile, the accordion controls
+                // visibility, so we must clear the tab-hidden state or the section stays non-interactive.
+                section.classList.remove('hidden');
+
                 const title = section.querySelector('h3')?.textContent?.trim() || 'Settings';
                 const item = document.createElement('div');
                 item.className = 'settings-accordion-item';
@@ -713,6 +717,11 @@ class UIService {
             const sections = Array.from(existingAccordion.querySelectorAll('.settings-content'));
             sections.forEach(section => container.appendChild(section));
             existingAccordion.remove();
+
+            const activeTab = document.querySelector('.settings-tab.active')?.dataset?.tab || 'general';
+            if (typeof this.switchSettingsTab === 'function') {
+                this.switchSettingsTab(activeTab);
+            }
         }
     }
 
@@ -1449,6 +1458,7 @@ class UIService {
         vaultService.lock();
         this.showScreen('auth');
         this.showLoginForm();
+        this.updateUserIdentity(null);
         notesService.notes = [];
         searchService.buildIndex([]);
         this.renderNoteList([]);
@@ -1471,6 +1481,7 @@ class UIService {
                 document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.currentView = btn.dataset.view;
+                this.closeAllPanels({ reason: 'navigate' });
                 this.closeMobileSidebar();
                 this.closeMobileFooterMenu();
                 this.renderCurrentView();
@@ -1482,6 +1493,7 @@ class UIService {
                 this.mobile.navPills.forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.currentView = btn.dataset.view;
+                this.closeAllPanels({ reason: 'navigate' });
                 this.closeMobileSidebar();
                 this.closeMobileFooterMenu();
                 this.renderCurrentView();
@@ -1558,6 +1570,8 @@ class UIService {
         });
 
         document.getElementById('btn-lock')?.addEventListener('click', () => authService.forceLogout('manual'));
+        document.getElementById('btn-signout')?.addEventListener('click', () => authService.signOut('manual'));
+        document.getElementById('mobile-signout')?.addEventListener('click', () => authService.signOut('manual'));
         if (this.mobile.btnLock) this.mobile.btnLock.onclick = () => authService.forceLogout('manual');
 
         document.getElementById('btn-toggle-compact')?.addEventListener('click', () => this.toggleCompactView());
@@ -1576,6 +1590,15 @@ class UIService {
         const shouldOpen = !document.body.classList.contains('mobile-sidebar-open');
         if (shouldOpen) this.openMobileSidebar();
         else this.closeMobileSidebar();
+    }
+
+    updateUserIdentity(username) {
+        const name = (username || vaultService.meta?.username || vaultService.vault?.meta?.username || '').trim();
+        const display = name ? `@${name}` : '';
+        const desktop = document.getElementById('current-user-display');
+        const mobile = document.getElementById('mobile-user-display');
+        if (desktop) desktop.textContent = display;
+        if (mobile) mobile.textContent = display;
     }
 
     openMobileSidebar() {
@@ -1752,10 +1775,6 @@ class UIService {
                     document.querySelector('[data-view="all"]')?.click();
                     return;
                 }
-                if (action === 'view-tags') {
-                    this.openTagsManager();
-                    return;
-                }
             });
             dashboardPanel.addEventListener('keydown', (e) => {
                 const isActivation = e.key === 'Enter' || e.key === ' ';
@@ -1871,11 +1890,7 @@ class UIService {
 
         document.getElementById('save-secret-question')?.addEventListener('click', () => this.saveSecretQuestion());
 
-        // Tags Manager
-        document.getElementById('btn-tags-manager')?.addEventListener('click', () => this.openTagsManager());
-        document.getElementById('close-tags-manager')?.addEventListener('click', () => {
-            document.getElementById('tags-manager-modal').classList.add('hidden');
-        });
+
 
         // Generate Recovery File Modal
         document.getElementById('btn-generate-recovery-file')?.addEventListener('click', () => this.openGenerateFileModal());
@@ -2410,6 +2425,7 @@ class UIService {
         // Vault Settings (post-login): require unlocked vault before rendering.
         if (!this.ensureAuthenticated()) return;
         const modal = document.getElementById('settings-modal');
+        this.closeAllPanels({ exceptIds: ['settings-modal'], reason: 'open-settings' });
         this.renderSettingsPanel(); // Render full settings UI
         this.renderThemeSwitcher();
         this.initBackgroundSettingsControls();
@@ -2428,6 +2444,23 @@ class UIService {
         if (tagSyncToggle) tagSyncToggle.disabled = !syncEnabled;
         this.updateDuplicateDetectionUI();
         await this.renderActiveRecoveryMethods();
+    }
+
+    closeAllPanels({ exceptIds = [], reason = '' } = {}) {
+        const keep = new Set(exceptIds || []);
+
+        // Close any open overlay modals/sheets/dialogs used across the app.
+        document.querySelectorAll('.modal-overlay').forEach(el => {
+            if (keep.has(el.id)) return;
+            el.classList.add('hidden');
+        });
+
+        // Close any context menus/popovers.
+        document.getElementById('notes-settings-menu')?.classList.add('hidden');
+
+        if (reason) {
+            this.logActivity(`UI: close panels (${reason})`);
+        }
     }
 
     renderSettingsPanel() {
@@ -3292,20 +3325,21 @@ class UIService {
             this.openAdminPanel();
         });
 
-        this.mobile.footerMenuTags?.addEventListener('click', () => {
-            this.closeMobileFooterMenu();
-            document.getElementById('btn-tags-manager')?.click();
-        });
-
         this.mobile.footerMenuLock?.addEventListener('click', () => {
             this.closeMobileFooterMenu();
             authService.forceLogout('manual');
+        });
+
+        this.mobile.footerMenuSignout?.addEventListener('click', () => {
+            this.closeMobileFooterMenu();
+            authService.signOut('manual');
         });
     }
 
     openAdminPanel() {
         if (!this.ensureAuthenticated()) return;
         if (!this.ensureAdminAccess()) return;
+        this.closeAllPanels({ reason: 'open-admin' });
         this.currentView = 'admin';
         this.renderCurrentView();
     }
@@ -3704,69 +3738,6 @@ class UIService {
         }
     }
 
-    async openTagsManager() {
-        const modal = document.getElementById('tags-manager-modal');
-        modal.classList.remove('hidden');
-        await this.renderTagsManager();
-    }
-
-    async renderTagsManager() {
-        const container = document.getElementById('tags-list');
-        const tags = notesService.getAllTags();
-
-        if (tags.length === 0) {
-            container.innerHTML = '<p class="hint center">No tags yet. Use #hashtags in your notes!</p>';
-            return;
-        }
-
-        container.innerHTML = tags.map(tag => `
-            <div class="tag-manager-item">
-                <div class="tag-manager-info">
-                    <div class="tag-color-preview" style="background-color: ${TAG_COLORS[tag.color]}"></div>
-                    <div class="tag-manager-details">
-                        <strong>#${Utils.escapeHtml(tag.name)}</strong>
-                        <span>${tag.count} note${tag.count !== 1 ? 's' : ''}</span>
-                    </div>
-                </div>
-                <div class="tag-color-picker" data-tag="${Utils.escapeHtml(tag.name)}">
-                    ${Object.keys(TAG_COLORS).map(colorName => `
-                        <div class="color-option ${tag.color === colorName ? 'active' : ''}" 
-                             data-color="${colorName}" 
-                             style="background-color: ${TAG_COLORS[colorName]}"
-                             title="${colorName}"></div>
-                    `).join('')}
-                </div>
-            </div>
-        `).join('');
-
-        // Add click listeners to color options
-        document.querySelectorAll('.color-option').forEach(option => {
-            option.addEventListener('click', async (e) => {
-                const color = e.target.dataset.color;
-                const picker = e.target.closest('.tag-color-picker');
-                const tagName = picker.dataset.tag;
-
-                // Update UI immediately
-                picker.querySelectorAll('.color-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                e.target.classList.add('active');
-
-                // Update preview
-                const preview = picker.closest('.tag-manager-item').querySelector('.tag-color-preview');
-                preview.style.backgroundColor = TAG_COLORS[color];
-
-                // Update in backend
-                await notesService.updateTagColor(tagName, color);
-
-                // Refresh note list to show new colors
-                this.renderCurrentView();
-
-                this.showToast(`Tag color updated to ${color}`, 'success');
-            });
-        });
-    }
-
     _stopCameraForQRScan() {
         if (this.qrScanner) {
             cancelAnimationFrame(this.qrScanner);
@@ -4115,6 +4086,7 @@ class UIService {
     async handleNewNote() {
         if (!this.ensureAuthenticated()) return;
         this.logActivity('New note created');
+        this.closeAllPanels({ reason: 'new-note' });
 
         // Animate button click
         const btn = document.getElementById('btn-new-note');

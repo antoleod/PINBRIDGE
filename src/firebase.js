@@ -9,6 +9,7 @@ import {
   updateProfile,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
   EmailAuthProvider,
   linkWithCredential
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
@@ -62,11 +63,16 @@ async function upgradeToEmail(email, password) {
   return user;
 }
 
+async function signOutUser() {
+  return firebaseSignOut(auth);
+}
+
 export {
   app,
   auth,
   db,
   ensureAnonymousSession,
   onAuth,
-  upgradeToEmail
+  upgradeToEmail,
+  signOutUser
 };
