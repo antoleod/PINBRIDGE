@@ -49,6 +49,19 @@ class UIService {
         // Capture Tools
         this.recognition = null;
         this.isRecording = false;
+        this.voice = {
+            state: 'idle', // idle | starting | listening | stopping
+            stopRequested: false,
+            restartAttempts: 0,
+            lastFinalAt: 0,
+        };
+        this.ocr = {
+            stream: null,
+            scanIntervalId: null,
+            isStarting: false,
+            lastGoodText: '',
+            lastGoodAt: 0,
+        };
         this.loginAttempts = 0;
         this.ocrScanInterval = null;
         this.isOcrProcessing = false;
@@ -324,6 +337,30 @@ class UIService {
         return el;
     }
 
+    _formatMediaError(err) {
+        const name = err?.name || 'Error';
+        if (name === 'NotAllowedError' || name === 'PermissionDeniedError') return 'Permission denied. Please allow access and retry.';
+        if (name === 'NotFoundError' || name === 'DevicesNotFoundError') return 'No compatible device found.';
+        if (name === 'NotReadableError' || name === 'TrackStartError') return 'Device is already in use by another app.';
+        if (name === 'OverconstrainedError' || name === 'ConstraintNotSatisfiedError') return 'Camera constraints not supported on this device.';
+        if (name === 'AbortError') return 'Request was interrupted. Try again.';
+        return err?.message || 'Unexpected error. Try again.';
+    }
+
+    async _getCameraStream(constraints) {
+        if (!navigator.mediaDevices?.getUserMedia) {
+            throw new Error('Camera is not supported in this browser.');
+        }
+        try {
+            return await navigator.mediaDevices.getUserMedia(constraints);
+        } catch (err) {
+            if (err?.name === 'OverconstrainedError' || err?.name === 'ConstraintNotSatisfiedError') {
+                return await navigator.mediaDevices.getUserMedia({ video: true });
+            }
+            throw err;
+        }
+    }
+
     // ADDITIVE: Transparency & Activity Tracking
     logActivity(action) {
         const timestamp = new Date().toLocaleTimeString();
@@ -413,6 +450,19 @@ class UIService {
         if (typeof feather !== 'undefined') {
             feather.replace();
         }
+
+        // Keep media resources stable across background/foreground transitions (mobile-first).
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) return;
+            this.stopOCRCamera();
+            this._stopCameraForQRScan?.();
+            this.stopVoiceRecording(true);
+        });
+        window.addEventListener('pagehide', () => {
+            this.stopOCRCamera();
+            this._stopCameraForQRScan?.();
+            this.stopVoiceRecording(true);
+        });
         this.initConverter();
     }
 
@@ -1597,6 +1647,7 @@ class UIService {
                 btn.id = 'btn-voice-type';
                 btn.className = 'btn-tool-minimal';
                 btn.title = 'Voice Typing';
+                btn.setAttribute('aria-pressed', 'false');
                 btn.innerHTML = '<i data-feather="mic"></i>';
                 btn.onclick = () => this.toggleVoiceRecording();
                 toolbarActions.insertBefore(btn, toolbarActions.firstChild);
@@ -1815,7 +1866,12 @@ class UIService {
             return;
         }
 
-        if (this.isRecording) {
+        if (this.voice.state === 'starting' || this.voice.state === 'stopping') {
+            this.showToast('Please wait…', 'info');
+            return;
+        }
+
+        if (this.voice.state === 'listening') {
             this.stopVoiceRecording();
             return;
         }
@@ -1828,7 +1884,15 @@ class UIService {
 
         this.recognition.onstart = () => {
             this.isRecording = true;
-            document.getElementById('btn-voice-type')?.classList.add('recording-pulse');
+            this.voice.state = 'listening';
+            this.voice.stopRequested = false;
+            const btn = document.getElementById('btn-voice-type');
+            btn?.classList.add('recording-pulse');
+            btn?.setAttribute('aria-pressed', 'true');
+            if (btn) {
+                btn.disabled = false;
+                btn.title = 'Stop Voice Typing';
+            }
             this.showToast('Listening...', 'info');
         };
 
@@ -1836,28 +1900,97 @@ class UIService {
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
                     this.insertTextAtCursor(event.results[i][0].transcript + ' ');
+                    this.voice.lastFinalAt = Date.now();
                 }
             }
         };
 
         this.recognition.onerror = (event) => {
             console.error('Speech error', event.error);
-            this.stopVoiceRecording();
+            const code = event?.error;
+            if (code === 'not-allowed' || code === 'service-not-allowed') {
+                this.showToast('Microphone permission denied. Enable it in browser settings and retry.', 'error');
+            } else if (code === 'no-speech') {
+                this.showToast('No speech detected. Try again.', 'info');
+            } else if (code === 'audio-capture') {
+                this.showToast('No microphone found or it is unavailable.', 'error');
+            } else if (code === 'network') {
+                this.showToast('Speech service unavailable (network). Try again.', 'error');
+            } else {
+                this.showToast('Speech recognition error. Try again.', 'error');
+            }
+            this.stopVoiceRecording(true);
         };
 
         this.recognition.onend = () => {
-            this.stopVoiceRecording();
+            const btn = document.getElementById('btn-voice-type');
+            btn?.classList.remove('recording-pulse');
+            btn?.setAttribute('aria-pressed', 'false');
+            if (btn) {
+                btn.disabled = false;
+                btn.title = 'Voice Typing';
+            }
+
+            // If the browser ended recognition due to silence, retry once to reduce "random" stops.
+            const endedUnexpectedly = !this.voice.stopRequested && this.voice.state === 'listening';
+            const timeSinceFinal = Date.now() - (this.voice.lastFinalAt || 0);
+            if (endedUnexpectedly && this.voice.restartAttempts < 1 && timeSinceFinal < 10_000) {
+                this.voice.restartAttempts += 1;
+                this.voice.state = 'starting';
+                setTimeout(() => {
+                    try {
+                        this.recognition?.start();
+                    } catch {
+                        this.stopVoiceRecording(true);
+                    }
+                }, 250);
+                return;
+            }
+
+            this.voice.state = 'idle';
+            this.voice.stopRequested = false;
+            this.voice.restartAttempts = 0;
+            this.isRecording = false;
+            this.recognition = null;
         };
 
-        this.recognition.start();
+        this.voice.state = 'starting';
+        this.voice.restartAttempts = 0;
+        const startBtn = document.getElementById('btn-voice-type');
+        if (startBtn) startBtn.disabled = true;
+        try {
+            this.recognition.start();
+        } catch (err) {
+            console.error('Speech start error', err);
+            this.showToast('Could not start speech recognition. Try again.', 'error');
+            this.stopVoiceRecording(true);
+        }
     }
 
-    stopVoiceRecording() {
+    stopVoiceRecording(force = false) {
+        if (this.voice.state === 'idle') return;
+        this.voice.stopRequested = true;
+        this.voice.state = 'stopping';
         this.isRecording = false;
-        document.getElementById('btn-voice-type')?.classList.remove('recording-pulse');
+
+        const btn = document.getElementById('btn-voice-type');
+        btn?.classList.remove('recording-pulse');
+        btn?.setAttribute('aria-pressed', 'false');
+        if (btn) {
+            btn.disabled = false;
+            btn.title = 'Voice Typing';
+        }
+
         if (this.recognition) {
-            this.recognition.stop();
-            this.recognition = null;
+            try {
+                this.recognition.stop();
+            } catch (err) {
+                if (!force) console.warn('Speech stop error', err);
+                this.recognition = null;
+                this.voice.state = 'idle';
+                this.voice.stopRequested = false;
+                this.voice.restartAttempts = 0;
+            }
         }
     }
 
@@ -1899,6 +2032,16 @@ class UIService {
         const modal = this._getById('ocr-modal');
         modal.classList.remove('hidden');
 
+        // Reset UI state on each open to avoid confusing stale results.
+        const statusEl = this._getById('ocr-status');
+        const previewEl = this._getById('ocr-result-preview');
+        const insertBtn = this._getById('btn-insert-ocr');
+        if (statusEl) statusEl.innerText = 'Preparing scanner...';
+        if (previewEl) previewEl.textContent = '';
+        if (insertBtn) insertBtn.disabled = true;
+        this.ocr.lastGoodText = '';
+        this.ocr.lastGoodAt = 0;
+
         // Load and initialize Tesseract
         if (!this.ocrWorker) {
             this.showToast('Loading OCR engine...', 'info');
@@ -1915,8 +2058,7 @@ class UIService {
                 }
             });
             await this.ocrWorker.setParameters({
-                tessedit_pageseg_mode: Tesseract.PSM.SINGLE_BLOCK,
-                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+                tessedit_pageseg_mode: Tesseract.PSM.AUTO,
             });
         }
 
@@ -1931,37 +2073,65 @@ class UIService {
     async startOCRCamera() {
         const video = this._getById('ocr-video');
         if (!video) return;
+        if (this.ocr.isStarting) return;
+
+        // Avoid duplicate streams/intervals on repeated opens.
+        this.stopOCRCamera();
+        this.ocr.isStarting = true;
+
+        const statusEl = this._getById('ocr-status');
+        if (statusEl) statusEl.innerText = 'Requesting camera permission...';
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            const stream = await this._getCameraStream({
+                video: {
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                }
+            });
+            this.ocr.stream = stream;
             video.srcObject = stream;
+            video.setAttribute('playsinline', '');
             await video.play();
-            this.ocrScanInterval = setInterval(() => this.scanFrame(), 1000);
+            if (statusEl) statusEl.innerText = 'Point camera at text';
+            this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 1200);
         } catch (err) {
             console.error("OCR Camera Error:", err);
-            this.showToast('Could not access camera', 'error');
+            const message = this._formatMediaError(err);
+            if (statusEl) statusEl.innerText = message;
+            this.showToast(message, 'error');
+        } finally {
+            this.ocr.isStarting = false;
         }
     }
 
     stopOCRCamera() {
-        if (this.ocrScanInterval) {
-            clearInterval(this.ocrScanInterval);
-            this.ocrScanInterval = null;
+        if (this.ocr.scanIntervalId) {
+            clearInterval(this.ocr.scanIntervalId);
+            this.ocr.scanIntervalId = null;
         }
         this.isOcrProcessing = false;
         const video = this._getById('ocr-video');
         if (video && video.srcObject) {
+            video.pause?.();
             video.srcObject.getTracks().forEach(track => track.stop());
             video.srcObject = null;
+        }
+        if (this.ocr.stream) {
+            this.ocr.stream.getTracks().forEach(track => track.stop());
+            this.ocr.stream = null;
         }
     }
 
     async scanFrame() {
         const video = this._getById('ocr-video');
-        const overlay = document.querySelector('.qr-scanner-overlay');
+        const modal = this._getById('ocr-modal');
+        const overlay = modal?.querySelector('.qr-scanner-overlay');
         const statusEl = this._getById('ocr-status');
         const previewEl = this._getById('ocr-result-preview');
 
-        if (!video || !overlay || this.isOcrProcessing || !this.ocrWorker) return;
+        if (!video || !overlay || !statusEl || !previewEl || this.isOcrProcessing || !this.ocrWorker) return;
+        if (!video.videoWidth || !video.videoHeight) return;
 
         this.isOcrProcessing = true;
         statusEl.innerText = 'Capturing...';
@@ -1975,15 +2145,21 @@ class UIService {
         const scaleX = video.videoWidth / videoRect.width;
         const scaleY = video.videoHeight / videoRect.height;
 
-        const cropX = (overlayRect.left - videoRect.left) * scaleX;
-        const cropY = (overlayRect.top - videoRect.top) * scaleY;
-        const cropWidth = overlayRect.width * scaleX;
-        const cropHeight = overlayRect.height * scaleY;
+        const cropX = Math.max(0, Math.round((overlayRect.left - videoRect.left) * scaleX));
+        const cropY = Math.max(0, Math.round((overlayRect.top - videoRect.top) * scaleY));
+        const cropWidth = Math.min(video.videoWidth - cropX, Math.max(1, Math.round(overlayRect.width * scaleX)));
+        const cropHeight = Math.min(video.videoHeight - cropY, Math.max(1, Math.round(overlayRect.height * scaleY)));
 
-        canvas.width = cropWidth;
-        canvas.height = cropHeight;
+        // Scale up small crops to improve OCR accuracy while keeping memory bounded.
+        const maxDim = 1600;
+        const scaleUp = Math.min(2, maxDim / Math.max(cropWidth, cropHeight));
+        const targetWidth = Math.max(1, Math.round(cropWidth * scaleUp));
+        const targetHeight = Math.max(1, Math.round(cropHeight * scaleUp));
 
-        context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+        canvas.width = targetWidth;
+        canvas.height = targetHeight;
+
+        context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, targetWidth, targetHeight);
 
         this._preprocessCanvas(canvas);
 
@@ -1993,9 +2169,21 @@ class UIService {
 
             if (data.confidence > 60) {
                 statusEl.innerText = `Confidence: ${data.confidence.toFixed(0)}%`;
-                previewEl.textContent = processedText;
+                // Avoid visually "jittering" by re-rendering identical content on every interval.
+                if (processedText && processedText !== this.ocr.lastGoodText) {
+                    this.ocr.lastGoodText = processedText;
+                    this.ocr.lastGoodAt = Date.now();
+                    previewEl.textContent = processedText;
+                    const insertBtn = this._getById('btn-insert-ocr');
+                    if (insertBtn) insertBtn.disabled = false;
+                }
             } else {
                 statusEl.innerText = "Text not clear yet ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â adjust angle or lighting";
+            }
+
+            // Sanitize any accidental mojibake in the "not clear" message.
+            if (statusEl.innerText?.startsWith('Text not clear yet')) {
+                statusEl.innerText = 'Text not clear yet — adjust angle or lighting.';
             }
         } catch (err) {
             console.error(err);
@@ -2193,6 +2381,10 @@ class UIService {
                     document.querySelectorAll('.modal-overlay:not(.hidden)').forEach(modal => {
                         modal.classList.add('hidden');
                     });
+                    // Ensure we also release camera/mic resources tied to modals.
+                    this.stopOCRCamera();
+                    this._stopCameraForQRScan?.();
+                    this.stopVoiceRecording(true);
                     document.getElementById('notes-settings-menu')?.classList.add('hidden');
                 }
             }
