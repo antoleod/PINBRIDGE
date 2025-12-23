@@ -207,6 +207,10 @@ class UIService {
             quickDrop: document.getElementById('quick-drop-input')
         };
 
+        this.checklist = {
+            container: document.getElementById('note-checklist')
+        };
+
         this.quickDropZone = document.getElementById('quick-drop-zone');
         this.registerAdminGroup = document.getElementById('register-admin-invite-group');
 
@@ -1695,6 +1699,7 @@ class UIService {
             this.refreshSaveButtonState();
             this.updateWordCount();
             this.autoResizeTextarea(this.inputs.noteContent);
+            this.renderChecklistFromEditor();
         });
 
         this.inputs.noteContent?.addEventListener('keydown', (e) => {
@@ -4698,6 +4703,7 @@ class UIService {
         this.updatePinButtonState(note.pinned);
         this.startNoteSession(note);
         this.renderAttachments(note);
+        this.renderChecklistFromText(note.body || '');
 
         document.querySelectorAll('.note-item.active').forEach(el => el.classList.remove('active'));
         const newActiveEl = document.querySelector(`.note-item[data-id="${note.id}"]`);
@@ -4713,6 +4719,129 @@ class UIService {
         this.updateWordCount();
 
         console.log(`[Persistence] Switched to note: ${note.id}`);
+    }
+
+    _parseChecklist(text) {
+        const lines = String(text || '').split('\n');
+        const items = [];
+        const re = /^(\s*)-\s*\[(x| )\]\s+(.*)$/i;
+        for (let i = 0; i < lines.length; i += 1) {
+            const m = lines[i].match(re);
+            if (!m) continue;
+            items.push({
+                lineIndex: i,
+                indent: m[1] || '',
+                checked: (m[2] || '').toLowerCase() === 'x',
+                text: (m[3] || '').trim()
+            });
+        }
+        return items;
+    }
+
+    _setEditorLineChecklistState(lineIndex, checked) {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return false;
+        const lines = String(textarea.value || '').split('\n');
+        if (lineIndex < 0 || lineIndex >= lines.length) return false;
+        const re = /^(\s*)-\s*\[(x| )\]\s+/i;
+        if (!re.test(lines[lineIndex])) return false;
+        const prefix = lines[lineIndex].replace(re, `$1- [${checked ? 'x' : ' '}] `);
+        // Preserve original text after the checklist marker.
+        lines[lineIndex] = prefix + lines[lineIndex].replace(re, '');
+        textarea.value = lines.join('\n');
+        textarea.dispatchEvent(new Event('input'));
+        return true;
+    }
+
+    _setAllChecklistState(checked) {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+        const lines = String(textarea.value || '').split('\n');
+        const re = /^(\s*)-\s*\[(x| )\]\s+/i;
+        let changed = false;
+        for (let i = 0; i < lines.length; i += 1) {
+            if (!re.test(lines[i])) continue;
+            const prefix = lines[i].replace(re, `$1- [${checked ? 'x' : ' '}] `);
+            lines[i] = prefix + lines[i].replace(re, '');
+            changed = true;
+        }
+        if (!changed) return;
+        textarea.value = lines.join('\n');
+        textarea.dispatchEvent(new Event('input'));
+    }
+
+    renderChecklistFromEditor() {
+        const text = this.inputs.noteContent?.value || '';
+        this.renderChecklistFromText(text);
+    }
+
+    renderChecklistFromText(text) {
+        const container = this.checklist?.container;
+        if (!container) return;
+
+        const items = this._parseChecklist(text);
+        if (!items.length) {
+            container.classList.add('hidden');
+            container.innerHTML = '';
+            return;
+        }
+
+        const done = items.filter(i => i.checked).length;
+        const total = items.length;
+
+        container.classList.remove('hidden');
+        container.innerHTML = `
+            <div class="checklist-header">
+                <div class="checklist-title">
+                    <h3>Tasks</h3>
+                    <span class="checklist-progress">${done}/${total} done</span>
+                </div>
+                <div class="checklist-actions">
+                    <button type="button" class="btn-checklist" data-checklist-action="check-all" ${done === total ? 'disabled' : ''}>Check all</button>
+                    <button type="button" class="btn-checklist" data-checklist-action="uncheck-all" ${done === 0 ? 'disabled' : ''}>Uncheck</button>
+                </div>
+            </div>
+            <div class="checklist-items"></div>
+            <div class="checklist-hint">Tip: tap a task to toggle. The note text stays as a checklist so it syncs normally.</div>
+        `;
+
+        const itemsEl = container.querySelector('.checklist-items');
+        if (!itemsEl) return;
+
+        for (const item of items) {
+            const row = document.createElement('label');
+            row.className = `checklist-item ${item.checked ? 'is-done' : ''}`;
+            row.dataset.lineIndex = String(item.lineIndex);
+            row.innerHTML = `
+                <input type="checkbox" ${item.checked ? 'checked' : ''} aria-label="Toggle task">
+                <div class="checklist-text">${Utils.escapeHtml(item.text || '(untitled task)')}</div>
+            `;
+            itemsEl.appendChild(row);
+        }
+
+        if (!container.dataset.boundChecklist) {
+            container.dataset.boundChecklist = 'true';
+            container.addEventListener('click', (e) => {
+                const actionBtn = e.target.closest('[data-checklist-action]');
+                if (actionBtn) {
+                    const action = actionBtn.dataset.checklistAction;
+                    if (action === 'check-all') this._setAllChecklistState(true);
+                    if (action === 'uncheck-all') this._setAllChecklistState(false);
+                    return;
+                }
+
+                const row = e.target.closest('.checklist-item');
+                if (!row) return;
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                const lineIndex = Number.parseInt(row.dataset.lineIndex || '', 10);
+                if (!Number.isFinite(lineIndex)) return;
+
+                // If the click was on the checkbox, let it change first; otherwise toggle it manually.
+                const nextChecked = e.target === checkbox ? checkbox.checked : !(checkbox?.checked);
+                if (checkbox && e.target !== checkbox) checkbox.checked = nextChecked;
+                this._setEditorLineChecklistState(lineIndex, nextChecked);
+            });
+        }
     }
 
     startNoteSession(note) {
