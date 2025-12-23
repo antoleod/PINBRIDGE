@@ -101,6 +101,11 @@ class SyncManager {
                         await syncService.pushMeta(task.uid, task.payload);
                     } else if (task.type === 'RECOVERY_REQUEST') {
                         await syncService.createRecoveryRequest(task.uid);
+                    } else if (task.type === 'PUSH_ATTACHMENT') {
+                        const hash = task?.payload?.hash;
+                        if (!hash) throw new Error('ATTACHMENT_HASH_REQUIRED');
+                        const mod = await import('../attachments/attachments.js');
+                        await mod.attachmentService.ensureRemoteAvailable(task.uid, hash);
                     }
 
                     await storageService.removeFromSyncQueue(task.id);

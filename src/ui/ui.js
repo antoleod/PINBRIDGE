@@ -14,6 +14,7 @@ import { pairingService } from '../modules/pairing/pairing.js'; // To be created
 import { shareService } from '../modules/share/share.js';
 import { diagnosticsService } from '../modules/diagnostics/diagnostics.js';
 import { syncManager } from '../modules/sync/sync-manager.js';
+import { attachmentService } from '../modules/attachments/attachments.js';
 import { isAdminUsername } from '../core/rbac.js';
 import { validatePin, validateUsername } from '../core/validation.js';
 
@@ -5246,52 +5247,52 @@ class UIService {
             progress: 0
         }, { pending: true });
 
-        const reader = new FileReader();
-        const startTime = Date.now();
-        reader.onprogress = (event) => {
-            if (!event.lengthComputable) return;
-            const percent = Math.round((event.loaded / event.total) * 100);
+        try {
+            const startTime = Date.now();
+            this.updateAttachmentProgress(pendingId, 5, null);
+            const { meta, hash } = await attachmentService.attachFileToNote(note, file);
             const elapsed = (Date.now() - startTime) / 1000;
-            const remaining = percent > 0 ? Math.max(0, Math.round((elapsed * (100 - percent)) / percent)) : null;
-            this.updateAttachmentProgress(pendingId, percent, remaining);
-        };
-        reader.onerror = () => {
-            this.attachmentRetries.set(pendingId, file);
-            this.updateAttachmentStatus(pendingId, 'error', 'Upload failed. Tap retry.');
-        };
-        reader.onloadend = async () => {
-            if (reader.error) return;
-            try {
-                const data = reader.result;
-                if (!(note.title || note.body)) {
-                    note.title = file.name;
-                    note.body = `Attached file: ${file.name}`;
-                }
-                const attachments = Array.isArray(note.attachments) ? [...note.attachments] : [];
-                attachments.push({
-                    id: attachmentId,
-                    name: file.name,
-                    type: file.type || 'application/octet-stream',
-                    size: file.size,
-                    data
-                });
-                note.attachments = attachments;
-                await notesService.persistNote(note);
-                this.renderAttachments(note);
-                this.showToast('File attached to note.', 'success');
-            } catch (err) {
-                console.error('Attach failed', err);
-                this.attachmentRetries.set(pendingId, file);
-                this.updateAttachmentStatus(pendingId, 'error', 'Attach failed. Tap retry.');
+            const remaining = elapsed > 0 ? Math.max(0, Math.round((100 - 5) / elapsed)) : null;
+            this.updateAttachmentProgress(pendingId, 30, remaining);
+
+            if (!(note.title || note.body)) {
+                note.title = file.name;
+                note.body = `Attached file: ${file.name}`;
             }
-        };
-        reader.readAsDataURL(file);
+
+            const attachments = Array.isArray(note.attachments) ? [...note.attachments] : [];
+            attachments.push(meta);
+            note.attachments = attachments;
+            await notesService.persistNote(note);
+            this.renderAttachments(note);
+
+            syncManager.enqueue('PUSH_ATTACHMENT', { hash }, vaultService.uid);
+            this.updateAttachmentProgress(pendingId, 100, 0);
+            this.showToast('File attached to note.', 'success');
+        } catch (err) {
+            console.error('Attach failed', err);
+            this.attachmentRetries.set(pendingId, file);
+            this.updateAttachmentStatus(pendingId, 'error', 'Attach failed. Tap retry.');
+        }
     }
 
     renderAttachments(note) {
         if (!this.attachments?.list || !this.attachments?.empty) return;
         this.attachments.list.innerHTML = '';
         const attachments = note?.attachments || [];
+        // Background migrate legacy inline attachments so they can sync cross-device without bloating the vault doc.
+        if (note && attachments.some(a => a?.data && !a?.hash)) {
+            attachmentService.migrateLegacyInlineAttachments(note)
+                .then(async (res) => {
+                    if (!res?.changed) return;
+                    await notesService.persistNote(note);
+                    for (const hash of res.hashesToUpload || []) {
+                        syncManager.enqueue('PUSH_ATTACHMENT', { hash }, vaultService.uid);
+                    }
+                    this.renderAttachments(note);
+                })
+                .catch((e) => console.warn('Attachment migration failed', e));
+        }
         if (!attachments.length) {
             this.attachments.empty.classList.remove('hidden');
             return;
@@ -5521,21 +5522,52 @@ class UIService {
         try {
             this.updateAttachmentProgress(attachment.id, 0);
             const start = Date.now();
-            const dataUrl = attachment.data;
-            const response = await fetch(dataUrl);
-            const blob = await response.blob();
-            const elapsed = (Date.now() - start) / 1000;
-            const remaining = elapsed > 0 ? Math.max(0, Math.round((100 - 100) / elapsed)) : null;
-            this.updateAttachmentProgress(attachment.id, 100, remaining);
+            if (attachment?.data && !attachment?.hash) {
+                const note = notesService.notes.find(n => n.id === this.activeNoteId);
+                if (note) {
+                    const migrated = await attachmentService.migrateLegacyInlineAttachments(note);
+                    if (migrated?.changed) {
+                        await notesService.persistNote(note);
+                        for (const hash of migrated.hashesToUpload || []) {
+                            syncManager.enqueue('PUSH_ATTACHMENT', { hash }, vaultService.uid);
+                        }
+                        this.renderAttachments(note);
+                    }
+                }
+            }
 
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = attachment.name || 'pinbridge-file';
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            URL.revokeObjectURL(url);
+            if (attachment?.hash) {
+                await attachmentService.downloadToLocal(vaultService.uid, attachment.hash);
+                this.updateAttachmentProgress(attachment.id, 60, null);
+                const bytes = await attachmentService.getLocalBytes(attachment.hash);
+                if (!bytes) throw new Error('ATTACHMENT_LOCAL_MISSING');
+                const blob = new Blob([bytes], { type: attachment.type || 'application/octet-stream' });
+                const elapsed = (Date.now() - start) / 1000;
+                this.updateAttachmentProgress(attachment.id, 100, elapsed > 0 ? 0 : null);
+
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = attachment.name || 'pinbridge-file';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } else if (attachment?.data) {
+                const response = await fetch(attachment.data);
+                const blob = await response.blob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = attachment.name || 'pinbridge-file';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                this.updateAttachmentProgress(attachment.id, 100, 0);
+            } else {
+                throw new Error('ATTACHMENT_NO_DATA');
+            }
         } catch (err) {
             console.error('Download failed', err);
             this.updateAttachmentStatus(attachment.id, 'error', 'Download failed. Tap retry.', { retryMode: 'download' });

@@ -3,14 +3,15 @@
  * Wrapper for IndexedDB.
  */
 
-const DB_VERSION = 6; // Increment for tags store
+const DB_VERSION = 7; // Increment for attachments store
 const STORE_META = 'meta';
 const STORE_VAULT = 'vault';
 const STORE_VERSIONS = 'versions';
 const STORE_SYNC_QUEUE = 'syncQueue'; // Changed from 'sync_queue'
 const STORE_RECOVERY = 'recovery'; // New store for recovery methods
 const STORE_TAGS = 'tags'; // New store for tag metadata
-const STORES = [STORE_META, STORE_VAULT, STORE_VERSIONS, STORE_SYNC_QUEUE, STORE_RECOVERY, STORE_TAGS];
+const STORE_ATTACHMENTS = 'attachments'; // Encrypted attachment blobs keyed by hash
+const STORES = [STORE_META, STORE_VAULT, STORE_VERSIONS, STORE_SYNC_QUEUE, STORE_RECOVERY, STORE_TAGS, STORE_ATTACHMENTS];
 
 class StorageService {
     constructor() {
@@ -59,6 +60,10 @@ class StorageService {
                 // Tags store (for colors, sync settings, etc.)
                 if (!db.objectStoreNames.contains(STORE_TAGS)) {
                     db.createObjectStore(STORE_TAGS, { keyPath: 'name' });
+                }
+                // Attachments store (encrypted blobs keyed by sha256 hash)
+                if (!db.objectStoreNames.contains(STORE_ATTACHMENTS)) {
+                    db.createObjectStore(STORE_ATTACHMENTS, { keyPath: 'hash' });
                 }
             };
 
@@ -257,6 +262,28 @@ class StorageService {
 
     async clearSyncQueue() {
         return await this.clearStore(STORE_SYNC_QUEUE);
+    }
+
+    // --- Attachments API ---
+    async saveAttachment(record) {
+        // record = { hash, payloadBase64, meta, updatedAt, createdAt }
+        return await this.put(STORE_ATTACHMENTS, record);
+    }
+
+    async getAttachment(hash) {
+        return await this.get(STORE_ATTACHMENTS, hash);
+    }
+
+    async deleteAttachment(hash) {
+        return await this.delete(STORE_ATTACHMENTS, hash);
+    }
+
+    async getAllAttachments() {
+        return await this.getAll(STORE_ATTACHMENTS);
+    }
+
+    async clearAttachments() {
+        return await this.clearStore(STORE_ATTACHMENTS);
     }
 
     // --- Recovery Methods API ---

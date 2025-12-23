@@ -1,7 +1,12 @@
 import {
+  collection,
+  deleteDoc,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
+  orderBy,
+  query,
   runTransaction,
   setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
@@ -131,6 +136,73 @@ class SyncService {
       }, { merge: true });
     } catch (err) {
       rethrowFirestoreError('RECOVERY_REQUEST', err);
+    }
+  }
+
+  // --- Attachments (encrypted client-side; stored as chunks in Firestore) ---
+
+  async pushAttachmentMeta(uid, attachment) {
+    try {
+      const ref = doc(db, 'users', uid, 'attachments', attachment.hash);
+      await setDoc(ref, attachment, { merge: true });
+    } catch (err) {
+      rethrowFirestoreError('PUSH_ATTACHMENT_META', err);
+    }
+  }
+
+  async pushAttachmentChunk(uid, hash, index, payloadBase64) {
+    try {
+      const id = String(index).padStart(8, '0');
+      const ref = doc(db, 'users', uid, 'attachments', hash, 'chunks', id);
+      await setDoc(ref, { index, payloadBase64 }, { merge: true });
+    } catch (err) {
+      rethrowFirestoreError('PUSH_ATTACHMENT_CHUNK', err);
+    }
+  }
+
+  async fetchAttachmentMeta(uid, hash) {
+    try {
+      const snap = await getDoc(doc(db, 'users', uid, 'attachments', hash));
+      return snap.exists() ? snap.data() : null;
+    } catch (err) {
+      rethrowFirestoreError('FETCH_ATTACHMENT_META', err);
+    }
+  }
+
+  async fetchAttachmentChunks(uid, hash) {
+    try {
+      const q = collection(db, 'users', uid, 'attachments', hash, 'chunks');
+      const snap = await getDocs(q);
+      return snap.docs.map(d => d.data());
+    } catch (err) {
+      rethrowFirestoreError('FETCH_ATTACHMENT_CHUNKS', err);
+    }
+  }
+
+  async fetchAttachmentChunksOrdered(uid, hash) {
+    try {
+      const qRef = collection(db, 'users', uid, 'attachments', hash, 'chunks');
+      const snap = await getDocs(query(qRef, orderBy('index')));
+      const rows = snap.docs.map(d => d.data());
+      return rows;
+    } catch (err) {
+      // If the query/orderBy path fails, fall back to unordered fetch and client-side sort.
+      try {
+        const rows = await this.fetchAttachmentChunks(uid, hash);
+        rows.sort((a, b) => (a.index || 0) - (b.index || 0));
+        return rows;
+      } catch (e2) {
+        rethrowFirestoreError('FETCH_ATTACHMENT_CHUNKS', err);
+      }
+    }
+  }
+
+  async deleteAttachmentChunk(uid, hash, index) {
+    try {
+      const id = String(index).padStart(8, '0');
+      await deleteDoc(doc(db, 'users', uid, 'attachments', hash, 'chunks', id));
+    } catch (err) {
+      rethrowFirestoreError('DELETE_ATTACHMENT_CHUNK', err);
     }
   }
 }
