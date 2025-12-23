@@ -2395,6 +2395,73 @@ button.btn:active {
     transition: background 220ms ease, border-color 220ms ease, padding 220ms ease;
 }
 
+/* Profile dropdown (replaces notes settings button/menu) */
+.profile-menu {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+#btn-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.profile-name {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    opacity: 0.9;
+}
+
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 160px;
+    padding: 8px;
+    border-radius: 12px;
+    background: rgba(20, 20, 20, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    z-index: 50;
+}
+
+.profile-dropdown.hidden {
+    display: none;
+}
+
+.profile-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 10px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.profile-item:hover,
+.profile-item:focus-visible {
+    background: rgba(255, 255, 255, 0.08);
+    outline: none;
+}
+
+.dashboard-card[role="button"] {
+    cursor: pointer;
+}
+
+.dashboard-card[role="button"]:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.35);
+    outline-offset: 3px;
+}
+
 .current-user-display {
     font-size: 0.75rem;
     color: var(--text-muted);

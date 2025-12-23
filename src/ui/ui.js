@@ -211,6 +211,13 @@ class UIService {
             container: document.getElementById('note-checklist')
         };
 
+        this.profile = {
+            btn: document.getElementById('btn-profile'),
+            name: document.getElementById('profile-name'),
+            dropdown: document.getElementById('profile-dropdown'),
+            logout: document.getElementById('profile-logout')
+        };
+
         this.quickDropZone = document.getElementById('quick-drop-zone');
         this.registerAdminGroup = document.getElementById('register-admin-invite-group');
 
@@ -446,14 +453,6 @@ class UIService {
         this.logActivity('System Initialized');
         this.initSecureShare();
         this.initDiagnostics();
-
-        // Initialize settings menu values
-        const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
-        const sortBy = localStorage.getItem('pinbridge.notes_sort') || 'updated';
-        const togglePreview = document.getElementById('toggle-show-preview');
-        const sortSelect = document.getElementById('notes-sort-select');
-        if (togglePreview) togglePreview.checked = showPreview;
-        if (sortSelect) sortSelect.value = sortBy;
 
         if (typeof feather !== 'undefined') {
             feather.replace();
@@ -1542,37 +1541,7 @@ class UIService {
 
         this.bindMobileFooterMenu();
 
-        // Notes settings menu
-        document.getElementById('btn-notes-settings')?.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.toggleNotesSettingsMenu();
-        });
-
-        // Close settings menu when clicking outside
-        document.addEventListener('click', (e) => {
-            const menu = document.getElementById('notes-settings-menu');
-            const btn = document.getElementById('btn-notes-settings');
-            if (menu && !menu.contains(e.target) && !btn?.contains(e.target)) {
-                menu.classList.add('hidden');
-            }
-        });
-
-        // Settings toggles
-        document.getElementById('toggle-compact-view')?.addEventListener('change', (e) => {
-            this.compactViewEnabled = e.target.checked;
-            localStorage.setItem('pinbridge.compact_notes', this.compactViewEnabled);
-            this.updateCompactViewUI();
-        });
-
-        document.getElementById('toggle-show-preview')?.addEventListener('change', (e) => {
-            localStorage.setItem('pinbridge.show_preview', e.target.checked);
-            this.renderCurrentView();
-        });
-
-        document.getElementById('notes-sort-select')?.addEventListener('change', (e) => {
-            localStorage.setItem('pinbridge.notes_sort', e.target.value);
-            this.renderCurrentView();
-        });
+        this.bindProfileMenu();
 
         document.getElementById('btn-lock')?.addEventListener('click', () => authService.forceLogout('manual'));
         document.getElementById('btn-signout')?.addEventListener('click', () => authService.signOut('manual'));
@@ -1604,6 +1573,66 @@ class UIService {
         const mobile = document.getElementById('mobile-user-display');
         if (desktop) desktop.textContent = display;
         if (mobile) mobile.textContent = display;
+        if (this.profile?.name) this.profile.name.textContent = display;
+    }
+
+    bindProfileMenu() {
+        const btn = this.profile?.btn;
+        const dropdown = this.profile?.dropdown;
+        const logout = this.profile?.logout;
+        if (!btn || !dropdown) return;
+
+        const close = () => {
+            dropdown.classList.add('hidden');
+            btn.setAttribute('aria-expanded', 'false');
+        };
+
+        const toggle = () => {
+            const isOpen = !dropdown.classList.contains('hidden');
+            if (isOpen) close();
+            else {
+                dropdown.classList.remove('hidden');
+                btn.setAttribute('aria-expanded', 'true');
+                // Ensure icons render if menu opened after initial feather replace.
+                if (typeof feather !== 'undefined') feather.replace();
+            }
+        };
+
+        if (!btn.dataset.boundProfile) {
+            btn.dataset.boundProfile = 'true';
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                toggle();
+            });
+
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggle();
+                }
+                if (e.key === 'Escape') {
+                    e.preventDefault();
+                    close();
+                    btn.focus();
+                }
+            });
+
+            document.addEventListener('click', (e) => {
+                if (dropdown.classList.contains('hidden')) return;
+                if (btn.contains(e.target) || dropdown.contains(e.target)) return;
+                close();
+            });
+        }
+
+        if (logout && !logout.dataset.boundLogout) {
+            logout.dataset.boundLogout = 'true';
+            logout.addEventListener('click', async (e) => {
+                e.preventDefault();
+                close();
+                await authService.signOut('manual');
+            });
+        }
     }
 
     openMobileSidebar() {
@@ -1777,8 +1806,11 @@ class UIService {
                     return;
                 }
                 if (action === 'view-folders') {
-                    // No dedicated "folders" view; open notes list with folder nav visible.
-                    document.querySelector('[data-view="all"]')?.click();
+                    this.openFoldersFromDashboard();
+                    return;
+                }
+                if (action === 'view-tags') {
+                    this.openTagsView();
                     return;
                 }
             });
@@ -2363,7 +2395,6 @@ class UIService {
                     this.stopOCRCamera();
                     this._stopCameraForQRScan?.();
                     this.stopVoiceRecording(true);
-                    document.getElementById('notes-settings-menu')?.classList.add('hidden');
                 }
             }
 
@@ -2461,9 +2492,6 @@ class UIService {
             el.classList.add('hidden');
         });
 
-        // Close any context menus/popovers.
-        document.getElementById('notes-settings-menu')?.classList.add('hidden');
-
         if (reason) {
             this.logActivity(`UI: close panels (${reason})`);
         }
@@ -2547,6 +2575,39 @@ class UIService {
                         </div>
                     </div>
 
+                    <h3>Notes</h3>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Compact view</span>
+                            <span class="settings-item-desc">Tighter note list spacing.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-compact-view" class="toggle-input">
+                            <label for="toggle-compact-view" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Show preview</span>
+                            <span class="settings-item-desc">Show a short body preview in the list.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-show-preview" class="toggle-input">
+                            <label for="toggle-show-preview" class="toggle-label"></label>
+                        </div>
+                    </div>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Sort notes</span>
+                            <span class="settings-item-desc">Choose how notes are ordered.</span>
+                        </div>
+                        <select id="notes-sort-select" class="settings-select">
+                            <option value="updated">Last updated</option>
+                            <option value="created">Date created</option>
+                            <option value="title">Title</option>
+                        </select>
+                    </div>
+
                     <h3>Security</h3>
                     <div class="settings-item">
                         <div class="settings-item-content">
@@ -2591,6 +2652,29 @@ class UIService {
             this._bindSetting('setting-smart-lists', 'pinbridge.smart_lists', 'checkbox');
             this._bindSetting('setting-font-size', 'pinbridge.ui_font_size', 'value', (val) => {
                 document.documentElement.style.setProperty('--font-size-base', val === 'lg' ? '18px' : val === 'sm' ? '14px' : '16px');
+            });
+
+            // Notes list settings (migrated from legacy notes settings menu).
+            const compactToggle = document.getElementById('toggle-compact-view');
+            if (compactToggle) compactToggle.checked = this.compactViewEnabled;
+            compactToggle?.addEventListener('change', (e) => {
+                this.compactViewEnabled = !!e.target.checked;
+                localStorage.setItem('pinbridge.compact_notes', this.compactViewEnabled ? 'true' : 'false');
+                this.updateCompactViewUI();
+            });
+
+            const previewToggle = document.getElementById('toggle-show-preview');
+            if (previewToggle) previewToggle.checked = localStorage.getItem('pinbridge.show_preview') !== 'false';
+            previewToggle?.addEventListener('change', (e) => {
+                localStorage.setItem('pinbridge.show_preview', e.target.checked ? 'true' : 'false');
+                this.renderCurrentView();
+            });
+
+            const sortSelect = document.getElementById('notes-sort-select');
+            if (sortSelect) sortSelect.value = localStorage.getItem('pinbridge.notes_sort') || 'updated';
+            sortSelect?.addEventListener('change', (e) => {
+                localStorage.setItem('pinbridge.notes_sort', e.target.value || 'updated');
+                this.renderCurrentView();
             });
             this._bindSetting('setting-footer-autohide', 'pinbridge.footer_autohide', 'checkbox', (val) => {
                 // Footer must remain visible; keep setting disabled for UX consistency.
@@ -3822,8 +3906,8 @@ class UIService {
         const folders = new Set(notes.filter(n => n.folder).map(n => n.folder));
         document.getElementById('stat-folders').innerText = folders.size;
 
-        const allTags = notes.flatMap(n => n.tags || []);
-        const uniqueTags = new Set(allTags);
+        const allTags = notes.flatMap(n => (n.tags || []).map(t => (typeof t === 'string' ? t : t?.name)).filter(Boolean));
+        const uniqueTags = new Set(allTags.map(t => String(t).trim()).filter(Boolean));
         document.getElementById('stat-tags').innerText = uniqueTags.size;
 
         // Recent Notes (last 5)
@@ -3855,7 +3939,9 @@ class UIService {
         // Top Tags (by frequency)
         const tagFreq = {};
         allTags.forEach(tag => {
-            tagFreq[tag] = (tagFreq[tag] || 0) + 1;
+            const key = String(tag || '').trim();
+            if (!key) return;
+            tagFreq[key] = (tagFreq[key] || 0) + 1;
         });
 
         const topTags = Object.entries(tagFreq)
@@ -4230,6 +4316,23 @@ class UIService {
             dashboardPanel?.classList.remove('hidden');
             adminPanel?.classList.add('hidden');
             this.renderDashboard();
+            // Sync Mobile Footer State
+            document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === this.currentView);
+            });
+            return;
+        }
+
+        if (this.currentView === 'tags') {
+            editorPanel?.classList.add('hidden');
+            dashboardPanel?.classList.add('hidden');
+            adminPanel?.classList.add('hidden');
+            this.updateDeleteButtonContext();
+            this.renderTagsView();
+            document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === this.currentView);
+            });
+            return;
         } else {
             // Show editor, hide dashboard with animation
             if (editorPanel?.classList.contains('hidden')) {
@@ -5110,15 +5213,112 @@ class UIService {
         if (this.autoSaveEnabled) this.scheduleAutoSave();
     }
 
-    toggleNotesSettingsMenu() {
-        const menu = document.getElementById('notes-settings-menu');
-        if (menu) {
-            menu.classList.toggle('hidden');
-            // Initialize feather icons when menu opens
-            if (!menu.classList.contains('hidden') && typeof feather !== 'undefined') {
-                feather.replace();
-            }
+    openFoldersFromDashboard() {
+        this.currentView = 'all';
+        document.querySelector('[data-view="all"]')?.click();
+        this.renderCurrentView();
+
+        const folderList = document.getElementById('folder-list');
+        if (!folderList) return;
+
+        // On mobile the sidebar is hidden; open it so folders are discoverable.
+        if (this.mobile?.btnMenu) {
+            this.openMobileSidebar();
         }
+
+        const firstFolder = folderList.querySelector('.folder-item');
+        if (firstFolder) {
+            firstFolder.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            firstFolder.focus?.();
+        } else {
+            this.showToast('No folders yet. Add a folder name in a note to create one.', 'info');
+        }
+    }
+
+    openTagsView() {
+        this.currentView = 'tags';
+        this.renderCurrentView();
+    }
+
+    renderTagsView() {
+        const listEl = document.getElementById('notes-list');
+        if (!listEl) return;
+
+        const notes = notesService.notes.filter(n => !n.trash && !n.isTemplate && !n.archived);
+        const freq = new Map();
+        notes.forEach(n => {
+            (n.tags || []).forEach(t => {
+                const name = (typeof t === 'string' ? t : t?.name) || '';
+                const key = name.trim();
+                if (!key) return;
+                freq.set(key, (freq.get(key) || 0) + 1);
+            });
+        });
+
+        const tags = Array.from(freq.entries()).sort((a, b) => b[1] - a[1]);
+
+        listEl.innerHTML = `
+            <div class="empty-list-placeholder" style="text-align:left">
+                <strong>Tags</strong>
+                <div class="hint" style="margin-top:6px">Tap a tag to filter notes.</div>
+                <div style="margin-top:10px">
+                    <button class="btn btn-secondary btn-sm" id="btn-tags-back">Back to Notes</button>
+                </div>
+            </div>
+        `;
+
+        listEl.querySelector('#btn-tags-back')?.addEventListener('click', () => {
+            this.currentView = 'all';
+            document.querySelector('[data-view="all"]')?.click();
+            this.renderCurrentView();
+        });
+
+        if (!tags.length) {
+            const hint = document.createElement('div');
+            hint.className = 'empty-list-placeholder';
+            hint.innerHTML = 'No tags yet. Add tags in the Tags field or use #hashtags.';
+            listEl.appendChild(hint);
+            return;
+        }
+
+        tags.forEach(([tag, count]) => {
+            const row = document.createElement('div');
+            row.className = 'note-item';
+            row.tabIndex = 0;
+            row.setAttribute('role', 'button');
+            row.setAttribute('aria-label', `Filter by tag ${tag}`);
+            row.innerHTML = `
+                <div class="note-top-minimal">
+                    <h4>#${Utils.escapeHtml(tag)}</h4>
+                    <div class="note-actions-minimal">
+                        <span class="note-badge">${count}</span>
+                    </div>
+                </div>
+                <p class="note-preview">Show notes tagged with #${Utils.escapeHtml(tag)}</p>
+            `;
+            const activate = () => {
+                this.currentView = 'all';
+                document.querySelector('[data-view="all"]')?.click();
+                const input = document.getElementById('search-input');
+                if (input) {
+                    input.value = `#${tag}`;
+                    input.dispatchEvent(new Event('input'));
+                    input.focus();
+                } else {
+                    this.renderCurrentView();
+                }
+            };
+            row.addEventListener('click', activate);
+            row.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    activate();
+                }
+            });
+            listEl.appendChild(row);
+        });
+
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     updateCompactViewUI() {

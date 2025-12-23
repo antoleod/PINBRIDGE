@@ -549,35 +549,20 @@
                     <kbd class="search-hint">/</kbd>
                 </div>
                 <div class="list-header-actions">
-                    <button id="btn-notes-settings" class="btn-icon-minimal" title="Notes Settings">
-                        <i data-feather="settings"></i>
-                    </button>
+                    <div class="profile-menu">
+                        <button id="btn-profile" class="btn-icon-minimal" title="Profile" aria-haspopup="menu" aria-expanded="false">
+                            <i data-feather="user"></i>
+                            <span id="profile-name" class="profile-name"></span>
+                        </button>
+                        <div id="profile-dropdown" class="profile-dropdown hidden" role="menu" aria-label="Profile menu">
+                            <button type="button" class="profile-item" role="menuitem" id="profile-logout">
+                                <i data-feather="log-out"></i>
+                                <span>Log out</span>
+                            </button>
+                        </div>
+                    </div>
                     <button id="btn-new-note" class="btn-new-minimal" title="New Note (N)"
                         data-i18n-title="newNoteTooltip">+</button>
-                </div>
-            </div>
-
-            <!-- Notes Settings Menu -->
-            <div id="notes-settings-menu" class="notes-settings-menu hidden">
-                <div class="settings-menu-item">
-                    <label class="settings-toggle">
-                        <input type="checkbox" id="toggle-compact-view" class="toggle-input">
-                        <span class="toggle-label">Compact view</span>
-                    </label>
-                </div>
-                <div class="settings-menu-item">
-                    <label class="settings-toggle">
-                        <input type="checkbox" id="toggle-show-preview" class="toggle-input" checked>
-                        <span class="toggle-label">Show preview</span>
-                    </label>
-                </div>
-                <div class="settings-menu-item">
-                    <label>Sort by</label>
-                    <select id="notes-sort-select" class="settings-select-minimal">
-                        <option value="updated">Last updated</option>
-                        <option value="created">Date created</option>
-                        <option value="title">Title</option>
-                    </select>
                 </div>
             </div>
 
@@ -675,6 +660,14 @@
                     <div class="card-content">
                         <h3 id="stat-folders">0</h3>
                         <p>Folders</p>
+                    </div>
+                </div>
+
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-tags" aria-label="Open tags">
+                    <div class="card-icon"><i data-feather="tag"></i></div>
+                    <div class="card-content">
+                        <h3 id="stat-tags">0</h3>
+                        <p>Tags</p>
                     </div>
                 </div>
 
