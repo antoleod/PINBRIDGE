@@ -12,6 +12,8 @@
     <link rel="icon" type="image/png" sizes="16x16" href="src/public/icons/web/pinbridge_32x32.png">
     <link rel="apple-touch-icon" href="src/public/icons/ios/pinbridge_180x180.png">
 
+    <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://www.gstatic.com 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self' blob: https://cdn.jsdelivr.net https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com stun: turn:; worker-src 'self' blob: https://cdn.jsdelivr.net; object-src 'none'; base-uri 'self';">
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +21,8 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="./src/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.1/dist/feather.min.js"
+        crossorigin="anonymous"></script>
     <script type="module">
         import * as pdfjsLib from 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/legacy/build/pdf.min.mjs';
         window.pdfjsLib = pdfjsLib;
@@ -201,8 +204,8 @@
                             <div class="input-wrapper">
                                 <label for="register-pin" class="visually-hidden">PIN</label>
                                 <input type="password" id="register-pin" autocomplete="new-password"
-                                    placeholder="PIN (4-6 digits)" data-i18n-placeholder="pinPlaceholder" minlength="4"
-                                    maxlength="6" required>
+                                    placeholder="PIN / Password (min 6 chars)" data-i18n-placeholder="pinPlaceholder"
+                                    minlength="6" required>
                                 <button type="button" class="btn-toggle-visibility" data-target="register-pin"
                                     aria-label="Show PIN" title="Show PIN">
                                     <!-- Icon will be injected by JS -->
@@ -210,9 +213,9 @@
                             </div>
                             <span class="error-message" id="register-pin-error" aria-live="polite"></span>
                         </div>
-                        <div class="input-group admin-invite hidden" id="register-admin-invite-group">
+                        <div class="input-group" id="register-admin-invite-group">
                             <label for="register-admin-code" class="visually-hidden">Admin invite code</label>
-                            <input type="text" id="register-admin-code" autocomplete="one-time-code"
+                            <input type="password" id="register-admin-code" autocomplete="one-time-code"
                                 placeholder="Admin invite code">
                             <span class="error-message" id="register-admin-code-error" aria-live="polite"></span>
                             <p class="hint">Admin accounts require an invite code from an existing admin.</p>
@@ -319,10 +322,6 @@
                             <span class="method-icon"><i data-feather="file-text"></i></span>
                             <span>Backup Code</span>
                         </button>
-                        <button type="button" class="recovery-method-btn" data-method="secret-question">
-                            <span class="method-icon"><i data-feather="help-circle"></i></span>
-                            <span>Secret Question</span>
-                        </button>
                         <button type="button" class="recovery-method-btn" data-method="recovery-file">
                             <span class="method-icon"><i data-feather="file"></i></span>
                             <span>Recovery File</span>
@@ -357,15 +356,6 @@
                             <input type="text" id="backup-code-input" placeholder="XXXX-XXXX-XXXX-XXXX"
                                 autocomplete="off">
                             <p class="hint">Enter one of your 10 backup codes</p>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
-                    </form>
-
-                    <!-- Secret Question Method -->
-                    <form id="secret-question-form" class="recovery-method-form hidden">
-                        <div class="input-group">
-                            <label id="secret-question-display">Loading question...</label>
-                            <input type="text" id="secret-answer-input" placeholder="Your answer" autocomplete="off">
                         </div>
                         <button type="submit" class="btn btn-primary btn-block">Recover Account</button>
                     </form>
@@ -494,17 +484,23 @@
                 </div>
                 <div class="list-header-actions">
                     <div class="profile-menu">
-                        <button id="btn-profile" class="btn-icon-minimal" title="Profile" aria-haspopup="menu" aria-expanded="false">
+                        <button id="btn-profile" class="btn-icon-minimal" title="Profile" aria-haspopup="menu"
+                            aria-expanded="false">
                             <span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span>
                             <span id="profile-name" class="profile-name"></span>
                         </button>
-                        <div id="profile-dropdown" class="profile-dropdown hidden" role="menu" aria-label="Profile menu">
+                        <div id="profile-dropdown" class="profile-dropdown hidden" role="menu"
+                            aria-label="Profile menu">
                             <button type="button" class="profile-item" role="menuitem" id="profile-logout">
                                 <i data-feather="log-out"></i>
                                 <span>Log out</span>
                             </button>
                         </div>
                     </div>
+                    <button id="btn-empty-trash" class="btn-icon-minimal hidden" title="Empty Trash"
+                        aria-label="Empty Trash">
+                        <i data-feather="trash-2"></i>
+                    </button>
                     <button id="btn-new-note" class="btn-new-minimal" title="New Note (N)"
                         data-i18n-title="newNoteTooltip">+</button>
                 </div>
@@ -527,19 +523,25 @@
                     <datalist id="folder-suggestions"></datalist>
                 </div>
                 <div class="editor-actions-minimal">
-                    <button class="btn-tool-minimal editor-undo-redo" id="btn-undo" title="Undo" aria-label="Undo" disabled>
+                    <button class="btn-tool-minimal editor-undo-redo" id="btn-undo" title="Undo" aria-label="Undo"
+                        disabled>
                         <i data-feather="corner-left-up"></i>
                     </button>
-                    <button class="btn-tool-minimal editor-undo-redo" id="btn-redo" title="Redo" aria-label="Redo" disabled>
+                    <button class="btn-tool-minimal editor-undo-redo" id="btn-redo" title="Redo" aria-label="Redo"
+                        disabled>
                         <i data-feather="corner-right-up"></i>
+                    </button>
+                    <button class="btn-tool-minimal hidden" id="btn-restore" title="Restore Note"
+                        aria-label="Restore Note">
+                        <i data-feather="rotate-ccw"></i>
                     </button>
                     <button class="btn-tool-minimal btn-attach-file" id="btn-attach-file" title="Attach file"
                         aria-label="Attach file">
                         <i data-feather="paperclip"></i>
                         <span>Attach</span>
                     </button>
-                    <button class="btn-tool-minimal" id="btn-voice-type" title="Voice Typing"
-                        aria-label="Voice typing" aria-pressed="false">
+                    <button class="btn-tool-minimal" id="btn-voice-type" title="Voice Typing" aria-label="Voice typing"
+                        aria-pressed="false">
                         <i data-feather="mic"></i>
                     </button>
                     <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode"
@@ -548,6 +550,10 @@
                     </button>
                     <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
                         <i data-feather="map-pin"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-screenshot" title="Screenshot / Print"
+                        aria-label="Screenshot">
+                        <i data-feather="camera"></i>
                     </button>
                     <button class="btn-tool-minimal" id="btn-delete" title="Delete" data-i18n-title="delete">
                         <i data-feather="trash-2"></i>
@@ -590,7 +596,8 @@
 
             <div class="dashboard-grid">
                 <!-- Stats Cards -->
-                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-all" aria-label="Open notes">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-view="all"
+                    aria-label="Open notes">
                     <div class="card-icon"><i data-feather="file-text"></i></div>
                     <div class="card-content">
                         <h3 id="stat-total-notes">0</h3>
@@ -598,7 +605,8 @@
                     </div>
                 </div>
 
-                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-favorites" aria-label="Open favorites">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-view="favorites"
+                    aria-label="Open favorites">
                     <div class="card-icon"><i data-feather="star"></i></div>
                     <div class="card-content">
                         <h3 id="stat-favorites">0</h3>
@@ -606,7 +614,8 @@
                     </div>
                 </div>
 
-                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-folders" aria-label="Open folders">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-folders"
+                    aria-label="Open folders">
                     <div class="card-icon"><i data-feather="folder"></i></div>
                     <div class="card-content">
                         <h3 id="stat-folders">0</h3>
@@ -614,7 +623,8 @@
                     </div>
                 </div>
 
-                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-tags" aria-label="Open tags">
+                <div class="dashboard-card glass-panel" role="button" tabindex="0" data-action="view-tags"
+                    aria-label="Open tags">
                     <div class="card-icon"><i data-feather="tag"></i></div>
                     <div class="card-content">
                         <h3 id="stat-tags">0</h3>
@@ -710,22 +720,22 @@
                                 <span>Auto-clear after transfer</span>
                             </label>
 
-                             <div class="share-status">
-                                 <div class="share-state" id="share-state">Idle</div>
-                                 <div class="share-progress">
-                                     <div class="share-progress-bar">
-                                         <span id="share-progress-fill"></span>
-                                     </div>
-                                     <div class="share-progress-meta">
-                                         <span id="share-progress-text">0%</span>
-                                         <span id="share-progress-bytes">Waiting for a file.</span>
-                                     </div>
-                                 </div>
-                                 <div class="share-status-actions">
-                                     <button class="btn btn-text" id="share-clear-file">Remove file</button>
-                                     <button class="btn btn-secondary" id="share-reset">End Transfer</button>
-                                 </div>
-                             </div>
+                            <div class="share-status">
+                                <div class="share-state" id="share-state">Idle</div>
+                                <div class="share-progress">
+                                    <div class="share-progress-bar">
+                                        <span id="share-progress-fill"></span>
+                                    </div>
+                                    <div class="share-progress-meta">
+                                        <span id="share-progress-text">0%</span>
+                                        <span id="share-progress-bytes">Waiting for a file.</span>
+                                    </div>
+                                </div>
+                                <div class="share-status-actions">
+                                    <button class="btn btn-text" id="share-clear-file">Remove file</button>
+                                    <button class="btn btn-secondary" id="share-reset">End Transfer</button>
+                                </div>
+                            </div>
 
                             <div class="share-receiver hidden" id="share-receiver">
                                 <div class="share-receiver-header">
@@ -903,6 +913,10 @@
                 <i data-feather="star"></i>
                 <span class="label">Favs</span>
             </button>
+            <button class="nav-item" id="mobile-footer-tools" aria-label="Tools">
+                <i data-feather="tool"></i>
+                <span class="label">Tools</span>
+            </button>
             <button class="nav-item" id="mobile-footer-menu" aria-label="Menu">
                 <i data-feather="menu"></i>
                 <span class="label">Menu</span>
@@ -926,7 +940,7 @@
                         <span class="settings-action-desc">Preferences, sync, and tools.</span>
                     </div>
                 </button>
-                <button class="settings-action admin-only hidden" id="mobile-footer-open-admin">
+                <button class="settings-action" id="mobile-footer-open-admin">
                     <span class="settings-action-icon"><i data-feather="shield"></i></span>
                     <div class="settings-action-content">
                         <span class="settings-action-title">Admin Console</span>
@@ -1068,7 +1082,7 @@
                     <i data-feather="activity" aria-hidden="true"></i><span>Activity</span>
                 </button>
             </div>
-            <div class="settings-admin-entry admin-only hidden">
+            <div class="settings-admin-entry">
                 <button id="btn-open-admin" class="btn btn-secondary btn-block">
                     <i data-feather="shield"></i> Admin Console
                 </button>
@@ -1151,16 +1165,6 @@
                                 </div>
                             </div>
                             <button id="btn-generate-backup-codes" class="btn btn-secondary">Generate</button>
-                        </div>
-                        <div class="recovery-action-card">
-                            <div class="action-header">
-                                <span class="action-icon"><i data-feather="help-circle"></i></span>
-                                <div>
-                                    <strong>Secret Question</strong>
-                                    <p>Set up a question only you can answer.</p>
-                                </div>
-                            </div>
-                            <button id="btn-setup-secret-question" class="btn btn-secondary">Set Up</button>
                         </div>
                         <div class="recovery-action-card">
                             <div class="action-header">
@@ -1407,35 +1411,6 @@
                     Email</button>
                 <button id="confirm-backup-codes" class="btn btn-primary"><i data-feather="check-circle"></i>
                     Confirm</button>
-            </div>
-        </div>
-    </dialog>
-
-    <!-- SECRET QUESTION MODAL -->
-    <dialog id="secret-question-modal" class="modal-overlay hidden">
-        <div class="modal-content glass-panel">
-            <div class="modal-header">
-                <h2>Setup Secret Question</h2>
-                <button id="close-secret-question-modal" class="btn-icon ghost">×</button>
-            </div>
-            <p class="hint">Choose a question only you can answer. This will help you recover your account.</p>
-            <div class="form-group">
-                <label for="secret-question-input">Your Question</label>
-                <input type="text" id="secret-question-input" placeholder="e.g., What was your first pet's name?"
-                    class="input-field">
-            </div>
-            <div class="form-group">
-                <label for="setup-secret-answer-input">Your Answer</label>
-                <input type="text" id="setup-secret-answer-input" placeholder="Answer (case-sensitive)"
-                    class="input-field">
-            </div>
-            <div class="form-group">
-                <label for="secret-answer-confirm">Confirm Answer</label>
-                <input type="text" id="secret-answer-confirm" placeholder="Re-enter your answer" class="input-field">
-            </div>
-            <div class="modal-actions">
-                <button id="cancel-secret-question" class="btn btn-text">Cancel</button>
-                <button id="save-secret-question" class="btn btn-primary">Save Question</button>
             </div>
         </div>
     </dialog>

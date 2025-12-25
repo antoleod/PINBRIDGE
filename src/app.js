@@ -77,6 +77,653 @@ async function init() {
     initEnterToLogin();
     // --- End UI Enhancements ---
 
+    // --- Attachment Management (Delete Feature & UI Injection) ---
+    function initAttachmentManager() {
+        const list = document.getElementById('note-attachments-list');
+        if (!list) return;
+
+        // Observer to inject Delete buttons into dynamically rendered attachments
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.classList.contains('attachment-item')) {
+                        // Prevent duplicate buttons
+                        if (node.querySelector('.btn-delete-attachment')) return;
+
+                        const actions = node.querySelector('.attachment-actions');
+                        if (actions) {
+                            const btn = document.createElement('button');
+                            btn.className = 'btn-icon ghost btn-delete-attachment';
+                            btn.innerHTML = '<i data-feather="trash-2"></i>';
+                            btn.title = 'Delete Attachment';
+                            btn.ariaLabel = 'Delete Attachment';
+
+                            // Insert before the first child (usually download/open) or append
+                            actions.appendChild(btn);
+
+                            if (typeof feather !== 'undefined') feather.replace();
+                        }
+                    }
+                });
+            });
+        });
+
+        observer.observe(list, { childList: true, subtree: true });
+
+        // Event Delegation for Delete Action
+        let pendingDeleteId = null;
+        const deleteModal = document.getElementById('delete-attachment-modal');
+
+        list.addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-delete-attachment');
+            if (btn) {
+                const item = btn.closest('.attachment-item');
+                pendingDeleteId = item.dataset.id; // Assuming render puts data-id
+                if (deleteModal) {
+                    deleteModal.classList.remove('hidden');
+                    deleteModal.showModal();
+                }
+            }
+        });
+
+        // Modal Actions
+        document.getElementById('cancel-delete-attachment')?.addEventListener('click', () => {
+            if (deleteModal) {
+                deleteModal.classList.add('hidden');
+                deleteModal.close();
+            }
+            pendingDeleteId = null;
+        });
+
+        document.getElementById('confirm-delete-attachment')?.addEventListener('click', () => {
+            if (pendingDeleteId) {
+                bus.emit('attachment:delete', pendingDeleteId);
+                if (deleteModal) {
+                    deleteModal.classList.add('hidden');
+                    deleteModal.close();
+                }
+                // Optimistic UI removal
+                const item = list.querySelector(`.attachment-item[data-id="${pendingDeleteId}"]`);
+                if (item) item.remove();
+
+                // Check if empty
+                if (list.children.length === 0) {
+                    document.getElementById('note-attachments-empty')?.classList.remove('hidden');
+                }
+            }
+        });
+
+        document.getElementById('close-delete-attachment-modal')?.addEventListener('click', () => {
+            if (deleteModal) {
+                deleteModal.classList.add('hidden');
+                deleteModal.close();
+            }
+        });
+
+        // Handler for attachment deletion
+        bus.on('attachment:delete', async (attachmentId) => {
+            const noteId = uiService.activeNoteId;
+            if (!noteId) {
+                console.warn('Cannot delete attachment: No active note');
+                return;
+            }
+
+            const notes = vaultService.getNotes();
+            const note = notes.find(n => n.id === noteId);
+
+            if (note && note.attachments) {
+                const initialCount = note.attachments.length;
+                note.attachments = note.attachments.filter(a => String(a.id) !== String(attachmentId));
+
+                if (note.attachments.length < initialCount) {
+                    note.updated = Date.now();
+                    await vaultService.upsertNote(note);
+                    uiService.showToast('Attachment removed from vault', 'success');
+                }
+            }
+        });
+    }
+    initAttachmentManager();
+    // --- End Attachment Management ---
+
+    // --- Note Deletion Management ---
+    function initNoteDeleteManager() {
+        const btnDelete = document.getElementById('btn-delete');
+        if (!btnDelete) return;
+
+        // Clone to remove existing listeners
+        const newBtn = btnDelete.cloneNode(true);
+        btnDelete.parentNode.replaceChild(newBtn, btnDelete);
+
+        const deleteModal = document.getElementById('delete-note-modal');
+        const modalTitle = deleteModal?.querySelector('h2');
+        const modalText = deleteModal?.querySelector('.warning-text');
+
+        // Clone confirm button to remove old listeners
+        const oldConfirmBtn = document.getElementById('confirm-delete-note');
+        let confirmBtn = oldConfirmBtn;
+        if (oldConfirmBtn) {
+            confirmBtn = oldConfirmBtn.cloneNode(true);
+            oldConfirmBtn.parentNode.replaceChild(confirmBtn, oldConfirmBtn);
+        }
+
+        const showDeleteModal = () => {
+            if (!uiService.activeNoteId) return;
+
+            const notes = vaultService.getNotes();
+            const note = notes.find(n => n.id === uiService.activeNoteId);
+            if (!note) return;
+
+            const isTrash = !!note.trash;
+
+            if (modalTitle) modalTitle.textContent = isTrash ? 'Delete Permanently' : 'Move to Trash';
+            if (modalText) modalText.textContent = isTrash
+                ? 'Are you sure you want to delete this note permanently? This action cannot be undone.'
+                : 'Are you sure you want to move this note to the trash?';
+            if (confirmBtn) confirmBtn.textContent = isTrash ? 'Delete Permanently' : 'Move to Trash';
+
+            if (deleteModal) {
+                deleteModal.classList.remove('hidden');
+                deleteModal.showModal();
+            }
+        };
+
+        newBtn.addEventListener('click', showDeleteModal);
+
+        // Keyboard Shortcut: Delete key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Delete') {
+                // Ignore if typing in input/textarea/contenteditable
+                const tag = document.activeElement.tagName;
+                if (tag === 'INPUT' || tag === 'TEXTAREA' || document.activeElement.isContentEditable) return;
+
+                // Ignore if any modal is open
+                if (document.querySelector('dialog[open]')) return;
+
+                showDeleteModal();
+            }
+        });
+
+        document.getElementById('cancel-delete-note')?.addEventListener('click', () => {
+            if (deleteModal) {
+                deleteModal.classList.add('hidden');
+                deleteModal.close();
+            }
+        });
+
+        document.getElementById('close-delete-note-modal')?.addEventListener('click', () => {
+            if (deleteModal) {
+                deleteModal.classList.add('hidden');
+                deleteModal.close();
+            }
+        });
+
+        confirmBtn?.addEventListener('click', async () => {
+            const noteId = uiService.activeNoteId;
+            if (noteId) {
+                const notes = vaultService.getNotes();
+                const note = notes.find(n => n.id === noteId);
+
+                if (note) {
+                    if (note.trash) {
+                        // Hard Delete
+                        const newNotes = notes.filter(n => n.id !== noteId);
+                        await vaultService.replaceNotes(newNotes);
+                        uiService.showToast('Note deleted permanently', 'success');
+                    } else {
+                        // Soft Delete
+                        note.trash = true;
+                        note.updated = Date.now();
+                        await vaultService.upsertNote(note);
+                        uiService.showToast('Note moved to trash', 'success');
+                    }
+                }
+
+                if (deleteModal) {
+                    deleteModal.classList.add('hidden');
+                    deleteModal.close();
+                }
+
+                // Clear Editor
+                const titleInput = document.getElementById('note-title');
+                const contentInput = document.getElementById('note-content');
+                if (titleInput) titleInput.value = '';
+                if (contentInput) contentInput.value = '';
+                const attachmentList = document.getElementById('note-attachments-list');
+                if (attachmentList) attachmentList.innerHTML = '';
+
+                // Refresh List
+                uiService.renderCurrentView(vaultService.getNotes());
+            }
+        });
+    }
+    initNoteDeleteManager();
+    // --- End Note Deletion Management ---
+
+    // --- Note List Actions Injection ---
+    function initNoteListActions() {
+        const list = document.getElementById('notes-list');
+        if (!list) return;
+
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.classList.contains('note-item')) {
+                        const topRow = node.querySelector('.note-top-minimal');
+                        if (!topRow) return;
+
+                        let actionsContainer = topRow.querySelector('.note-actions-minimal');
+                        if (!actionsContainer) {
+                            actionsContainer = document.createElement('div');
+                            actionsContainer.className = 'note-actions-minimal';
+                            topRow.appendChild(actionsContainer);
+                        }
+
+                        if (actionsContainer.hasChildNodes()) return;
+
+                        // History Icon
+                        const btnHistory = document.createElement('button');
+                        btnHistory.className = 'note-action-icon';
+                        btnHistory.dataset.action = 'history';
+                        btnHistory.title = 'History';
+                        btnHistory.innerHTML = '<i data-feather="clock"></i>';
+                        actionsContainer.appendChild(btnHistory);
+
+                        // Delete Icon
+                        const btnDelete = document.createElement('button');
+                        btnDelete.className = 'note-action-icon';
+                        btnDelete.dataset.action = 'delete';
+                        btnDelete.title = 'Delete';
+                        btnDelete.innerHTML = '<i data-feather="trash-2"></i>';
+                        actionsContainer.appendChild(btnDelete);
+
+                        if (typeof feather !== 'undefined') feather.replace();
+                    }
+                });
+            });
+        });
+
+        observer.observe(list, { childList: true });
+
+        list.addEventListener('click', (e) => {
+            const btn = e.target.closest('.note-action-icon');
+            if (!btn) return;
+            e.stopPropagation();
+
+            const noteItem = btn.closest('.note-item');
+            const noteId = noteItem.dataset.id;
+
+            if (btn.dataset.action === 'delete') {
+                uiService.activeNoteId = noteId;
+                const deleteModal = document.getElementById('delete-note-modal');
+                if (deleteModal) {
+                    const notes = vaultService.getNotes();
+                    const note = notes.find(n => n.id === noteId);
+                    const modalTitle = deleteModal.querySelector('h2');
+                    const modalText = deleteModal.querySelector('.warning-text');
+                    const confirmBtn = document.getElementById('confirm-delete-note');
+
+                    if (note) {
+                        const isTrash = !!note.trash;
+                        if (modalTitle) modalTitle.textContent = isTrash ? 'Delete Permanently' : 'Move to Trash';
+                        if (modalText) modalText.textContent = isTrash
+                            ? 'Are you sure you want to delete this note permanently? This action cannot be undone.'
+                            : 'Are you sure you want to move this note to the trash?';
+                        if (confirmBtn) confirmBtn.textContent = isTrash ? 'Delete Permanently' : 'Move to Trash';
+                    }
+
+                    deleteModal.classList.remove('hidden');
+                    deleteModal.showModal();
+                }
+            } else if (btn.dataset.action === 'history') {
+                const historyModal = document.getElementById('history-modal');
+                if (historyModal) {
+                    const notes = vaultService.getNotes();
+                    const note = notes.find(n => n.id === noteId);
+                    const listContainer = document.getElementById('history-list');
+
+                    if (listContainer) {
+                        listContainer.innerHTML = '';
+                        const history = note?.history || [];
+
+                        if (history.length === 0) {
+                            listContainer.innerHTML = `
+                                <div class="empty-list-placeholder">
+                                    <p>No history available for this note.</p>
+                                </div>`;
+                        } else {
+                            // Sort by date descending
+                            const sortedHistory = [...history].sort((a, b) => (b.updated || 0) - (a.updated || 0));
+
+                            sortedHistory.forEach(version => {
+                                const item = document.createElement('div');
+                                item.className = 'history-item';
+                                const dateStr = new Date(version.updated).toLocaleString();
+                                const titleSafe = (version.title || 'Untitled').replace(/</g, '&lt;');
+                                const contentPreview = (version.content || '').substring(0, 60).replace(/</g, '&lt;');
+
+                                item.innerHTML = `
+                                    <div class="history-meta">
+                                        <div class="history-date">${dateStr}</div>
+                                        <div class="history-preview"><strong>${titleSafe}</strong><br>${contentPreview}...</div>
+                                    </div>
+                                    <button class="btn-icon ghost restore-btn" title="Restore this version">
+                                        <i data-feather="rotate-ccw"></i>
+                                    </button>
+                                `;
+
+                                item.querySelector('.restore-btn').addEventListener('click', async () => {
+                                    if (confirm('Restore this version? The current version will be saved to history.')) {
+                                        // Save current state to history
+                                        const currentSnapshot = {
+                                            updated: Date.now(),
+                                            title: note.title,
+                                            content: note.content
+                                        };
+
+                                        // Restore old state
+                                        note.title = version.title;
+                                        note.content = version.content;
+                                        note.updated = Date.now();
+                                        if (!note.history) note.history = [];
+                                        note.history.push(currentSnapshot);
+
+                                        await vaultService.upsertNote(note);
+                                        uiService.showToast('Version restored', 'success');
+
+                                        historyModal.classList.add('hidden');
+                                        historyModal.close();
+
+                                        // Refresh UI if this note is active
+                                        if (uiService.activeNoteId === note.id) {
+                                            const titleInput = document.getElementById('note-title');
+                                            const contentInput = document.getElementById('note-content');
+                                            if (titleInput) titleInput.value = note.title;
+                                            if (contentInput) contentInput.value = note.content;
+                                        }
+                                        uiService.renderCurrentView(vaultService.getNotes());
+                                    }
+                                });
+
+                                listContainer.appendChild(item);
+                            });
+
+                            if (typeof feather !== 'undefined') feather.replace();
+                        }
+                    }
+
+                    historyModal.classList.remove('hidden');
+                    historyModal.showModal();
+                }
+            }
+        });
+
+        document.getElementById('close-history-modal')?.addEventListener('click', () => {
+            const historyModal = document.getElementById('history-modal');
+            if (historyModal) {
+                historyModal.classList.add('hidden');
+                historyModal.close();
+            }
+        });
+    }
+    initNoteListActions();
+    // --- End Note List Actions Injection ---
+
+    // --- Trash Management ---
+    function initTrashManager() {
+        const btnEmptyTrash = document.getElementById('btn-empty-trash');
+        const btnNewNote = document.getElementById('btn-new-note');
+        const btnRestore = document.getElementById('btn-restore');
+        const emptyModal = document.getElementById('empty-trash-modal');
+
+        // --- Empty Trash Logic ---
+        btnEmptyTrash?.addEventListener('click', () => {
+            if (emptyModal) {
+                emptyModal.classList.remove('hidden');
+                emptyModal.showModal();
+            }
+        });
+
+        document.getElementById('cancel-empty-trash')?.addEventListener('click', () => {
+            if (emptyModal) {
+                emptyModal.classList.add('hidden');
+                emptyModal.close();
+            }
+        });
+
+        document.getElementById('close-empty-trash-modal')?.addEventListener('click', () => {
+            if (emptyModal) {
+                emptyModal.classList.add('hidden');
+                emptyModal.close();
+            }
+        });
+
+        document.getElementById('confirm-empty-trash')?.addEventListener('click', async () => {
+            const notes = vaultService.getNotes();
+            const keptNotes = notes.filter(n => !n.trash);
+
+            if (keptNotes.length < notes.length) {
+                await vaultService.replaceNotes(keptNotes);
+                uiService.showToast('Trash emptied', 'success');
+                uiService.renderCurrentView(keptNotes);
+
+                // Clear editor if active note was deleted
+                if (uiService.activeNoteId) {
+                    const activeStillExists = keptNotes.find(n => n.id === uiService.activeNoteId);
+                    if (!activeStillExists) {
+                        document.getElementById('note-title').value = '';
+                        document.getElementById('note-content').value = '';
+                        uiService.activeNoteId = null;
+                    }
+                }
+            }
+
+            if (emptyModal) {
+                emptyModal.classList.add('hidden');
+                emptyModal.close();
+            }
+        });
+
+        // --- Restore Logic ---
+        btnRestore?.addEventListener('click', async () => {
+            const noteId = uiService.activeNoteId;
+            if (!noteId) return;
+
+            const notes = vaultService.getNotes();
+            const note = notes.find(n => n.id === noteId);
+            if (note && note.trash) {
+                note.trash = false;
+                note.updated = Date.now();
+                await vaultService.upsertNote(note);
+                uiService.showToast('Note restored', 'success');
+                uiService.renderCurrentView(vaultService.getNotes());
+                updateTrashUI(); // Refresh button state
+            }
+        });
+
+        // --- UI State Management ---
+        const updateTrashUI = () => {
+            const isTrashView = uiService.currentView === 'trash';
+
+            // Toggle List Header Buttons
+            if (btnEmptyTrash) btnEmptyTrash.classList.toggle('hidden', !isTrashView);
+            if (btnNewNote) btnNewNote.classList.toggle('hidden', isTrashView);
+
+            // Toggle Restore Button based on active note
+            const noteId = uiService.activeNoteId;
+            if (noteId) {
+                const notes = vaultService.getNotes();
+                const note = notes.find(n => n.id === noteId);
+                const isTrashed = !!note?.trash;
+                if (btnRestore) btnRestore.classList.toggle('hidden', !isTrashed);
+            } else {
+                if (btnRestore) btnRestore.classList.add('hidden');
+            }
+        };
+
+        // Hook into navigation and selection events to update UI
+        const notesList = document.getElementById('notes-list');
+        if (notesList) {
+            notesList.addEventListener('click', () => setTimeout(updateTrashUI, 50));
+        }
+
+        // Initial check on unlock
+        bus.on('auth:unlock', () => setTimeout(updateTrashUI, 500));
+        bus.on('view:switched', () => setTimeout(updateTrashUI, 0));
+    }
+    initTrashManager();
+    // --- End Trash Management ---
+
+    // --- App-wide Navigation ---
+    function initAppNavigation() {
+        const mainPanels = {
+            // Map view names to panel elements
+            all: document.querySelector('.list-panel'),
+            favorites: document.querySelector('.list-panel'),
+            templates: document.querySelector('.list-panel'),
+            trash: document.querySelector('.list-panel'),
+            archive: document.querySelector('.list-panel'),
+            dashboard: document.querySelector('.dashboard-panel'),
+            admin: document.querySelector('.admin-panel'),
+        };
+
+        const switchView = (view) => {
+            if (!view || !mainPanels[view]) {
+                console.warn(`[NAV] Invalid view requested: ${view}`);
+                return;
+            }
+
+            const isMobile = document.body.classList.contains('is-mobile');
+
+            // 1. Hide all main panels
+            Object.values(mainPanels).forEach(panel => panel?.classList.add('hidden'));
+            if (isMobile) document.querySelector('.editor-panel')?.classList.add('hidden');
+
+            // 2. Show the target panel
+            const targetPanel = mainPanels[view];
+            targetPanel?.classList.remove('hidden');
+
+            // 3. Update active state on all nav buttons
+            document.querySelectorAll('[data-view]').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+
+            // 4. Update uiService state and re-render content
+            uiService.currentView = view;
+            uiService.renderCurrentView(vaultService.getNotes());
+
+            // 5. Close mobile sidebar if open
+            document.body.classList.remove('mobile-sidebar-open');
+            document.querySelector('.mobile-nav-backdrop')?.classList.remove('visible');
+
+            // 6. Handle mobile list/editor state
+            if (isMobile) {
+                document.body.classList.add('mobile-list-active');
+                document.body.classList.remove('mobile-editor-active');
+            }
+
+            // 7. Notify other modules of the view change
+            bus.emit('view:switched', { view });
+        };
+
+        // Use event delegation for all navigation clicks
+        document.body.addEventListener('click', (e) => {
+            const navTrigger = e.target.closest('[data-view]');
+            if (navTrigger) {
+                e.preventDefault();
+                e.stopPropagation();
+                const view = navTrigger.dataset.view;
+                switchView(view);
+            }
+        });
+
+        // Expose the switcher to the bus for programmatic navigation
+        bus.on('view:switch', switchView);
+    }
+    initAppNavigation();
+    // --- End App-wide Navigation ---
+
+    // --- Mobile Navigation Enhancements (Transitions & Back Button) ---
+    function initMobileNavigation() {
+        const mobileTopbar = document.getElementById('mobile-topbar');
+        if (!mobileTopbar) return;
+
+        // 1. Inject Back Button into Mobile Topbar
+        const backBtn = document.createElement('button');
+        backBtn.className = 'btn-icon ghost mobile-back-btn';
+        backBtn.innerHTML = '<i data-feather="arrow-left"></i>';
+        backBtn.ariaLabel = 'Back to list';
+        // Insert after menu button
+        mobileTopbar.insertBefore(backBtn, mobileTopbar.children[1]);
+        if (typeof feather !== 'undefined') feather.replace();
+
+        // 2. Handle Back Button Click
+        backBtn.addEventListener('click', () => {
+            document.body.classList.remove('mobile-editor-active');
+            document.body.classList.add('mobile-list-active');
+        });
+
+        // 3. Handle Note Click to Enter Editor (Delegation)
+        const notesList = document.getElementById('notes-list');
+        if (notesList) {
+            notesList.addEventListener('click', (e) => {
+                if (e.target.closest('.note-item')) {
+                    // Only trigger on mobile
+                    if (window.matchMedia('(max-width: 900px)').matches) {
+                        // Small delay to allow UI service to set active note first
+                        requestAnimationFrame(() => {
+                            document.body.classList.add('mobile-editor-active');
+                            document.body.classList.remove('mobile-list-active');
+                        });
+                    }
+                }
+            });
+        }
+
+        // 4. Swipe to Back Gesture (Edge Swipe)
+        let touchStartX = 0;
+        const editorPanel = document.querySelector('.editor-panel');
+
+        if (editorPanel) {
+            editorPanel.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            editorPanel.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0].screenX;
+                // Swipe right from left edge (back gesture)
+                if (touchEndX - touchStartX > 80 && touchStartX < 60) {
+                    backBtn.click();
+                }
+            }, { passive: true });
+        }
+
+        // 5. Mobile Footer Tools Button
+        const btnMobileTools = document.getElementById('mobile-footer-tools');
+        if (btnMobileTools) {
+            btnMobileTools.addEventListener('click', () => {
+                const settingsModal = document.getElementById('settings-modal');
+                if (settingsModal) {
+                    // Switch to tools tab
+                    const toolsTab = settingsModal.querySelector('[data-tab="tools"]');
+                    if (toolsTab) toolsTab.click();
+                    settingsModal.classList.remove('hidden');
+                    settingsModal.showModal();
+                }
+            });
+        }
+
+        // 6. Screenshot / Print Button
+        const btnScreenshot = document.getElementById('btn-screenshot');
+        if (btnScreenshot) {
+            btnScreenshot.addEventListener('click', () => {
+                window.print();
+            });
+        }
+    }
+    initMobileNavigation();
+    // --- End Mobile Navigation ---
+
     const lang = i18n.init();
     document.documentElement.lang = lang;
     bus.on('i18n:change', (code) => {
@@ -148,14 +795,7 @@ bus.on('auth:unlock', async () => {
 
         if (notes && Array.isArray(notes)) {
             searchService.buildIndex(notes);
-            // Small delay for smooth transition from skeleton
-            await new Promise(resolve => setTimeout(resolve, 300));
-            uiService.renderCurrentView(notes);
-
-            // Initialize feather icons after rendering
-            if (typeof feather !== 'undefined') {
-                feather.replace();
-            }
+            bus.emit('view:switch', 'all'); // Trigger initial render via new navigation system
         } else {
             console.error('Notes is not an array:', notes);
             uiService.renderCurrentView([]);

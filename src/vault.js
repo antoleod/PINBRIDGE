@@ -186,13 +186,31 @@ class VaultService {
       console.warn('Vault not initialized, returning empty notes array');
       return [];
     }
-    return this.vault.notes || [];
+    // Return copies to ensure upsertNote can detect changes for history
+    return (this.vault.notes || []).map(n => ({
+      ...n,
+      attachments: n.attachments ? [...n.attachments] : [],
+      history: n.history ? [...n.history] : []
+    }));
   }
 
   async upsertNote(note) {
     if (!this.vault.notes) this.vault.notes = [];
     const existingIndex = this.vault.notes.findIndex(n => n.id === note.id);
     if (existingIndex >= 0) {
+      const oldNote = this.vault.notes[existingIndex];
+      // Auto-save history if content or title changed
+      if (oldNote.content !== note.content || oldNote.title !== note.title) {
+        const historyEntry = {
+          updated: oldNote.updated || Date.now(),
+          title: oldNote.title,
+          content: oldNote.content
+        };
+        if (!note.history) note.history = oldNote.history ? [...oldNote.history] : [];
+        note.history.push(historyEntry);
+        // Keep last 50 versions
+        if (note.history.length > 50) note.history.shift();
+      }
       this.vault.notes[existingIndex] = note;
     } else {
       this.vault.notes.push(note);
@@ -227,13 +245,17 @@ class VaultService {
     if (this.syncEnabled) {
       // Use Queue with optimization
       try {
-        if (typeof syncManager !== 'undefined') syncManager.enqueueOrUpdate('PUSH_VAULT', record, this.uid);
+        if (typeof syncManager !== 'undefined') {
+          syncManager.enqueueOrUpdate('PUSH_VAULT', record, this.uid);
+          // Force sync immediately
+          syncManager.processQueue();
+        }
       } catch (e) {
         console.warn('Sync push failed, but local saved', e);
-        bus.emit('vault:saved-local-only', now);
+        bus.emit('vault:saved-local-only', updatedAt);
       }
     }
-    bus.emit('vault:saved', now);
+    bus.emit('vault:saved', updatedAt);
   }
 
   async persistNotes(notes) {

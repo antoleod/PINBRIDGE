@@ -198,9 +198,20 @@ body::after {
 }
 
 @keyframes bg-drift {
-    0% { transform: translate3d(0, 0, 0) scale(1); filter: hue-rotate(0deg); }
-    50% { transform: translate3d(0, -10px, 0) scale(1.02); filter: hue-rotate(12deg); }
-    100% { transform: translate3d(0, 0, 0) scale(1); filter: hue-rotate(0deg); }
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: hue-rotate(0deg);
+    }
+
+    50% {
+        transform: translate3d(0, -10px, 0) scale(1.02);
+        filter: hue-rotate(12deg);
+    }
+
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: hue-rotate(0deg);
+    }
 }
 
 /* Keep app layers above background */
@@ -209,8 +220,13 @@ body::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    body::after { animation: none; }
-    * { scroll-behavior: auto !important; }
+    body::after {
+        animation: none;
+    }
+
+    * {
+        scroll-behavior: auto !important;
+    }
 }
 
 /* Mobile touch adjustments */
@@ -2971,7 +2987,7 @@ body.compact-notes .note-item p {
     min-width: 0;
 }
 
-.note-meta-info > span {
+.note-meta-info>span {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -3301,6 +3317,21 @@ body.compact-notes .note-item p {
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.btn-delete-attachment {
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.btn-delete-attachment:hover {
+    color: var(--text-danger);
+    background: rgba(248, 113, 113, 0.1);
+    transform: scale(1.05);
+}
+
+.btn-delete-attachment i {
+    pointer-events: none;
 }
 
 .attachment-progress {
@@ -4524,7 +4555,7 @@ input[type="file"]::file-selector-button {
 
     body {
         height: auto;
-        overflow-y: auto;
+        overflow: hidden;
     }
 
     .floating-panel {
@@ -4722,11 +4753,16 @@ input[type="file"]::file-selector-button {
     }
 
     .editor-actions-minimal {
-        justify-content: space-between;
+        justify-content: flex-start;
         width: 100%;
+        overflow-x: auto;
+        gap: 0.75rem;
+        padding-bottom: 2px;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
     }
 
-.btn-tool-minimal {
+    .btn-tool-minimal {
         width: 42px;
         height: 42px;
         border-radius: 10px;
@@ -4839,6 +4875,7 @@ input[type="file"]::file-selector-button {
 
     body.mobile-editor-active .editor-panel {
         display: flex;
+        animation: slideInRightMobile 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
 
     body.mobile-list-active .editor-panel {
@@ -4847,6 +4884,22 @@ input[type="file"]::file-selector-button {
 
     body.mobile-list-active .list-panel {
         display: flex;
+        animation: slideInLeftMobile 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+    }
+
+    /* Mobile Topbar State Changes */
+    body.mobile-editor-active #mobile-topbar .topbar-actions,
+    body.mobile-editor-active #btn-mobile-menu {
+        display: none;
+    }
+
+    .mobile-back-btn {
+        display: none;
+    }
+
+    body.mobile-editor-active .mobile-back-btn {
+        display: flex;
+        margin-right: 0.5rem;
     }
 }
 
@@ -5510,6 +5563,7 @@ input[type="file"]::file-selector-button {
 
 /* --- MOBILE SETTINGS SHEET --- */
 @media (max-width: 900px) {
+
     /* Ensure <dialog> defaults don't constrain the settings sheet */
     #settings-modal.modal-overlay {
         padding: 0;
@@ -5846,3 +5900,26 @@ input[type="file"]::file-selector-button {
     font-weight: 500;
 }
 
+@keyframes slideInRightMobile {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInLeftMobile {
+    from {
+        transform: translateX(-20%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
