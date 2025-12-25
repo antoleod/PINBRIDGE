@@ -85,6 +85,23 @@ class UIService {
         this.mobileFooterBusy = false;
         this.mobileFooterMenuOpen = false;
         this.mobileFooterMenuTrap = null;
+
+        this._pendingNavigation = null;
+        this._history = {
+            undoStack: [],
+            redoStack: [],
+            lastValue: null,
+            lastSelection: { start: 0, end: 0 },
+            lastPushedAt: 0,
+            debounceMs: 300,
+            max: 120
+        };
+        this._markdownToolbarButtons = new Map();
+        this._inlineWrapState = {
+            bold: false,
+            italic: false,
+            code: false
+        };
     }
 
     showLoginForm() {
@@ -573,11 +590,17 @@ class UIService {
             btn.className = 'btn-md-tool';
             btn.innerHTML = `<i data-feather="${t.icon}"></i>`;
             btn.title = t.title;
+            btn.setAttribute('aria-label', t.title);
+            btn.setAttribute('aria-pressed', 'false');
+            btn.dataset.format = t.icon;
             btn.onclick = (e) => {
                 e.preventDefault();
                 t.action();
             };
             toolbar.appendChild(btn);
+            if (['bold', 'italic', 'code'].includes(t.icon)) {
+                this._markdownToolbarButtons.set(t.icon, btn);
+            }
         });
 
         // Insert after the minimal toolbar
@@ -586,6 +609,7 @@ class UIService {
             topBar.parentNode.insertBefore(toolbar, topBar.nextSibling);
         }
         if (typeof feather !== 'undefined') feather.replace();
+        this.updateMarkdownToolbarState();
     }
 
     setupSecurityFeatures() {
@@ -1483,25 +1507,29 @@ class UIService {
     addVaultEventListeners() {
         document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
             btn.onclick = () => {
-                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentView = btn.dataset.view;
-                this.closeAllPanels({ reason: 'navigate' });
-                this.closeMobileSidebar();
-                this.closeMobileFooterMenu();
-                this.renderCurrentView();
+                this.guardUnsavedChanges(async () => {
+                    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.currentView = btn.dataset.view;
+                    this.closeAllPanels({ reason: 'navigate' });
+                    this.closeMobileSidebar();
+                    this.closeMobileFooterMenu();
+                    this.renderCurrentView();
+                }, { source: 'navigate' });
             };
         });
 
         this.mobile.navPills?.forEach(btn => {
             btn.onclick = () => {
-                this.mobile.navPills.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentView = btn.dataset.view;
-                this.closeAllPanels({ reason: 'navigate' });
-                this.closeMobileSidebar();
-                this.closeMobileFooterMenu();
-                this.renderCurrentView();
+                this.guardUnsavedChanges(async () => {
+                    this.mobile.navPills.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.currentView = btn.dataset.view;
+                    this.closeAllPanels({ reason: 'navigate' });
+                    this.closeMobileSidebar();
+                    this.closeMobileFooterMenu();
+                    this.renderCurrentView();
+                }, { source: 'navigate' });
             };
         });
 
@@ -1544,10 +1572,10 @@ class UIService {
 
         this.bindProfileMenu();
 
-        document.getElementById('btn-lock')?.addEventListener('click', () => authService.forceLogout('manual'));
-        document.getElementById('btn-signout')?.addEventListener('click', () => authService.signOut('manual'));
-        document.getElementById('mobile-signout')?.addEventListener('click', () => authService.signOut('manual'));
-        if (this.mobile.btnLock) this.mobile.btnLock.onclick = () => authService.forceLogout('manual');
+        document.getElementById('btn-lock')?.addEventListener('click', () => this.handleLockAction());
+        document.getElementById('btn-signout')?.addEventListener('click', () => this.handleSignOutAction());
+        document.getElementById('mobile-signout')?.addEventListener('click', () => this.handleSignOutAction());
+        if (this.mobile.btnLock) this.mobile.btnLock.onclick = () => this.handleLockAction();
 
         document.getElementById('btn-toggle-compact')?.addEventListener('click', () => this.toggleCompactView());
 
@@ -1559,6 +1587,8 @@ class UIService {
                 if (!quickDropInput.value) this.quickDropZone?.classList.add('collapsed');
             });
         }
+
+        this.bindEditorIntelligence();
     }
 
     toggleMobileSidebar() {
@@ -1638,7 +1668,7 @@ class UIService {
             logout.addEventListener('click', async (e) => {
                 e.preventDefault();
                 close();
-                await authService.signOut('manual');
+                await this.handleSignOutAction();
             });
         }
     }
@@ -1654,6 +1684,267 @@ class UIService {
             backdrop.addEventListener('click', () => this.closeMobileSidebar());
         }
         backdrop.classList.add('visible');
+    }
+
+    async handleLockAction() {
+        // Lock = quick privacy action (no confirmation).
+        const ok = await this.guardUnsavedChanges(async () => true, { source: 'lock' });
+        if (!ok) return;
+        authService.forceLogout('manual');
+    }
+
+    async handleSignOutAction() {
+        // Sign out = explicit account/session termination.
+        const ok = await this.guardUnsavedChanges(async () => true, { source: 'signout' });
+        if (!ok) return;
+        if (!confirm('Sign out on this device? Your vault stays encrypted, and you can sign back in anytime.')) return;
+        await authService.signOut('manual');
+    }
+
+    async guardUnsavedChanges(onProceed, { source } = {}) {
+        if (!this.activeNoteId) {
+            if (onProceed) await onProceed();
+            return true;
+        }
+        const hasChanged = this.isNoteChanged();
+        if (!hasChanged) {
+            if (onProceed) await onProceed();
+            return true;
+        }
+
+        // Try to persist silently first to avoid friction.
+        const saved = await this.persistNote(true);
+        if (saved) {
+            if (onProceed) await onProceed();
+            return true;
+        }
+
+        // Save failed (or blocked). Show a subtle inline guard instead of a modal.
+        this._pendingNavigation = onProceed || null;
+        this.showUnsavedGuard(source);
+        return false;
+    }
+
+    showUnsavedGuard(source) {
+        const toolbar = document.querySelector('.editor-toolbar-minimal');
+        if (!toolbar) return;
+
+        let guard = document.getElementById('unsaved-guard');
+        if (!guard) {
+            guard = document.createElement('div');
+            guard.id = 'unsaved-guard';
+            guard.className = 'unsaved-guard';
+            guard.innerHTML = `
+                <div class="unsaved-guard-text">Unsaved changes</div>
+                <div class="unsaved-guard-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="unsaved-guard-save">Save</button>
+                    <button type="button" class="btn btn-text btn-sm" id="unsaved-guard-discard">Discard</button>
+                </div>
+            `;
+            toolbar.appendChild(guard);
+
+            guard.querySelector('#unsaved-guard-save')?.addEventListener('click', async () => {
+                const ok = await this.persistNote(true);
+                if (!ok) return;
+                this.hideUnsavedGuard();
+                const pending = this._pendingNavigation;
+                this._pendingNavigation = null;
+                if (pending) await pending();
+            });
+
+            guard.querySelector('#unsaved-guard-discard')?.addEventListener('click', async () => {
+                this.hideUnsavedGuard();
+                this._pendingNavigation = null;
+                const note = notesService.notes.find(n => n.id === this.activeNoteId);
+                if (!note) return;
+                if (this.inputs.noteTitle) this.inputs.noteTitle.value = note.title || '';
+                if (this.inputs.noteContent) this.inputs.noteContent.value = note.body || '';
+                if (this.inputs.noteFolder) this.inputs.noteFolder.value = note.folder || '';
+                if (this.inputs.noteTags) this.inputs.noteTags.value = (note.tags || []).join(', ');
+                this.refreshSaveButtonState();
+                this.scheduleAutoSave();
+            });
+        }
+
+        guard.dataset.source = source || '';
+        guard.classList.add('visible');
+    }
+
+    hideUnsavedGuard() {
+        const guard = document.getElementById('unsaved-guard');
+        guard?.classList.remove('visible');
+    }
+
+    bindEditorIntelligence() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea || textarea.dataset.boundIntelligence) return;
+        textarea.dataset.boundIntelligence = 'true';
+
+        this._history.lastValue = textarea.value;
+        this._pushHistorySnapshot();
+        this.updateUndoRedoUI();
+
+        textarea.addEventListener('keydown', (e) => this.handleEditorKeydown(e));
+        textarea.addEventListener('input', () => {
+            this.hideUnsavedGuard();
+            this._maybePushHistorySnapshot();
+            this.updateUndoRedoUI();
+            this.updateMarkdownToolbarState();
+        });
+
+        textarea.addEventListener('click', () => this.updateMarkdownToolbarState());
+        textarea.addEventListener('keyup', () => this.updateMarkdownToolbarState());
+        document.addEventListener('selectionchange', () => {
+            if (document.activeElement === textarea) this.updateMarkdownToolbarState();
+        });
+
+        document.getElementById('btn-undo')?.addEventListener('click', () => this.undo());
+        document.getElementById('btn-redo')?.addEventListener('click', () => this.redo());
+    }
+
+    handleEditorKeydown(e) {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+
+        const isMac = navigator.platform.toLowerCase().includes('mac');
+        const mod = isMac ? e.metaKey : e.ctrlKey;
+
+        if (mod && !e.altKey && (e.key === 'z' || e.key === 'Z')) {
+            e.preventDefault();
+            if (e.shiftKey) this.redo();
+            else this.undo();
+            return;
+        }
+
+        if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
+            // Newline should exit any inline wrap toggle mode.
+            if (this._inlineWrapState.bold || this._inlineWrapState.italic || this._inlineWrapState.code) {
+                this._inlineWrapState.bold = false;
+                this._inlineWrapState.italic = false;
+                this._inlineWrapState.code = false;
+                this.updateMarkdownToolbarState();
+            }
+            if (this.handleSmartListEnter()) {
+                e.preventDefault();
+            }
+        }
+    }
+
+    handleSmartListEnter() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return false;
+
+        const value = textarea.value;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        if (start !== end) return false;
+
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        const lineEnd = value.indexOf('\n', start);
+        const currentLine = value.slice(lineStart, lineEnd === -1 ? value.length : lineEnd);
+        const beforeCursorInLine = value.slice(lineStart, start);
+
+        const ordered = currentLine.match(/^(\s*)(\d+)\.\s(.*)$/);
+        const unordered = currentLine.match(/^(\s*)([-*])\s(.*)$/);
+
+        const insertAt = (text) => {
+            textarea.setRangeText(text, start, end, 'end');
+            textarea.dispatchEvent(new Event('input'));
+        };
+
+        if (ordered) {
+            const indent = ordered[1] || '';
+            const n = Number(ordered[2] || '1');
+            const rest = ordered[3] || '';
+            if (beforeCursorInLine.trim() === `${n}.` || rest.trim() === '') {
+                insertAt('\n');
+                return true;
+            }
+            insertAt(`\n${indent}${n + 1}. `);
+            return true;
+        }
+
+        if (unordered) {
+            const indent = unordered[1] || '';
+            const bullet = unordered[2] || '-';
+            const rest = unordered[3] || '';
+            if (beforeCursorInLine.trim() === bullet || rest.trim() === '') {
+                insertAt('\n');
+                return true;
+            }
+            insertAt(`\n${indent}${bullet} `);
+            return true;
+        }
+
+        return false;
+    }
+
+    _pushHistorySnapshot() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+        const snap = {
+            value: textarea.value,
+            selectionStart: textarea.selectionStart,
+            selectionEnd: textarea.selectionEnd
+        };
+        const last = this._history.undoStack[this._history.undoStack.length - 1];
+        if (last && last.value === snap.value && last.selectionStart === snap.selectionStart && last.selectionEnd === snap.selectionEnd) {
+            return;
+        }
+        this._history.undoStack.push(snap);
+        if (this._history.undoStack.length > this._history.max) this._history.undoStack.shift();
+        this._history.redoStack = [];
+        this._history.lastValue = snap.value;
+        this._history.lastSelection = { start: snap.selectionStart, end: snap.selectionEnd };
+        this._history.lastPushedAt = Date.now();
+    }
+
+    _maybePushHistorySnapshot() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+        const now = Date.now();
+        const changed = textarea.value !== this._history.lastValue;
+        if (!changed) return;
+        if (now - this._history.lastPushedAt < this._history.debounceMs) return;
+        this._pushHistorySnapshot();
+    }
+
+    undo() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+        if (this._history.undoStack.length <= 1) return;
+
+        const current = this._history.undoStack.pop();
+        if (current) this._history.redoStack.push(current);
+        const prev = this._history.undoStack[this._history.undoStack.length - 1];
+        if (!prev) return;
+
+        textarea.value = prev.value;
+        textarea.setSelectionRange(prev.selectionStart, prev.selectionEnd);
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+        this.updateUndoRedoUI();
+    }
+
+    redo() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+        const next = this._history.redoStack.pop();
+        if (!next) return;
+
+        this._history.undoStack.push(next);
+        textarea.value = next.value;
+        textarea.setSelectionRange(next.selectionStart, next.selectionEnd);
+        textarea.focus();
+        textarea.dispatchEvent(new Event('input'));
+        this.updateUndoRedoUI();
+    }
+
+    updateUndoRedoUI() {
+        const undoBtn = document.getElementById('btn-undo');
+        const redoBtn = document.getElementById('btn-redo');
+        if (undoBtn) undoBtn.disabled = this._history.undoStack.length <= 1;
+        if (redoBtn) redoBtn.disabled = this._history.redoStack.length === 0;
     }
 
     closeMobileSidebar() {
@@ -4085,13 +4376,62 @@ class UIService {
         const before = text.substring(0, start);
         const after = text.substring(end);
 
-        textarea.value = before + prefix + selected + suffix + after;
-        textarea.selectionStart = start + prefix.length;
-        textarea.selectionEnd = Math.max(start + prefix.length, end + prefix.length + selected.length);
+        const wrap = prefix && suffix;
+        const noSelection = start === end;
+
+        // Avoid visible "****" artifacts for inline toggles (Bold/Italic/Code):
+        // when there's no selection, insert only the opening marker and toggle a state;
+        // a second click inserts the closing marker.
+        const isToggleWrap = wrap && noSelection && prefix === suffix;
+        const markerKey = prefix === '**' ? 'bold' : prefix === '_' ? 'italic' : prefix === '`' ? 'code' : null;
+        if (isToggleWrap && markerKey) {
+            const marker = prefix;
+            const active = !!this._inlineWrapState[markerKey];
+            const inserted = marker;
+            textarea.value = before + inserted + after;
+            const caret = start + marker.length;
+            textarea.selectionStart = caret;
+            textarea.selectionEnd = caret;
+            this._inlineWrapState[markerKey] = !active;
+        } else {
+            textarea.value = before + prefix + selected + suffix + after;
+            textarea.selectionStart = start + prefix.length;
+            textarea.selectionEnd = Math.max(start + prefix.length, end + prefix.length + selected.length);
+        }
         textarea.focus();
 
         // Trigger save
         textarea.dispatchEvent(new Event('input'));
+    }
+
+    updateMarkdownToolbarState() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return;
+
+        const pos = textarea.selectionStart;
+        const text = textarea.value;
+
+        const isInside = (marker) => {
+            const before = text.slice(0, pos);
+            const after = text.slice(pos);
+            const open = before.lastIndexOf(marker);
+            if (open === -1) return false;
+            const closeRel = after.indexOf(marker);
+            if (closeRel === -1) return false;
+            const close = pos + closeRel;
+            if (close <= open) return false;
+            const between = text.slice(open + marker.length, close);
+            return !between.includes('\n');
+        };
+
+        for (const [format, btn] of this._markdownToolbarButtons.entries()) {
+            const active = format === 'bold' ? (this._inlineWrapState.bold || isInside('**'))
+                : format === 'italic' ? (this._inlineWrapState.italic || isInside('_'))
+                    : format === 'code' ? (this._inlineWrapState.code || isInside('`'))
+                        : false;
+            btn.classList.toggle('active', active);
+            btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
     }
 
     insertTextAtCursor(text) {
