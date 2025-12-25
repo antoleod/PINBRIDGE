@@ -2546,17 +2546,6 @@ button.btn:active {
     outline-offset: 3px;
 }
 
-.current-user-display {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    padding: 0.25rem 0.5rem;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    text-align: center;
-}
-
 .mobile-user-display {
     font-size: 0.75rem;
     color: var(--text-muted);

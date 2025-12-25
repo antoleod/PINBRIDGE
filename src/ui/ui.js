@@ -102,6 +102,12 @@ class UIService {
             italic: false,
             code: false
         };
+        this.activePanel = 'notes'; // notes | settings | tools | null
+        this._autosave = {
+            pending: false,
+            lastFailedAt: 0,
+            debounceMs: 800
+        };
     }
 
     showLoginForm() {
@@ -1508,6 +1514,7 @@ class UIService {
         document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
             btn.onclick = () => {
                 this.guardUnsavedChanges(async () => {
+                    this.setActivePanel('notes');
                     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     this.currentView = btn.dataset.view;
@@ -1522,6 +1529,7 @@ class UIService {
         this.mobile.navPills?.forEach(btn => {
             btn.onclick = () => {
                 this.guardUnsavedChanges(async () => {
+                    this.setActivePanel('notes');
                     this.mobile.navPills.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     this.currentView = btn.dataset.view;
@@ -1602,9 +1610,7 @@ class UIService {
         const validated = name ? validateUsername(name) : { ok: false };
         const safeName = validated.ok ? validated.value : '';
         const display = safeName ? `@${safeName}` : i18n.t('loginFormTitle');
-        const desktop = document.getElementById('current-user-display');
         const mobile = document.getElementById('mobile-user-display');
-        if (desktop) desktop.textContent = display;
         if (mobile) mobile.textContent = display;
         if (this.profile?.name) this.profile.name.textContent = display;
         if (this.profile?.avatar) {
@@ -1785,6 +1791,19 @@ class UIService {
         this.updateUndoRedoUI();
 
         textarea.addEventListener('keydown', (e) => this.handleEditorKeydown(e));
+        textarea.addEventListener('beforeinput', (e) => {
+            if (e.inputType === 'insertLineBreak') {
+                if (this.handleSmartListEnter()) {
+                    e.preventDefault();
+                }
+                return;
+            }
+            if (e.inputType === 'deleteContentBackward') {
+                if (this.handleListBackspace()) {
+                    e.preventDefault();
+                }
+            }
+        });
         textarea.addEventListener('input', () => {
             this.hideUnsavedGuard();
             this._maybePushHistorySnapshot();
@@ -1828,6 +1847,12 @@ class UIService {
                 e.preventDefault();
             }
         }
+
+        if (e.key === 'Backspace' && !e.shiftKey && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            if (this.handleListBackspace()) {
+                e.preventDefault();
+            }
+        }
     }
 
     handleSmartListEnter() {
@@ -1844,8 +1869,8 @@ class UIService {
         const currentLine = value.slice(lineStart, lineEnd === -1 ? value.length : lineEnd);
         const beforeCursorInLine = value.slice(lineStart, start);
 
-        const ordered = currentLine.match(/^(\s*)(\d+)\.\s(.*)$/);
-        const unordered = currentLine.match(/^(\s*)([-*])\s(.*)$/);
+        const ordered = currentLine.match(/^(\s*)(\d+)\.\s?(.*)$/);
+        const unordered = currentLine.match(/^(\s*)([-*])\s?(.*)$/);
 
         const insertAt = (text) => {
             textarea.setRangeText(text, start, end, 'end');
@@ -1873,6 +1898,38 @@ class UIService {
                 return true;
             }
             insertAt(`\n${indent}${bullet} `);
+            return true;
+        }
+
+        return false;
+    }
+
+    handleListBackspace() {
+        const textarea = this.inputs.noteContent;
+        if (!textarea) return false;
+        const value = textarea.value;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        if (start !== end) return false;
+        if (start === 0) return false;
+
+        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+        const beforeCursorInLine = value.slice(lineStart, start);
+
+        // If cursor is right after a list prefix, remove the prefix (keep content).
+        // Ordered: "12. " or "12."
+        const orderedPrefix = beforeCursorInLine.match(/^(\s*)(\d+)\.\s?$/);
+        if (orderedPrefix) {
+            textarea.setRangeText('', lineStart + orderedPrefix[1].length, start, 'end');
+            textarea.dispatchEvent(new Event('input'));
+            return true;
+        }
+
+        // Unordered: "- " "*" with optional space
+        const unorderedPrefix = beforeCursorInLine.match(/^(\s*)([-*])\s?$/);
+        if (unorderedPrefix) {
+            textarea.setRangeText('', lineStart + unorderedPrefix[1].length, start, 'end');
+            textarea.dispatchEvent(new Event('input'));
             return true;
         }
 
@@ -1954,6 +2011,7 @@ class UIService {
 
     showSettingsModal() {
         // Auth Settings (pre-login): never touch encrypted vault data.
+        this.setActivePanel('settings');
         this.settingsModal.overlay?.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
     }
@@ -1961,6 +2019,26 @@ class UIService {
     hideSettingsModal() {
         this.settingsModal.overlay?.classList.add('hidden');
         document.body.style.overflow = '';
+        if (this.activePanel === 'settings') this.setActivePanel('notes');
+    }
+
+    setActivePanel(panel) {
+        this.activePanel = panel;
+
+        // Mobile-first: ensure layers do not overlap or intercept clicks.
+        if (panel !== 'settings') {
+            this.settingsModal.overlay?.classList.add('hidden');
+            document.getElementById('settings-modal')?.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+        if (panel !== 'tools') {
+            document.getElementById('generated-password-modal')?.classList.add('hidden');
+        }
+        if (panel !== 'notes') {
+            // keep notes panel as baseline; close sidebar overlays/menus
+            this.closeMobileSidebar();
+            this.closeMobileFooterMenu();
+        }
     }
 
     addEditorEventListeners() {
@@ -2030,11 +2108,7 @@ class UIService {
             this.renderChecklistFromEditor();
         });
 
-        this.inputs.noteContent?.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                this.handleSmartList(e);
-            }
-        });
+        // Smart list/autocomplete is handled centrally in `bindEditorIntelligence()` (desktop + mobile).
 
         this.inputs.noteFolder?.addEventListener('input', () => this.scheduleAutoSave());
         this.inputs.noteTags?.addEventListener('input', () => {
@@ -2165,7 +2239,7 @@ class UIService {
         // Settings Tabs
         document.querySelectorAll('.settings-tab').forEach(tab => {
             tab.addEventListener('click', e => {
-                const tabName = e.target.dataset.tab;
+                const tabName = e.currentTarget?.dataset?.tab;
                 this.switchSettingsTab(tabName);
             });
         });
@@ -2197,7 +2271,7 @@ class UIService {
                 const hasChanged = this.isNoteChanged();
                 if (hasChanged) {
                     // We can't await here but we can try to fire a sync request
-                    this.persistNote(true).catch(err => console.error("Final persist failed", err));
+                    this.persistNote({ force: true, reason: 'autosave', silent: true }).catch(err => console.error("Final persist failed", err));
 
                     // Show confirmation if it's not a clear-on-exit scenario
                     const clearOnExit = localStorage.getItem('pinbridge.clear_on_exit') === 'true';
@@ -2761,6 +2835,7 @@ class UIService {
         // Vault Settings (post-login): require unlocked vault before rendering.
         if (!this.ensureAuthenticated()) return;
         const modal = document.getElementById('settings-modal');
+        this.setActivePanel('settings');
         this.closeAllPanels({ exceptIds: ['settings-modal'], reason: 'open-settings' });
         this.renderSettingsPanel(); // Render full settings UI
         this.renderThemeSwitcher();
@@ -3452,14 +3527,14 @@ class UIService {
         if (!note) return false;
 
         const title = (this.inputs.noteTitle?.value || '').trim();
-        const body = (this.inputs.noteContent?.value || '').trim();
+        const body = (this.inputs.noteContent?.value || '');
         const folder = (this.inputs.noteFolder?.value || '').trim();
         const tags = (this.inputs.noteTags?.value || '').split(',').map(t => t.trim()).filter(t => t);
 
         const currentTags = (note.tags || []).map(t => typeof t === 'string' ? t : t.name);
 
         return note.title !== title ||
-            note.body !== body ||
+            (note.body || '') !== body ||
             note.folder !== folder ||
             JSON.stringify(currentTags) !== JSON.stringify(tags);
     }
@@ -3907,11 +3982,13 @@ class UIService {
             modal.style.top = 'var(--floating-panel-top)';
             modal.style.transform = 'translateX(-50%)';
         }
+        this.setActivePanel('tools');
         modal?.classList.remove('hidden');
     }
 
     closeGeneratedPasswordModal() {
         this._getById('generated-password-modal')?.classList.add('hidden');
+        if (this.activePanel === 'tools') this.setActivePanel('notes');
     }
 
     discardGeneratedPassword() {
@@ -5459,7 +5536,7 @@ class UIService {
         if (this.activeNoteId) {
             const hasChanged = this.refreshSaveButtonState();
             if (hasChanged) {
-                this.persistNote(true).catch(e => console.error("Auto-save on clear failed", e));
+                this.persistNote({ force: true, reason: 'autosave', silent: true }).catch(e => console.error("Auto-save on clear failed", e));
             }
         }
         this.activeNoteId = null;
@@ -5472,9 +5549,14 @@ class UIService {
         this.setStatus(i18n.t('statusReady'));
     }
 
-    async persistNote(force = false) {
+    async persistNote(forceOrOptions = false) {
         if (!this.ensureAuthenticated()) return false;
         if (!this.activeNoteId) return false;
+
+        const options = typeof forceOrOptions === 'object' && forceOrOptions !== null
+            ? forceOrOptions
+            : { force: !!forceOrOptions };
+        const { force = false, reason = 'manual', silent = false } = options;
 
         const note = notesService.notes.find(n => n.id === this.activeNoteId);
         if (note && note.trash) return false;
@@ -5482,7 +5564,7 @@ class UIService {
         clearTimeout(this.saveTimeout);
 
         const title = (this.inputs.noteTitle?.value || '').trim();
-        const body = (this.inputs.noteContent?.value || '').trim();
+        const body = (this.inputs.noteContent?.value || '');
         const folder = (this.inputs.noteFolder?.value || '').trim();
         const tags = (this.inputs.noteTags?.value || '').split(',').map(t => t.trim()).filter(t => t);
 
@@ -5494,8 +5576,8 @@ class UIService {
             return true;
         }
 
-        if (!title && !body) {
-            if (force) this.showToast(i18n.t('toastNoteEmpty'), 'error');
+        if (!title && !body.trim()) {
+            if (force && !silent) this.showToast(i18n.t('toastNoteEmpty'), 'error');
             this.refreshSaveButtonState();
             return false;
         }
@@ -5519,7 +5601,9 @@ class UIService {
             this.noteSessionStart = Date.now(); // Reset session start
         }
 
-        this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
+        if (!silent) {
+            this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
+        }
 
         try {
             await notesService.updateNote(this.activeNoteId, title, body, folder, tags);
@@ -5527,6 +5611,7 @@ class UIService {
 
             const updatedNote = notesService.notes.find(n => n.id === this.activeNoteId);
             const savedAt = new Date().toLocaleTimeString();
+            this._autosave.pending = false;
             this.setStatus(`${i18n.t('statusSaved')} ${savedAt}${folder ? ` (${folder})` : ''}`);
 
             this.renderFolders();
@@ -5537,8 +5622,12 @@ class UIService {
             return true;
         } catch (err) {
             console.error(`[Persistence] FAILED to save note: ${this.activeNoteId}`, err);
-            this.setStatus('Error Saving!', 'error');
-            this.showToast('Note could not be saved. Check connection/storage.', 'error');
+            this._autosave.pending = true;
+            this._autosave.lastFailedAt = Date.now();
+            this.setStatus(reason === 'autosave' ? 'Offline • Unsaved changes' : 'Error saving', 'error');
+            if (!silent && reason !== 'autosave') {
+                this.showToast('Note could not be saved. Check connection/storage.', 'error');
+            }
             return false;
         }
     }
@@ -5546,9 +5635,15 @@ class UIService {
     scheduleAutoSave() {
         if (!this.activeNoteId || !this.autoSaveEnabled) return;
         clearTimeout(this.saveTimeout);
-        const folder = (this.inputs.noteFolder?.value || '').trim();
-        this.setStatus(i18n.t('statusSaving') + (folder ? ` (${folder})...` : '...'));
-        this.saveTimeout = setTimeout(() => this.persistNote(), 500);
+
+        // Typing should never feel like "saving" and must never spam error UI.
+        // Show a calm, persistent indicator until the debounced autosave succeeds.
+        this._autosave.pending = true;
+        this.setStatus('Unsaved changes');
+
+        this.saveTimeout = setTimeout(() => {
+            this.persistNote({ reason: 'autosave', silent: true }).catch(() => { });
+        }, this._autosave.debounceMs);
     }
 
     updateDeleteButtonContext() {
