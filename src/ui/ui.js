@@ -1584,6 +1584,12 @@ class UIService {
         document.getElementById('btn-signout')?.addEventListener('click', () => this.handleSignOutAction());
         document.getElementById('mobile-signout')?.addEventListener('click', () => this.handleSignOutAction());
         if (this.mobile.btnLock) this.mobile.btnLock.onclick = () => this.handleLockAction();
+        document.getElementById('btn-tools')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            this.openGeneratedPasswordModal();
+            this.updateSidebarActiveStates();
+        });
 
         document.getElementById('btn-toggle-compact')?.addEventListener('click', () => this.toggleCompactView());
 
@@ -2039,6 +2045,20 @@ class UIService {
             this.closeMobileSidebar();
             this.closeMobileFooterMenu();
         }
+
+        this.updateSidebarActiveStates();
+    }
+
+    updateSidebarActiveStates() {
+        const settingsBtn = document.getElementById('btn-vault-settings');
+        const toolsBtn = document.getElementById('btn-tools');
+        settingsBtn?.classList.toggle('active', this.activePanel === 'settings');
+        toolsBtn?.classList.toggle('active', this.activePanel === 'tools');
+
+        if (this.activePanel === 'notes') {
+            settingsBtn?.classList.remove('active');
+            toolsBtn?.classList.remove('active');
+        }
     }
 
     addEditorEventListeners() {
@@ -2114,6 +2134,9 @@ class UIService {
         this.inputs.noteTags?.addEventListener('input', () => {
             this.scheduleAutoSave();
         });
+
+        // Ensure editor intelligence is always bound (some flows rebind editor listeners).
+        this.bindEditorIntelligence();
 
         document.getElementById('btn-delete')?.addEventListener('click', () => this.handleDelete());
         // Minimal toolbar actions
@@ -3984,6 +4007,7 @@ class UIService {
         }
         this.setActivePanel('tools');
         modal?.classList.remove('hidden');
+        this.updateSidebarActiveStates();
     }
 
     closeGeneratedPasswordModal() {
@@ -5624,9 +5648,11 @@ class UIService {
             console.error(`[Persistence] FAILED to save note: ${this.activeNoteId}`, err);
             this._autosave.pending = true;
             this._autosave.lastFailedAt = Date.now();
-            this.setStatus(reason === 'autosave' ? 'Offline • Unsaved changes' : 'Error saving', 'error');
-            if (!silent && reason !== 'autosave') {
-                this.showToast('Note could not be saved. Check connection/storage.', 'error');
+            this.setStatus(reason === 'autosave' ? 'Offline - Unsaved changes' : 'Error saving', 'error');
+            // Never spam error toasts during typing/autosave. Status line is enough.
+            // If you need an explicit error toast, trigger it from the initiating action (e.g. delete/sign out).
+            if (reason === 'autosave') {
+                this.setStatus('Offline - Unsaved changes', 'error');
             }
             return false;
         }
@@ -6031,12 +6057,9 @@ class UIService {
         }, { pending: true });
 
         try {
-            const startTime = Date.now();
             this.updateAttachmentProgress(pendingId, 5, null);
             const { meta, hash } = await attachmentService.attachFileToNote(note, file);
-            const elapsed = (Date.now() - startTime) / 1000;
-            const remaining = elapsed > 0 ? Math.max(0, Math.round((100 - 5) / elapsed)) : null;
-            this.updateAttachmentProgress(pendingId, 30, remaining);
+            this.updateAttachmentProgress(pendingId, 65, null);
 
             if (!(note.title || note.body)) {
                 note.title = file.name;
@@ -6046,11 +6069,22 @@ class UIService {
             const attachments = Array.isArray(note.attachments) ? [...note.attachments] : [];
             attachments.push(meta);
             note.attachments = attachments;
-            await notesService.persistNote(note);
+            try {
+                await notesService.persistNote(note);
+            } catch (e) {
+                // Offline-first: attachment is stored locally even if note persistence/sync is unavailable.
+                this.updateAttachmentStatus(pendingId, 'warning', 'Saved locally. Will sync when online.');
+            }
             this.renderAttachments(note);
 
-            syncManager.enqueue('PUSH_ATTACHMENT', { hash }, vaultService.uid);
-            this.updateAttachmentProgress(pendingId, 100, 0);
+            const syncEnabled = localStorage.getItem('pinbridge.sync_enabled') === 'true';
+            if (syncEnabled) {
+                syncManager.enqueue('PUSH_ATTACHMENT', { hash }, vaultService.uid);
+                this.updateAttachmentStatus(pendingId, 'warning', 'Saved locally. Syncing…');
+            } else {
+                this.updateAttachmentStatus(pendingId, 'warning', 'Saved locally.');
+            }
+            this.updateAttachmentProgress(pendingId, 100, null);
             this.showToast('File attached to note.', 'success');
         } catch (err) {
             console.error('Attach failed', err);
@@ -6134,7 +6168,10 @@ class UIService {
         if (row) row.classList.remove('hidden');
         if (bar) bar.style.width = `${percent}%`;
         if (text) {
-            const remainingText = remainingSeconds !== null ? ` (${remainingSeconds}s)` : ``;
+            const safeRemaining = typeof remainingSeconds === 'number' && Number.isFinite(remainingSeconds)
+                ? Math.max(0, Math.min(remainingSeconds, 59))
+                : null;
+            const remainingText = safeRemaining !== null ? ` (${safeRemaining}s)` : ``;
             text.textContent = `${percent}%${remainingText}`;
         }
     }
@@ -6279,6 +6316,9 @@ class UIService {
             retryBtn?.classList.remove('hidden');
             if (retryBtn) retryBtn.dataset.retryMode = retryMode;
             downloadBtn?.setAttribute('disabled', 'disabled');
+        } else {
+            retryBtn?.classList.add('hidden');
+            downloadBtn?.removeAttribute('disabled');
         }
     }
 
