@@ -551,7 +551,7 @@
                 <div class="list-header-actions">
                     <div class="profile-menu">
                         <button id="btn-profile" class="btn-icon-minimal" title="Profile" aria-haspopup="menu" aria-expanded="false">
-                            <i data-feather="user"></i>
+                            <span id="profile-avatar" class="profile-avatar" aria-hidden="true"></span>
                             <span id="profile-name" class="profile-name"></span>
                         </button>
                         <div id="profile-dropdown" class="profile-dropdown hidden" role="menu" aria-label="Profile menu">
@@ -579,6 +579,7 @@
                         class="meta-input-minimal" data-i18n-placeholder="folderPlaceholder">
                     <input type="text" id="note-tags" placeholder="#tags" class="meta-input-minimal"
                         data-i18n-placeholder="tagsPlaceholder">
+                    <div id="note-meta-info" class="note-meta-info" aria-label="Note info"></div>
                     <datalist id="folder-suggestions"></datalist>
                 </div>
                 <div class="editor-actions-minimal">

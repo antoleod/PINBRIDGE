@@ -213,6 +213,7 @@ class UIService {
 
         this.profile = {
             btn: document.getElementById('btn-profile'),
+            avatar: document.getElementById('profile-avatar'),
             name: document.getElementById('profile-name'),
             dropdown: document.getElementById('profile-dropdown'),
             logout: document.getElementById('profile-logout')
@@ -1568,12 +1569,19 @@ class UIService {
 
     updateUserIdentity(username) {
         const name = (username || vaultService.meta?.username || vaultService.vault?.meta?.username || '').trim();
-        const display = name ? `@${name}` : '';
+        const validated = name ? validateUsername(name) : { ok: false };
+        const safeName = validated.ok ? validated.value : '';
+        const display = safeName ? `@${safeName}` : i18n.t('loginFormTitle');
         const desktop = document.getElementById('current-user-display');
         const mobile = document.getElementById('mobile-user-display');
         if (desktop) desktop.textContent = display;
         if (mobile) mobile.textContent = display;
         if (this.profile?.name) this.profile.name.textContent = display;
+        if (this.profile?.avatar) {
+            const initials = safeName ? safeName.slice(0, 2).toUpperCase() : 'PB';
+            this.profile.avatar.textContent = initials;
+            this.profile.avatar.title = safeName ? safeName : i18n.t('loginFormTitle');
+        }
     }
 
     bindProfileMenu() {
@@ -3077,6 +3085,19 @@ class UIService {
         });
 
         container.innerHTML = html;
+
+        // Normalize icons (some older stored icons may be garbled text)
+        const iconEls = Array.from(container.querySelectorAll('.method-icon'));
+        iconEls.forEach((el, idx) => {
+            if (idx === 0) {
+                el.innerHTML = '<i data-feather="key"></i>';
+                return;
+            }
+            const raw = (el.textContent || '').trim();
+            const isFeatherName = /^[a-z0-9-]+$/i.test(raw);
+            el.innerHTML = `<i data-feather="${isFeatherName ? raw : 'shield'}"></i>`;
+        });
+        if (typeof feather !== 'undefined') feather.replace();
     }
 
     async generateBackupCodes() {
@@ -4964,7 +4985,7 @@ class UIService {
     }
 
     renderNoteMeta(note) {
-        const metaContainer = document.querySelector('.editor-meta-minimal');
+        const metaContainer = document.getElementById('note-meta-info');
         if (!metaContainer) return;
 
         const meta = this.getNoteMeta(note.id);
@@ -4980,11 +5001,9 @@ class UIService {
         const version = note.history ? note.history.length + 1 : 1;
 
         metaContainer.innerHTML = `
-            <div class="note-meta-info">
-                <span title="Last updated"><i data-feather="calendar"></i> ${date}</span>
-                <span title="Time spent working"><i data-feather="clock"></i> ${timeStr}</span>
-                <span title="Version count"><i data-feather="git-commit"></i> v${version}</span>
-            </div>
+            <span title="Last updated"><i data-feather="calendar"></i><span class="note-meta-text">${date}</span></span>
+            <span title="Time spent working"><i data-feather="clock"></i><span class="note-meta-text">${timeStr}</span></span>
+            <span title="Version count"><i data-feather="git-commit"></i><span class="note-meta-text">v${version}</span></span>
         `;
         if (typeof feather !== 'undefined') feather.replace();
     }

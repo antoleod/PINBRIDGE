@@ -2406,15 +2406,36 @@ button.btn:active {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    width: auto;
+    padding: 0 10px;
+}
+
+.profile-avatar {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.92);
+    background:
+        radial-gradient(circle at 30% 30%, rgba(59, 130, 246, 0.95), rgba(168, 85, 247, 0.85));
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+    flex-shrink: 0;
 }
 
 .profile-name {
-    max-width: 120px;
+    max-width: 160px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 12px;
-    opacity: 0.9;
+    font-size: 13px;
+    font-weight: 600;
+    opacity: 0.95;
 }
 
 .profile-dropdown {
@@ -2881,6 +2902,39 @@ body.compact-notes .note-item p {
     display: flex;
     gap: 0.75rem;
     flex: 1;
+}
+
+.note-meta-info {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    white-space: nowrap;
+    min-width: 0;
+}
+
+.note-meta-info > span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.note-meta-info svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.9;
+}
+
+.note-meta-text {
+    max-width: 11ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .meta-input-minimal {
@@ -3889,7 +3943,21 @@ body.safe-view-mode {
 }
 
 .recovery-method-item .method-icon {
-    font-size: 2rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    flex-shrink: 0;
+}
+
+.recovery-method-item .method-icon svg {
+    width: 18px;
+    height: 18px;
 }
 
 .recovery-method-item strong {

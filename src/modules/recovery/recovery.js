@@ -222,7 +222,7 @@ class RecoveryService {
             methods.push({
                 type: 'backup_codes',
                 name: 'Backup Codes',
-                icon: '🎫',
+                icon: 'shield',
                 status: `${unusedCount}/10 remaining`,
                 createdAt: backupCodes.createdAt
             });
@@ -234,7 +234,7 @@ class RecoveryService {
             methods.push({
                 type: 'recovery_file',
                 name: 'Recovery File',
-                icon: '💾',
+                icon: 'file-text',
                 status: 'Downloaded',
                 createdAt: recoveryFile.createdAt
             });
@@ -246,7 +246,7 @@ class RecoveryService {
             methods.push({
                 type: 'secret_question',
                 name: 'Secret Question',
-                icon: '❓',
+                icon: 'help-circle',
                 status: 'Active',
                 createdAt: secretQuestion.createdAt,
                 question: secretQuestion.question
@@ -265,3 +265,4 @@ class RecoveryService {
 }
 
 export const recoveryService = new RecoveryService();
+
