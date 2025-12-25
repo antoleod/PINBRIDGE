@@ -710,19 +710,22 @@
                                 <span>Auto-clear after transfer</span>
                             </label>
 
-                            <div class="share-status">
-                                <div class="share-state" id="share-state">Idle</div>
-                                <div class="share-progress">
-                                    <div class="share-progress-bar">
-                                        <span id="share-progress-fill"></span>
-                                    </div>
-                                    <div class="share-progress-meta">
-                                        <span id="share-progress-text">0%</span>
-                                        <span id="share-progress-bytes">Waiting for a file.</span>
-                                    </div>
-                                </div>
-                                <button class="btn btn-secondary" id="share-reset">End Transfer</button>
-                            </div>
+                             <div class="share-status">
+                                 <div class="share-state" id="share-state">Idle</div>
+                                 <div class="share-progress">
+                                     <div class="share-progress-bar">
+                                         <span id="share-progress-fill"></span>
+                                     </div>
+                                     <div class="share-progress-meta">
+                                         <span id="share-progress-text">0%</span>
+                                         <span id="share-progress-bytes">Waiting for a file.</span>
+                                     </div>
+                                 </div>
+                                 <div class="share-status-actions">
+                                     <button class="btn btn-text" id="share-clear-file">Remove file</button>
+                                     <button class="btn btn-secondary" id="share-reset">End Transfer</button>
+                                 </div>
+                             </div>
 
                             <div class="share-receiver hidden" id="share-receiver">
                                 <div class="share-receiver-header">

@@ -1587,7 +1587,7 @@ class UIService {
         document.getElementById('btn-tools')?.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopPropagation();
-            this.openGeneratedPasswordModal();
+            this.openToolsTab();
             this.updateSidebarActiveStates();
         });
 
@@ -2032,7 +2032,8 @@ class UIService {
         this.activePanel = panel;
 
         // Mobile-first: ensure layers do not overlap or intercept clicks.
-        if (panel !== 'settings') {
+        // Tools lives inside the settings modal; treat it as a first-class panel state.
+        if (panel !== 'settings' && panel !== 'tools') {
             this.settingsModal.overlay?.classList.add('hidden');
             document.getElementById('settings-modal')?.classList.add('hidden');
             document.body.style.overflow = '';
@@ -2052,7 +2053,7 @@ class UIService {
     updateSidebarActiveStates() {
         const settingsBtn = document.getElementById('btn-vault-settings');
         const toolsBtn = document.getElementById('btn-tools');
-        settingsBtn?.classList.toggle('active', this.activePanel === 'settings');
+        settingsBtn?.classList.toggle('active', this.activePanel === 'settings' || this.activePanel === 'tools');
         toolsBtn?.classList.toggle('active', this.activePanel === 'tools');
 
         if (this.activePanel === 'notes') {
@@ -2880,6 +2881,13 @@ class UIService {
         await this.renderActiveRecoveryMethods();
     }
 
+    async openToolsTab() {
+        await this.openSettingsModal();
+        this.setActivePanel('tools');
+        this.switchSettingsTab('tools');
+        document.getElementById('settings-modal')?.scrollTo?.({ top: 0, behavior: 'smooth' });
+    }
+
     closeAllPanels({ exceptIds = [], reason = '' } = {}) {
         const keep = new Set(exceptIds || []);
 
@@ -3432,6 +3440,12 @@ class UIService {
             content.classList.add('hidden');
         });
         document.getElementById(`settings-${tabName}`)?.classList.remove('hidden');
+
+        if (tabName === 'tools') {
+            this.setActivePanel('tools');
+        } else {
+            this.setActivePanel('settings');
+        }
 
         // ADDITIVE: Render logs if activity tab is active
         if (tabName === 'activity') {
@@ -6502,6 +6516,7 @@ class UIService {
         this.share.viewBtn.addEventListener('click', () => this.viewIncomingShare());
         this.share.rejectBtn.addEventListener('click', () => this.rejectIncomingShare());
         this.share.resetBtn?.addEventListener('click', () => this.resetShareSession());
+        document.getElementById('share-clear-file')?.addEventListener('click', () => this.clearShareFileSelection({ cancelTransfer: true }));
     }
 
     copyShareText(el) {
@@ -6761,13 +6776,16 @@ class UIService {
         }
     }
 
-    clearShareFileSelection() {
+    clearShareFileSelection({ cancelTransfer = false } = {}) {
+        if (cancelTransfer) {
+            shareService.cancelSession();
+        }
         if (this.share.fileInput) {
             this.share.fileInput.value = '';
         }
         this.setShareProgress(0, 0);
         this.shareTransferStart = null;
-        this.setShareStatus('Ready for a new file.', 'info');
+        this.setShareStatus(cancelTransfer ? 'File removed.' : 'Ready for a new file.', 'info');
     }
 
     resetShareSession() {
@@ -6776,7 +6794,7 @@ class UIService {
         this.share.answerIn.value = '';
         this.share.joinOfferIn.value = '';
         this.share.joinAnswerOut.value = '';
-        this.clearShareFileSelection();
+        this.clearShareFileSelection({ cancelTransfer: false });
         this.clearIncomingShare();
         this.shareTransferStart = null;
         this.setShareStatus('Transfer ended.', 'info');
