@@ -6446,3 +6446,30 @@ body.selection-mode .note-item-content {
         opacity: 1;
     }
 }
+
+/* Mobile performance safety: strip expensive filters and keep touch scrolling fluid */
+@media (max-width: 900px) {
+    .note-item {
+        touch-action: pan-y;
+    }
+
+    .glass-panel,
+    .modal-overlay::backdrop,
+    .mobile-nav-backdrop,
+    #settings-modal.modal-overlay::backdrop,
+    #mobile-footer-menu-modal.modal-overlay::backdrop,
+    #mobile-footer-menu-modal .modal-content,
+    #auth-settings-modal.modal-overlay::backdrop,
+    .modal-content {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+
+    body.app-blurred #vault-screen {
+        filter: none !important;
+    }
+
+    .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.48);
+    }
+}

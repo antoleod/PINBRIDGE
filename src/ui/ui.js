@@ -102,6 +102,8 @@ class UIService {
             italic: false,
             code: false
         };
+        this._noteListEventsBound = false;
+        this._renderNotesFrame = null;
         this.activePanel = 'notes'; // notes | settings | tools | null
         this._autosave = {
             pending: false,
@@ -4880,6 +4882,13 @@ class UIService {
     renderNoteList(notes, showSkeleton = false) {
         const listEl = document.getElementById('notes-list');
         if (!listEl) return;
+
+        // Kill any pending render frame to keep interactions responsive on mobile.
+        if (this._renderNotesFrame) {
+            cancelAnimationFrame(this._renderNotesFrame);
+            this._renderNotesFrame = null;
+        }
+
         listEl.innerHTML = '';
 
         if (showSkeleton) {
@@ -4897,112 +4906,139 @@ class UIService {
             return;
         }
 
-        notes.forEach(note => {
-            const div = document.createElement('div');
-            div.className = 'note-item';
-            div.dataset.id = note.id;
-            if (note.id === this.activeNoteId) div.classList.add('active');
-            this.addSwipeHandlers(div, note);
+        const fragment = document.createDocumentFragment();
+        const total = notes.length;
+        let index = 0;
 
-            const badges = [];
-            if (note.pinned) badges.push('<span class="note-badge">&#9733;</span>');
+        const renderChunk = () => {
+            const frameStart = performance.now();
+            while (index < total && performance.now() - frameStart < 8) {
+                const note = notes[index];
+                const div = document.createElement('div');
+                div.className = 'note-item';
+                div.dataset.id = note.id;
+                if (note.id === this.activeNoteId) div.classList.add('active');
+                this.addSwipeHandlers(div, note);
 
-            const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
-            const previewText = showPreview ? Utils.escapeHtml(note.body?.substring(0, 100) || '') || '' : '';
+                const badges = [];
+                if (note.pinned) badges.push('<span class="note-badge">&#9733;</span>');
 
-            div.innerHTML = `
-                <div class="note-top-minimal">
-                    <h4>${Utils.escapeHtml(note.title) || i18n.t('noteTitlePlaceholder')}${badges.join(' ')}</h4>
-                    <div class="note-actions-minimal">
-                        <button class="note-action-icon ${note.pinned ? 'active' : ''}" data-action="pin" title="${note.pinned ? 'Unpin' : 'Pin as favorite'}" data-note-id="${note.id}">
-                            <i data-feather="star"></i>
-                        </button>
-                        <button class="note-action-icon ${note.archived ? 'active' : ''}" data-action="archive" title="${note.archived ? 'Unarchive' : 'Archive'}" data-note-id="${note.id}">
-                            <i data-feather="archive"></i>
-                        </button>
-                        <button class="note-action-icon" data-action="trash" title="Delete" data-note-id="${note.id}">
-                            <i data-feather="trash-2"></i>
-                        </button>
+                const showPreview = localStorage.getItem('pinbridge.show_preview') !== 'false';
+                const previewText = showPreview ? Utils.escapeHtml(note.body?.substring(0, 100) || '') || '' : '';
+
+                div.innerHTML = `
+                    <div class="note-top-minimal">
+                        <h4>${Utils.escapeHtml(note.title) || i18n.t('noteTitlePlaceholder')}${badges.join(' ')}</h4>
+                        <div class="note-actions-minimal">
+                            <button class="note-action-icon ${note.pinned ? 'active' : ''}" data-action="pin" title="${note.pinned ? 'Unpin' : 'Pin as favorite'}" data-note-id="${note.id}">
+                                <i data-feather="star"></i>
+                            </button>
+                            <button class="note-action-icon ${note.archived ? 'active' : ''}" data-action="archive" title="${note.archived ? 'Unarchive' : 'Archive'}" data-note-id="${note.id}">
+                                <i data-feather="archive"></i>
+                            </button>
+                            <button class="note-action-icon" data-action="trash" title="Delete" data-note-id="${note.id}">
+                                <i data-feather="trash-2"></i>
+                            </button>
+                        </div>
                     </div>
-                </div>
-                ${showPreview ? `<p class="note-preview">${previewText}</p>` : ''}
-            `;
+                    ${showPreview ? `<p class="note-preview">${previewText}</p>` : ''}
+                `;
 
-            div.onclick = (e) => {
-                // Prevent accidental open after long-press context menu on mobile
-                if (div.dataset.longpress === '1') {
-                    div.dataset.longpress = '0';
-                    return;
-                }
-                // Don't select note if clicking on action buttons
-                if (e.target.closest('.note-action-icon')) {
-                    e.stopPropagation();
-                    return;
-                }
-                this.selectNote(note);
-            };
+                fragment.appendChild(div);
+                index += 1;
+            }
 
-            // Desktop equivalent for mobile long-press
-            div.addEventListener('contextmenu', (e) => {
+            if (index < total) {
+                this._renderNotesFrame = requestAnimationFrame(renderChunk);
+                return;
+            }
+
+            listEl.appendChild(fragment);
+            this._bindNoteListEvents();
+            if (typeof feather !== 'undefined') {
+                feather.replace(listEl.querySelectorAll('i[data-feather]'));
+            }
+            this._renderNotesFrame = null;
+        };
+
+        // Kick off batched render on the next frame to avoid blocking input
+        this._renderNotesFrame = requestAnimationFrame(renderChunk);
+    }
+
+    _bindNoteListEvents() {
+        if (this._noteListEventsBound) return;
+        const listEl = document.getElementById('notes-list');
+        if (!listEl) return;
+        this._noteListEventsBound = true;
+
+        listEl.addEventListener('click', async (e) => {
+            const actionBtn = e.target.closest('.note-action-icon');
+            const noteItem = e.target.closest('.note-item');
+            if (!noteItem) return;
+
+            if (noteItem.dataset.longpress === '1') {
+                noteItem.dataset.longpress = '0';
+                return;
+            }
+
+            const noteId = noteItem.dataset.id;
+            const note = notesService.notes.find(n => n.id === noteId);
+            if (!note) return;
+
+            if (actionBtn) {
                 e.preventDefault();
-                this.showMobileContextMenu(note);
-            });
-
-            // Add event listeners for action buttons
-            div.querySelectorAll('.note-action-icon').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    const action = btn.dataset.action;
-                    const noteId = btn.dataset.noteId;
-
-                    switch (action) {
-                        case 'pin':
-                            await notesService.togglePin(noteId);
-                            // Re-initialize feather icons after update
-                            if (typeof feather !== 'undefined') {
-                                feather.replace();
+                e.stopPropagation();
+                const action = actionBtn.dataset.action;
+                switch (action) {
+                    case 'pin':
+                        await notesService.togglePin(noteId);
+                        this.renderCurrentView();
+                        return;
+                    case 'trash':
+                        if (note.trash) {
+                            let allowed = confirm('Permanently delete this note?');
+                            if (allowed && this._isGeneratedPasswordNote(note)) {
+                                allowed = await this.confirmGeneratedPasswordDeletion();
                             }
-                            this.renderCurrentView();
-                            break;
-                        case 'trash':
-                            if (note.trash) {
-                                let allowed = confirm('Permanently delete this note?');
-                                if (allowed && this._isGeneratedPasswordNote(note)) {
-                                    allowed = await this.confirmGeneratedPasswordDeletion();
-                                }
-                                if (allowed) await notesService.deleteNote(noteId);
-                            } else {
-                                await notesService.moveToTrash(noteId);
-                            }
-                            if (this.activeNoteId === noteId) {
-                                this.activeNoteId = null;
-                                this.clearEditor();
-                            }
-                            this.renderCurrentView();
-                            break;
-                        case 'archive':
-                            await this.handleArchiveNote(noteId);
-                            // Re-initialize feather icons after update
-                            if (typeof feather !== 'undefined') {
-                                feather.replace();
-                            }
-                            this.renderCurrentView();
-                            break;
-                    }
-                });
-            });
-
-            // Initialize feather icons for this note
-            if (typeof feather !== 'undefined') {
-                feather.replace();
+                            if (allowed) await notesService.deleteNote(noteId);
+                        } else {
+                            await notesService.moveToTrash(noteId);
+                        }
+                        if (this.activeNoteId === noteId) {
+                            this.activeNoteId = null;
+                            this.clearEditor();
+                        }
+                        this.renderCurrentView();
+                        return;
+                    case 'archive':
+                        if (note.archived) {
+                            await notesService.unarchiveNote(noteId);
+                            this.showToast('Note unarchived', 'success');
+                        } else {
+                            await notesService.archiveNote(noteId);
+                            this.showToast('Note archived', 'success');
+                        }
+                        if (this.activeNoteId === noteId) {
+                            this.activeNoteId = null;
+                            this.clearEditor();
+                        }
+                        this.renderCurrentView();
+                        return;
+                    default:
+                        return;
+                }
             }
 
-            listEl.appendChild(div);
+            this.selectNote(note);
+        });
 
-            // Initialize feather icons for this note
-            if (typeof feather !== 'undefined') {
-                feather.replace();
-            }
+        listEl.addEventListener('contextmenu', (e) => {
+            const noteItem = e.target.closest('.note-item');
+            if (!noteItem) return;
+            const note = notesService.notes.find(n => n.id === noteItem.dataset.id);
+            if (!note) return;
+            e.preventDefault();
+            this.showMobileContextMenu(note);
         });
     }
 

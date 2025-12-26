@@ -27,7 +27,11 @@ async function init() {
     } else if (typeof viewportWatcher.addListener === 'function') {
         viewportWatcher.addListener(updateViewportMode);
     }
-    window.addEventListener('resize', updateViewportMode);
+    let resizeRaf;
+    window.addEventListener('resize', () => {
+        if (resizeRaf) cancelAnimationFrame(resizeRaf);
+        resizeRaf = requestAnimationFrame(updateViewportMode);
+    }, { passive: true });
 
     // --- Dynamic Confirmation Modal ---
     function createConfirmationModal({ title, text, confirmText, confirmTone, onConfirm }) {
