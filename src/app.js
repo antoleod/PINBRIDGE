@@ -724,6 +724,282 @@ async function init() {
     initMobileNavigation();
     // --- End Mobile Navigation ---
 
+    // --- Panic Mode (Security) ---
+    function initPanicMode() {
+        document.addEventListener('keydown', (e) => {
+            // Trigger: Ctrl + Shift + X (or Cmd + Shift + X)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.code === 'KeyX') {
+                if (e.repeat) return;
+                e.preventDefault();
+                console.warn('⚠️ PANIC ACTION TRIGGERED');
+
+                // 1. Immediate visual obscuration
+                const vaultScreen = document.getElementById('vault-screen');
+                if (vaultScreen) vaultScreen.classList.add('hidden');
+
+                // 2. Clear sensitive data
+                vaultService.clearSession();
+
+                // 3. Notify system
+                bus.emit('auth:locked', 'panic');
+
+                // 4. Feedback
+                uiService.showToast('Vault locked via Panic Action', 'error');
+            }
+        });
+    }
+    initPanicMode();
+
+    // --- Secure Reminders ---
+    function initSecureReminders() {
+        const btnReminder = document.getElementById('btn-reminder');
+        const modal = document.getElementById('reminders-modal');
+        const btnSave = document.getElementById('save-reminder');
+        const btnClose = document.getElementById('close-reminders-modal');
+        const inputDateTime = document.getElementById('reminder-datetime');
+        const inputRecurrence = document.getElementById('reminder-recurrence');
+
+        if (!btnReminder || !modal) return;
+
+        btnReminder.addEventListener('click', () => {
+            if (!uiService.activeNoteId) {
+                uiService.showToast('Open a note to set a reminder', 'info');
+                return;
+            }
+
+            const notes = vaultService.getNotes();
+            const note = notes.find(n => n.id === uiService.activeNoteId);
+
+            if (note && note.reminder && note.reminder.time) {
+                const date = new Date(note.reminder.time);
+                // Adjust for local input format
+                const offsetMs = date.getTimezoneOffset() * 60000;
+                const localISOTime = (new Date(date.getTime() - offsetMs)).toISOString().slice(0, 16);
+                inputDateTime.value = localISOTime;
+                inputRecurrence.value = note.reminder.recurrence || 'none';
+            } else {
+                inputDateTime.value = '';
+                inputRecurrence.value = 'none';
+            }
+
+            modal.classList.remove('hidden');
+            modal.showModal();
+        });
+
+        const closeModal = () => {
+            modal.classList.add('hidden');
+            modal.close();
+        };
+
+        btnClose?.addEventListener('click', closeModal);
+
+        btnSave?.addEventListener('click', async () => {
+            if (!uiService.activeNoteId) return;
+
+            const timeVal = inputDateTime.value;
+            const notes = vaultService.getNotes();
+            const note = notes.find(n => n.id === uiService.activeNoteId);
+
+            if (!note) return;
+
+            if (!timeVal) {
+                if (note.reminder) {
+                    delete note.reminder;
+                    note.updated = Date.now();
+                    await vaultService.upsertNote(note);
+                    uiService.showToast('Reminder removed', 'info');
+                }
+                closeModal();
+                return;
+            }
+
+            const timestamp = new Date(timeVal).getTime();
+            const recurrence = inputRecurrence.value;
+
+            note.reminder = {
+                time: timestamp,
+                recurrence: recurrence,
+                created: Date.now()
+            };
+            note.updated = Date.now();
+
+            await vaultService.upsertNote(note);
+            uiService.showToast('Secure reminder set', 'success');
+            closeModal();
+
+            if ('Notification' in window && Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+        });
+    }
+    initSecureReminders();
+
+    // --- Secure Scanner Pro ---
+    function initSecureScanner() {
+        const btnScan = document.getElementById('btn-scan-doc');
+        const modal = document.getElementById('doc-scanner-modal');
+        const video = document.getElementById('doc-scanner-video');
+        const canvas = document.getElementById('doc-scanner-canvas');
+        const btnCapture = document.getElementById('btn-capture-doc');
+        const btnInsert = document.getElementById('btn-insert-ocr');
+        const btnRetake = document.getElementById('btn-retake-doc');
+        const btnClose = document.getElementById('close-doc-scanner-modal');
+        const processingDiv = document.getElementById('scanner-processing');
+        const resultContainer = document.getElementById('ocr-result-container');
+        const resultText = document.getElementById('ocr-result-text');
+        const statusText = document.getElementById('ocr-status-text');
+
+        let stream = null;
+
+        if (!btnScan || !modal) return;
+
+        const stopCamera = () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            if (video) video.srcObject = null;
+        };
+
+        const startCamera = async () => {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                video.srcObject = stream;
+                video.play();
+                resultContainer.classList.add('hidden');
+                btnCapture.classList.remove('hidden');
+                processingDiv.classList.add('hidden');
+            } catch (err) {
+                console.error("Camera error", err);
+                uiService.showToast("Camera access denied or unavailable", "error");
+                modal.classList.add('hidden');
+                modal.close();
+            }
+        };
+
+        btnScan.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            modal.showModal();
+            startCamera();
+        });
+
+        btnClose.addEventListener('click', () => {
+            stopCamera();
+            modal.classList.add('hidden');
+            modal.close();
+        });
+
+        btnCapture.addEventListener('click', async () => {
+            if (!video || !canvas) return;
+
+            // Capture frame
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            // UI State
+            btnCapture.classList.add('hidden');
+            processingDiv.classList.remove('hidden');
+            statusText.textContent = "Analyzing document locally...";
+
+            // OCR
+            try {
+                if (typeof Tesseract === 'undefined') {
+                    throw new Error("OCR engine not loaded");
+                }
+
+                const { data: { text } } = await Tesseract.recognize(canvas, 'eng', {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            statusText.textContent = `Processing: ${Math.round(m.progress * 100)}%`;
+                        }
+                    }
+                });
+
+                resultText.value = text.trim();
+                processingDiv.classList.add('hidden');
+                resultContainer.classList.remove('hidden');
+                stopCamera(); // Stop camera to save battery while reviewing
+            } catch (e) {
+                console.error(e);
+                uiService.showToast("OCR Failed: " + e.message, "error");
+                btnCapture.classList.remove('hidden');
+                processingDiv.classList.add('hidden');
+            }
+        });
+
+        btnRetake.addEventListener('click', () => {
+            resultContainer.classList.add('hidden');
+            startCamera();
+        });
+
+        btnInsert.addEventListener('click', () => {
+            const text = resultText.value;
+            if (text) {
+                const contentArea = document.getElementById('note-content');
+                if (contentArea) {
+                    const start = contentArea.selectionStart;
+                    const end = contentArea.selectionEnd;
+                    const current = contentArea.value;
+                    contentArea.value = current.substring(0, start) + text + current.substring(end);
+                    // Trigger input event for auto-save if implemented
+                    contentArea.dispatchEvent(new Event('input'));
+                }
+                uiService.showToast("Text inserted", "success");
+            }
+            stopCamera();
+            modal.classList.add('hidden');
+            modal.close();
+        });
+    }
+    initSecureScanner();
+
+    // Reminder Check Loop (Every 30s)
+    setInterval(async () => {
+        if (!vaultService.isUnlocked()) return;
+
+        const notes = vaultService.getNotes();
+        const now = Date.now();
+        let changed = false;
+
+        for (const note of notes) {
+            if (note.reminder && note.reminder.time && note.reminder.time <= now) {
+                // Trigger Notification
+                if ('Notification' in window && Notification.permission === 'granted') {
+                    new Notification('PINBRIDGE Security', {
+                        body: 'Secure Reminder: A vault item requires your attention.',
+                        icon: 'src/public/icons/web/pinbridge_32x32.png',
+                        tag: 'pinbridge-reminder-' + note.id
+                    });
+                } else {
+                    uiService.showToast('Secure Reminder: Check your vault notes.', 'info');
+                }
+
+                // Handle Recurrence
+                if (note.reminder.recurrence === 'daily') {
+                    note.reminder.time += 86400000;
+                } else if (note.reminder.recurrence === 'weekly') {
+                    note.reminder.time += 604800000;
+                } else if (note.reminder.recurrence === 'monthly') {
+                    const d = new Date(note.reminder.time);
+                    d.setMonth(d.getMonth() + 1);
+                    note.reminder.time = d.getTime();
+                } else {
+                    delete note.reminder;
+                }
+
+                note.updated = Date.now();
+                await vaultService.upsertNote(note);
+                changed = true;
+            }
+        }
+
+        if (changed && uiService.currentView === 'all') {
+            uiService.renderCurrentView(vaultService.getNotes());
+        }
+    }, 30000);
+
     const lang = i18n.init();
     document.documentElement.lang = lang;
     bus.on('i18n:change', (code) => {

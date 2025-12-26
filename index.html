@@ -29,6 +29,7 @@
         pdfjsLib.GlobalWorkerOptions.workerSrc =
             'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/legacy/build/pdf.worker.min.mjs';
     </script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
     <style>
         /* 
          * RECOVERY KEY MODAL - RESPONSIVE LAYOUT
@@ -538,7 +539,6 @@
                     <button class="btn-tool-minimal btn-attach-file" id="btn-attach-file" title="Attach file"
                         aria-label="Attach file">
                         <i data-feather="paperclip"></i>
-                        <span>Attach</span>
                     </button>
                     <button class="btn-tool-minimal" id="btn-voice-type" title="Voice Typing" aria-label="Voice typing"
                         aria-pressed="false">
@@ -550,6 +550,12 @@
                     </button>
                     <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
                         <i data-feather="map-pin"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-reminder" title="Set Reminder" aria-label="Set Reminder">
+                        <i data-feather="bell"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-scan-doc" title="Scan Document" aria-label="Scan Document">
+                        <i data-feather="aperture"></i>
                     </button>
                     <button class="btn-tool-minimal" id="btn-screenshot" title="Screenshot / Print"
                         aria-label="Screenshot">
@@ -596,6 +602,25 @@
 
             <div class="dashboard-grid">
                 <!-- Stats Cards -->
+                <div class="dashboard-section glass-panel security-health-card">
+                    <div class="security-health-header">
+                        <div class="health-ring-container">
+                            <svg viewBox="0 0 36 36" class="health-ring-chart">
+                                <path class="health-ring-bg"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                <path class="health-ring-value" stroke-dasharray="85, 100"
+                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            </svg>
+                            <i data-feather="shield" class="health-icon"></i>
+                        </div>
+                        <div class="health-content">
+                            <h3>Security Health: Good</h3>
+                            <p class="hint">2 recommendations available to improve your vault score.</p>
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="btn-security-review">Review</button>
+                    </div>
+                </div>
+
                 <div class="dashboard-card glass-panel" role="button" tabindex="0" data-view="all"
                     aria-label="Open notes">
                     <div class="card-icon"><i data-feather="file-text"></i></div>
@@ -1054,8 +1079,65 @@
                 <h2>Insert Template</h2>
                 <button id="close-template-modal" class="btn-icon ghost">×</button>
             </div>
-            <div id="template-list" class="history-list scroll-container">
-                <!-- Templates injected here -->
+            <div id="template-list" class="templates-grid scroll-container">
+                <button class="template-card" data-template="login">
+                    <div class="template-icon"><i data-feather="key"></i></div>
+                    <span class="template-title">Login</span>
+                </button>
+                <button class="template-card" data-template="bank">
+                    <div class="template-icon"><i data-feather="credit-card"></i></div>
+                    <span class="template-title">Bank Card</span>
+                </button>
+                <button class="template-card" data-template="server">
+                    <div class="template-icon"><i data-feather="server"></i></div>
+                    <span class="template-title">Server</span>
+                </button>
+                <button class="template-card" data-template="wifi">
+                    <div class="template-icon"><i data-feather="wifi"></i></div>
+                    <span class="template-title">Wi-Fi</span>
+                </button>
+                <button class="template-card" data-template="identity">
+                    <div class="template-icon"><i data-feather="user"></i></div>
+                    <span class="template-title">Identity</span>
+                </button>
+                <button class="template-card" data-template="crypto">
+                    <div class="template-icon"><i data-feather="shield"></i></div>
+                    <span class="template-title">Recovery Key</span>
+                </button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- DOCUMENT SCANNER MODAL -->
+    <dialog id="doc-scanner-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h2>Secure Scanner Pro</h2>
+                <button id="close-doc-scanner-modal" class="btn-icon ghost">×</button>
+            </div>
+            <div class="scanner-body">
+                <div class="scanner-viewport">
+                    <video id="doc-scanner-video" playsinline autoplay></video>
+                    <canvas id="doc-scanner-canvas" class="hidden"></canvas>
+                    <div class="scanner-overlay"></div>
+                </div>
+                <div class="scanner-controls">
+                    <button id="btn-capture-doc" class="btn btn-primary btn-block">
+                        <i data-feather="camera"></i> Capture & OCR
+                    </button>
+                    <div id="scanner-processing" class="hidden">
+                        <div class="loader-pulse small"></div>
+                        <span id="ocr-status-text">Processing locally...</span>
+                    </div>
+                </div>
+                <div id="ocr-result-container" class="hidden">
+                    <h3>Scanned Text</h3>
+                    <textarea id="ocr-result-text" class="input-field" rows="6"></textarea>
+                    <div class="modal-actions">
+                        <button id="btn-insert-ocr" class="btn btn-primary">Insert to Note</button>
+                        <button id="btn-retake-doc" class="btn btn-secondary">Retake</button>
+                    </div>
+                </div>
             </div>
         </div>
     </dialog>
@@ -1147,6 +1229,18 @@
                             <option value="15">15 Minutes</option>
                             <option value="30">30 Minutes</option>
                         </select>
+                    </div>
+                    <div class="divider"></div>
+                    <h4>Stealth & Privacy</h4>
+                    <div class="settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Stealth Mode</span>
+                            <span class="settings-item-desc">Obscure sensitive content and use neutral branding.</span>
+                        </div>
+                        <div class="toggle-switch">
+                            <input type="checkbox" id="toggle-stealth-mode" class="toggle-input">
+                            <label for="toggle-stealth-mode" class="toggle-label"></label>
+                        </div>
                     </div>
                     <div class="divider"></div>
                     <h4>Active Recovery Methods</h4>
