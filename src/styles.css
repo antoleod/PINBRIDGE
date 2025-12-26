@@ -6306,6 +6306,135 @@ input[type="file"]::file-selector-button {
     font-family: var(--font-mono);
 }
 
+/* Bulk Selection Mode */
+.note-select-checkbox {
+    display: none;
+    /* Hidden by default */
+    width: 20px;
+    height: 20px;
+    margin-right: 1rem;
+    accent-color: var(--brand-primary);
+    cursor: pointer;
+}
+
+body.selection-mode .note-select-checkbox {
+    display: block;
+}
+
+body.selection-mode .note-item {
+    display: flex;
+    align-items: center;
+    padding-left: 1rem;
+}
+
+/* Ensure content doesn't overlap checkbox */
+body.selection-mode .note-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Bulk Action Bar (Overlays List Header) */
+.bulk-action-bar {
+    position: absolute;
+    inset: 0;
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.25rem;
+    z-index: 15;
+    /* Lower than header actions to keep Select button clickable if needed */
+    border-bottom: 1px solid var(--border-subtle);
+    animation: fadeIn 0.2s ease forwards;
+}
+
+.bulk-action-bar.hidden {
+    display: none;
+}
+
+.bulk-selection-info {
+    font-weight: 600;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.bulk-actions .btn-icon-minimal {
+    color: var(--text-primary);
+}
+
+/* Selection Badge on Toggle Button */
+#btn-toggle-select {
+    position: relative;
+    overflow: visible;
+    z-index: 20;
+    /* Keep above bulk bar */
+}
+
+#btn-toggle-select[data-count]::after {
+    content: attr(data-count);
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: var(--brand-primary);
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    height: 18px;
+    min-width: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    border: 2px solid var(--bg-surface);
+    padding: 0 4px;
+    animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#btn-toggle-select[data-count="0"]::after {
+    display: none;
+}
+
+/* Note Color Coding */
+.note-item[data-color] {
+    border-left-width: 3px;
+}
+
+.note-item[data-color="red"] { border-left-color: #ef4444; background: linear-gradient(90deg, rgba(239, 68, 68, 0.05), rgba(255, 255, 255, 0.02)); }
+.note-item[data-color="orange"] { border-left-color: #f97316; background: linear-gradient(90deg, rgba(249, 115, 22, 0.05), rgba(255, 255, 255, 0.02)); }
+.note-item[data-color="yellow"] { border-left-color: #eab308; background: linear-gradient(90deg, rgba(234, 179, 8, 0.05), rgba(255, 255, 255, 0.02)); }
+.note-item[data-color="green"] { border-left-color: #22c55e; background: linear-gradient(90deg, rgba(34, 197, 94, 0.05), rgba(255, 255, 255, 0.02)); }
+.note-item[data-color="blue"] { border-left-color: #3b82f6; background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), rgba(255, 255, 255, 0.02)); }
+.note-item[data-color="purple"] { border-left-color: #a855f7; background: linear-gradient(90deg, rgba(168, 85, 247, 0.05), rgba(255, 255, 255, 0.02)); }
+.note-item[data-color="pink"] { border-left-color: #ec4899; background: linear-gradient(90deg, rgba(236, 72, 153, 0.05), rgba(255, 255, 255, 0.02)); }
+.note-item[data-color="gray"] { border-left-color: #71717a; background: linear-gradient(90deg, rgba(113, 113, 122, 0.05), rgba(255, 255, 255, 0.02)); }
+
+/* Color Picker in Prompt (Optional enhancement for prompt modal if we had custom HTML, 
+   but for now we rely on text input/datalist which is functional) */
+
+/* Tag Badges in Note Item (if not already present) */
+.note-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.note-item-tag {
+    font-size: 0.7rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
 @keyframes slideInLeftMobile {
     from {
         transform: translateX(-20%);

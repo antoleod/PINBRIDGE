@@ -29,6 +29,91 @@ async function init() {
     }
     window.addEventListener('resize', updateViewportMode);
 
+    // --- Dynamic Confirmation Modal ---
+    function createConfirmationModal({ title, text, confirmText, confirmTone, onConfirm }) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+
+        // Icon based on tone
+        const iconSvg = confirmTone === 'danger'
+            ? '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+            : '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+
+        overlay.innerHTML = `
+            <div class="modal-content confirmation">
+                <div class="confirmation-body">
+                    <div class="confirmation-icon">${iconSvg}</div>
+                    <h3 class="confirmation-title">${title}</h3>
+                    <p class="confirmation-text">${text}</p>
+                    <div class="confirmation-actions">
+                        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+                        <button class="btn btn-primary ${confirmTone === 'danger' ? 'danger' : ''}" id="modal-confirm">${confirmText || 'Confirm'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const close = () => {
+            overlay.remove();
+        };
+
+        overlay.querySelector('#modal-cancel').addEventListener('click', close);
+        overlay.querySelector('#modal-confirm').addEventListener('click', () => {
+            if (onConfirm) onConfirm();
+            close();
+        });
+
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) close();
+        });
+    }
+
+    // --- Dynamic Prompt Modal (Input) ---
+    function createPromptModal({ title, label, placeholder, suggestions = [], confirmText, onConfirm }) {
+        const overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+
+        const datalistId = 'prompt-suggestions-' + Date.now();
+        const datalistHtml = suggestions.length ? `
+            <datalist id="${datalistId}">
+                ${suggestions.map(s => `<option value="${s}">`).join('')}
+            </datalist>
+        ` : '';
+
+        overlay.innerHTML = `
+            <div class="modal-content confirmation">
+                <div class="confirmation-body">
+                    <h3 class="confirmation-title">${title}</h3>
+                    <div class="form-group" style="width: 100%; text-align: left; margin-top: 1rem;">
+                        <label style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; display: block;">${label}</label>
+                        <input type="text" id="prompt-input" class="input-field" placeholder="${placeholder || ''}" list="${suggestions.length ? datalistId : ''}" autofocus>
+                        ${datalistHtml}
+                    </div>
+                    <div class="confirmation-actions">
+                        <button class="btn btn-secondary" id="modal-cancel">Cancel</button>
+                        <button class="btn btn-primary" id="modal-confirm">${confirmText || 'Confirm'}</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('#prompt-input');
+        const close = () => overlay.remove();
+
+        overlay.querySelector('#modal-cancel').addEventListener('click', close);
+        overlay.querySelector('#modal-confirm').addEventListener('click', () => {
+            const value = input.value.trim();
+            if (value && onConfirm) onConfirm(value);
+            close();
+        });
+
+        // Focus input
+        setTimeout(() => input.focus(), 50);
+    }
+
     // --- UI Enhancements ---
     function initPinVisibilityToggle() {
         const eyeIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
@@ -111,52 +196,25 @@ async function init() {
         observer.observe(list, { childList: true, subtree: true });
 
         // Event Delegation for Delete Action
-        let pendingDeleteId = null;
-        const deleteModal = document.getElementById('delete-attachment-modal');
-
         list.addEventListener('click', (e) => {
             const btn = e.target.closest('.btn-delete-attachment');
             if (btn) {
                 const item = btn.closest('.attachment-item');
-                pendingDeleteId = item.dataset.id; // Assuming render puts data-id
-                if (deleteModal) {
-                    deleteModal.classList.remove('hidden');
-                    deleteModal.showModal();
-                }
-            }
-        });
+                const attachmentId = item.dataset.id;
 
-        // Modal Actions
-        document.getElementById('cancel-delete-attachment')?.addEventListener('click', () => {
-            if (deleteModal) {
-                deleteModal.classList.add('hidden');
-                deleteModal.close();
-            }
-            pendingDeleteId = null;
-        });
-
-        document.getElementById('confirm-delete-attachment')?.addEventListener('click', () => {
-            if (pendingDeleteId) {
-                bus.emit('attachment:delete', pendingDeleteId);
-                if (deleteModal) {
-                    deleteModal.classList.add('hidden');
-                    deleteModal.close();
-                }
-                // Optimistic UI removal
-                const item = list.querySelector(`.attachment-item[data-id="${pendingDeleteId}"]`);
-                if (item) item.remove();
-
-                // Check if empty
-                if (list.children.length === 0) {
-                    document.getElementById('note-attachments-empty')?.classList.remove('hidden');
-                }
-            }
-        });
-
-        document.getElementById('close-delete-attachment-modal')?.addEventListener('click', () => {
-            if (deleteModal) {
-                deleteModal.classList.add('hidden');
-                deleteModal.close();
+                createConfirmationModal({
+                    title: 'Delete Attachment?',
+                    text: 'Are you sure you want to delete this attachment? This action cannot be undone.',
+                    confirmText: 'Delete',
+                    confirmTone: 'danger',
+                    onConfirm: () => {
+                        bus.emit('attachment:delete', attachmentId);
+                        item.remove();
+                        if (list.children.length === 0) {
+                            document.getElementById('note-attachments-empty')?.classList.remove('hidden');
+                        }
+                    }
+                });
             }
         });
 
@@ -469,6 +527,31 @@ async function init() {
     initNoteListActions();
     // --- End Note List Actions Injection ---
 
+    // --- Note Color Sync (Visualizer) ---
+    function initNoteColorSync() {
+        const list = document.getElementById('notes-list');
+        if (!list) return;
+
+        const observer = new MutationObserver((mutations) => {
+            const notes = vaultService.getNotes();
+            const noteMap = new Map(notes.map(n => [n.id, n]));
+
+            mutations.forEach(m => {
+                m.addedNodes.forEach(node => {
+                    if (node.nodeType === 1 && node.classList.contains('note-item')) {
+                        const id = node.dataset.id;
+                        const note = noteMap.get(id);
+                        if (note && note.color) {
+                            node.setAttribute('data-color', note.color);
+                        }
+                    }
+                });
+            });
+        });
+        observer.observe(list, { childList: true });
+    }
+    initNoteColorSync();
+
     // --- Trash Management ---
     function initTrashManager() {
         const btnEmptyTrash = document.getElementById('btn-empty-trash');
@@ -723,6 +806,445 @@ async function init() {
     }
     initMobileNavigation();
     // --- End Mobile Navigation ---
+
+    // --- Settings Accordion (Mobile) ---
+    function initSettingsAccordion() {
+        const settingsModal = document.getElementById('settings-modal');
+        if (!settingsModal) return;
+
+        settingsModal.addEventListener('click', (e) => {
+            const toggle = e.target.closest('.settings-accordion-toggle');
+            if (toggle) {
+                const item = toggle.closest('.settings-accordion-item');
+                const content = item.querySelector('.settings-accordion-content');
+
+                // Toggle state
+                const isOpen = item.classList.contains('open');
+
+                // Close others for exclusive accordion behavior
+                settingsModal.querySelectorAll('.settings-accordion-item').forEach(otherItem => {
+                    if (otherItem !== item) {
+                        otherItem.classList.remove('open');
+                        const otherContent = otherItem.querySelector('.settings-accordion-content');
+                        if (otherContent) otherContent.classList.add('hidden');
+                    }
+                });
+
+                if (isOpen) {
+                    item.classList.remove('open');
+                    content.classList.add('hidden');
+                } else {
+                    item.classList.add('open');
+                    content.classList.remove('hidden');
+                }
+            }
+        });
+    }
+    initSettingsAccordion();
+    // --- End Settings Accordion ---
+
+    // --- Bulk Actions & Selection ---
+    function initBulkActions() {
+        const btnToggleSelect = document.getElementById('btn-toggle-select');
+        const bulkBar = document.getElementById('bulk-action-bar');
+        const btnBulkCancel = document.getElementById('btn-bulk-cancel');
+        const checkSelectAll = document.getElementById('bulk-select-all');
+        const countDisplay = document.getElementById('bulk-count');
+        const list = document.getElementById('notes-list');
+
+        let selectedIds = new Set();
+        let isSelectionMode = false;
+
+        const toggleSelectionMode = (active, clear = true) => {
+            isSelectionMode = active;
+            document.body.classList.toggle('selection-mode', active);
+
+            // Logic: If active, show bar. If not active, hide bar.
+            // Exception: If we just want to hide the bar but keep selection (e.g. via toggle button), we handle visibility separately.
+            // Here we assume 'active' means "Enter/Exit Mode".
+            if (active) bulkBar.classList.remove('hidden');
+            else bulkBar.classList.add('hidden');
+
+            if (!active && clear) {
+                selectedIds.clear();
+                updateSelectionUI();
+                // Uncheck all
+                list.querySelectorAll('.note-select-checkbox').forEach(cb => cb.checked = false);
+                checkSelectAll.checked = false;
+            }
+        };
+
+        const updateSelectionUI = () => {
+            countDisplay.textContent = `${selectedIds.size} selected`;
+            checkSelectAll.checked = list.children.length > 0 && selectedIds.size === list.children.length;
+            checkSelectAll.indeterminate = selectedIds.size > 0 && selectedIds.size < list.children.length;
+            btnToggleSelect.setAttribute('data-count', selectedIds.size);
+        };
+
+        // Inject checkboxes via Observer
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.classList.contains('note-item')) {
+                        if (node.querySelector('.note-select-checkbox')) return;
+
+                        const checkbox = document.createElement('input');
+                        checkbox.type = 'checkbox';
+                        checkbox.className = 'note-select-checkbox';
+
+                        // Wrap content to allow flex layout with checkbox
+                        const contentWrapper = document.createElement('div');
+                        contentWrapper.className = 'note-item-content';
+                        while (node.firstChild) {
+                            contentWrapper.appendChild(node.firstChild);
+                        }
+
+                        node.appendChild(checkbox);
+                        node.appendChild(contentWrapper);
+
+                        // Handle click
+                        checkbox.addEventListener('change', (e) => {
+                            e.stopPropagation();
+                            const id = node.dataset.id;
+                            if (e.target.checked) selectedIds.add(id);
+                            else selectedIds.delete(id);
+                            updateSelectionUI();
+                        });
+
+                        // Prevent note opening when clicking checkbox area
+                        checkbox.addEventListener('click', e => e.stopPropagation());
+                    }
+                });
+            });
+        });
+
+        if (list) observer.observe(list, { childList: true });
+
+        // Listeners
+        btnToggleSelect?.addEventListener('click', () => {
+            if (selectedIds.size > 0) {
+                // If items are selected, toggle the bar visibility only, don't clear selection
+                bulkBar.classList.toggle('hidden');
+            } else {
+                // Standard toggle
+                toggleSelectionMode(!isSelectionMode);
+            }
+        });
+
+        btnBulkCancel?.addEventListener('click', () => toggleSelectionMode(false));
+
+        checkSelectAll?.addEventListener('change', (e) => {
+            const checkboxes = list.querySelectorAll('.note-select-checkbox');
+            const shouldSelect = e.target.checked;
+
+            checkboxes.forEach(cb => {
+                cb.checked = shouldSelect;
+                const noteItem = cb.closest('.note-item');
+                if (noteItem) {
+                    if (shouldSelect) selectedIds.add(noteItem.dataset.id);
+                    else selectedIds.delete(noteItem.dataset.id);
+                }
+            });
+            updateSelectionUI();
+        });
+
+        // Bulk Operations
+        const performBulkAction = async (action) => {
+            if (selectedIds.size === 0) return;
+
+            const notes = vaultService.getNotes();
+            const ids = Array.from(selectedIds);
+
+            if (action === 'delete') {
+                createConfirmationModal({
+                    title: `Delete ${ids.length} Notes?`,
+                    text: 'These notes will be moved to trash.',
+                    confirmText: 'Delete',
+                    confirmTone: 'danger',
+                    onConfirm: async () => {
+                        ids.forEach(id => {
+                            const note = notes.find(n => n.id === id);
+                            if (note) {
+                                note.trash = true;
+                                note.updated = Date.now();
+                            }
+                        });
+                        await vaultService.persistNotes(notes);
+                        uiService.showToast(`${ids.length} notes moved to trash`, 'success');
+                        toggleSelectionMode(false);
+                        uiService.renderCurrentView(vaultService.getNotes());
+                    }
+                });
+            } else if (action === 'archive') {
+                ids.forEach(id => {
+                    const note = notes.find(n => n.id === id);
+                    if (note) {
+                        note.archived = !note.archived; // Toggle archive
+                        note.updated = Date.now();
+                    }
+                });
+                await vaultService.persistNotes(notes);
+                uiService.showToast(`${ids.length} notes archived`, 'success');
+                toggleSelectionMode(false);
+                uiService.renderCurrentView(vaultService.getNotes());
+            }
+            else if (action === 'move') {
+                const existingFolders = [...new Set(notes.map(n => n.folder).filter(Boolean))].sort();
+                createPromptModal({
+                    title: `Move ${ids.length} Notes`,
+                    label: 'Select or type folder name',
+                    placeholder: 'Folder name...',
+                    suggestions: existingFolders,
+                    confirmText: 'Move',
+                    onConfirm: async (folderName) => {
+                        ids.forEach(id => {
+                            const note = notes.find(n => n.id === id);
+                            if (note) {
+                                note.folder = folderName;
+                                note.updated = Date.now();
+                            }
+                        });
+                        await vaultService.persistNotes(notes);
+                        uiService.showToast(`${ids.length} notes moved to "${folderName}"`, 'success');
+                        toggleSelectionMode(false);
+                        uiService.renderCurrentView(vaultService.getNotes());
+                    }
+                });
+            }
+            else if (action === 'merge') {
+                if (ids.length < 2) {
+                    uiService.showToast('Select at least 2 notes to merge', 'info');
+                    return;
+                }
+                const selectedNotes = notes.filter(n => selectedIds.has(n.id));
+                const defaultTitle = `Merged Note - ${new Date().toLocaleDateString()}`;
+
+                createPromptModal({
+                    title: `Merge ${ids.length} Notes`,
+                    label: 'Title for the new merged note',
+                    placeholder: defaultTitle,
+                    confirmText: 'Merge',
+                    onConfirm: async (title) => {
+                        const finalTitle = title || defaultTitle;
+                        let mergedContent = selectedNotes.map(n => `# ${n.title || 'Untitled'}\n\n${n.content || ''}`).join('\n\n---\n\n');
+
+                        const newNote = {
+                            id: self.crypto && self.crypto.randomUUID ? self.crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2),
+                            title: finalTitle,
+                            content: mergedContent,
+                            folder: selectedNotes[0].folder || '',
+                            tags: [...new Set(selectedNotes.flatMap(n => n.tags || []))],
+                            created: Date.now(),
+                            updated: Date.now(),
+                            favorite: false,
+                            trash: false
+                        };
+
+                        notes.unshift(newNote);
+                        await vaultService.persistNotes(notes);
+                        uiService.showToast('Notes merged successfully', 'success');
+                        toggleSelectionMode(false);
+                        uiService.renderCurrentView(vaultService.getNotes());
+                    }
+                });
+            }
+            else if (action === 'export') {
+                createPromptModal({
+                    title: `Export ${ids.length} Notes`,
+                    label: 'Format (json or markdown)',
+                    placeholder: 'json',
+                    suggestions: ['json', 'markdown'],
+                    confirmText: 'Export',
+                    onConfirm: (format) => {
+                        const fmt = (format || 'json').toLowerCase().trim();
+                        const selectedNotes = notes.filter(n => selectedIds.has(n.id));
+
+                        let blob, filename;
+                        const timestamp = new Date().toISOString().slice(0, 10);
+
+                        if (fmt === 'markdown' || fmt === 'md') {
+                            const content = selectedNotes.map(n => `# ${n.title || 'Untitled'}\n\n${n.content || ''}`).join('\n\n---\n\n');
+                            blob = new Blob([content], { type: 'text/markdown' });
+                            filename = `pinbridge-export-${timestamp}.md`;
+                        } else {
+                            // Default to JSON
+                            blob = new Blob([JSON.stringify(selectedNotes, null, 2)], { type: 'application/json' });
+                            filename = `pinbridge-export-${timestamp}.json`;
+                        }
+
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+
+                        toggleSelectionMode(false);
+                        uiService.showToast(`Exported ${ids.length} notes as ${fmt.toUpperCase()}`, 'success');
+                    }
+                });
+            }
+            else if (action === 'pin') {
+                ids.forEach(id => {
+                    const note = notes.find(n => n.id === id);
+                    if (note) {
+                        note.pinned = !note.pinned;
+                        note.updated = Date.now();
+                    }
+                });
+                await vaultService.persistNotes(notes);
+                uiService.showToast(`${ids.length} notes pin status updated`, 'success');
+                toggleSelectionMode(false);
+                uiService.renderCurrentView(vaultService.getNotes());
+            }
+            else if (action === 'duplicate') {
+                const newNotes = [];
+                ids.forEach(id => {
+                    const note = notes.find(n => n.id === id);
+                    if (note) {
+                        const copy = JSON.parse(JSON.stringify(note));
+                        copy.id = self.crypto && self.crypto.randomUUID ? self.crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2);
+                        copy.title = `Copy of ${note.title || 'Untitled'}`;
+                        copy.created = Date.now();
+                        copy.updated = Date.now();
+                        copy.history = []; // Reset history for the copy
+                        newNotes.push(copy);
+                    }
+                });
+                notes.unshift(...newNotes);
+                await vaultService.persistNotes(notes);
+                uiService.showToast(`${newNotes.length} notes duplicated`, 'success');
+                toggleSelectionMode(false);
+                uiService.renderCurrentView(vaultService.getNotes());
+            }
+            else if (action === 'tag') {
+                createPromptModal({
+                    title: `Tag ${ids.length} Notes`,
+                    label: 'Enter tags (comma separated). Prefix with "-" to remove.',
+                    placeholder: 'work, -personal',
+                    confirmText: 'Update Tags',
+                    onConfirm: async (input) => {
+                        const tags = input.split(',').map(t => t.trim()).filter(Boolean);
+                        const toAdd = tags.filter(t => !t.startsWith('-'));
+                        const toRemove = tags.filter(t => t.startsWith('-')).map(t => t.substring(1));
+
+                        ids.forEach(id => {
+                            const note = notes.find(n => n.id === id);
+                            if (note) {
+                                const currentTags = new Set(note.tags || []);
+                                toAdd.forEach(t => currentTags.add(t));
+                                toRemove.forEach(t => currentTags.delete(t));
+                                note.tags = Array.from(currentTags);
+                                note.updated = Date.now();
+                            }
+                        });
+                        await vaultService.persistNotes(notes);
+                        uiService.showToast('Tags updated successfully', 'success');
+                        toggleSelectionMode(false);
+                        uiService.renderCurrentView(vaultService.getNotes());
+                    }
+                });
+            }
+            else if (action === 'color') {
+                const colors = ['red', 'orange', 'yellow', 'green', 'blue', 'purple', 'pink', 'gray', 'none'];
+                createPromptModal({
+                    title: `Color Code ${ids.length} Notes`,
+                    label: 'Select a color label',
+                    placeholder: 'blue',
+                    suggestions: colors,
+                    confirmText: 'Set Color',
+                    onConfirm: async (color) => {
+                        const val = color.toLowerCase().trim();
+                        ids.forEach(id => {
+                            const note = notes.find(n => n.id === id);
+                            if (note) {
+                                note.color = (val === 'none' || !val) ? null : val;
+                                note.updated = Date.now();
+                            }
+                        });
+                        await vaultService.persistNotes(notes);
+                        uiService.showToast('Color labels updated', 'success');
+                        toggleSelectionMode(false);
+                        uiService.renderCurrentView(vaultService.getNotes());
+                    }
+                });
+            }
+        };
+
+        document.getElementById('btn-bulk-delete')?.addEventListener('click', () => performBulkAction('delete'));
+        document.getElementById('btn-bulk-archive')?.addEventListener('click', () => performBulkAction('archive'));
+        document.getElementById('btn-bulk-move')?.addEventListener('click', () => performBulkAction('move'));
+        document.getElementById('btn-bulk-merge')?.addEventListener('click', () => performBulkAction('merge'));
+        document.getElementById('btn-bulk-export')?.addEventListener('click', () => performBulkAction('export'));
+        document.getElementById('btn-bulk-pin')?.addEventListener('click', () => performBulkAction('pin'));
+        document.getElementById('btn-bulk-duplicate')?.addEventListener('click', () => performBulkAction('duplicate'));
+        document.getElementById('btn-bulk-tag')?.addEventListener('click', () => performBulkAction('tag'));
+        document.getElementById('btn-bulk-color')?.addEventListener('click', () => performBulkAction('color'));
+    }
+    initBulkActions();
+    // --- End Bulk Actions ---
+
+    // --- Cache Management ---
+    function initCacheSettings() {
+        const btnClear = document.getElementById('btn-clear-cache');
+        const sizeDisplay = document.getElementById('cache-size-display');
+
+        // Update size when settings open
+        const settingsModal = document.getElementById('settings-modal');
+        if (settingsModal) {
+            const observer = new MutationObserver((mutations) => {
+                mutations.forEach((mutation) => {
+                    if (mutation.attributeName === 'class' && !settingsModal.classList.contains('hidden')) {
+                        if (navigator.storage && navigator.storage.estimate) {
+                            navigator.storage.estimate().then(estimate => {
+                                const mb = (estimate.usage / (1024 * 1024)).toFixed(2);
+                                if (sizeDisplay) sizeDisplay.textContent = `${mb} MB`;
+                            });
+                        }
+                    }
+                });
+            });
+            observer.observe(settingsModal, { attributes: true });
+        }
+
+        btnClear?.addEventListener('click', () => {
+            createConfirmationModal({
+                title: 'Clear All Data?',
+                text: 'This will wipe all local data, cache, and settings. You will be logged out. Ensure you have a backup.',
+                confirmText: 'Clear & Reset',
+                confirmTone: 'danger',
+                onConfirm: async () => {
+                    try {
+                        // Clear Storage
+                        localStorage.clear();
+                        sessionStorage.clear();
+
+                        // Clear Cache API
+                        if ('caches' in window) {
+                            const keys = await caches.keys();
+                            await Promise.all(keys.map(key => caches.delete(key)));
+                        }
+
+                        // Clear IndexedDB (if used by Firebase/Local)
+                        if ('indexedDB' in window && indexedDB.databases) {
+                            const dbs = await indexedDB.databases();
+                            dbs.forEach(db => indexedDB.deleteDatabase(db.name));
+                        }
+
+                        uiService.showToast('Data cleared. Reloading...', 'success');
+                        setTimeout(() => window.location.reload(), 1000);
+                    } catch (e) {
+                        console.error('Clear cache failed', e);
+                        uiService.showToast('Failed to clear some data', 'error');
+                    }
+                }
+            });
+        });
+    }
+    initCacheSettings();
+    // --- End Cache Management ---
 
     // --- Panic Mode (Security) ---
     function initPanicMode() {

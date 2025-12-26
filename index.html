@@ -477,6 +477,36 @@
         <!-- LIST PANEL -->
         <section class="list-panel">
             <div class="list-header">
+                <!-- Bulk Action Bar (Hidden by default) -->
+                <div id="bulk-action-bar" class="bulk-action-bar hidden">
+                    <div class="bulk-selection-info">
+                        <input type="checkbox" id="bulk-select-all" title="Select All">
+                        <span id="bulk-count">0 selected</span>
+                    </div>
+                    <div class="bulk-actions">
+                        <button id="btn-bulk-tag" class="btn-icon-minimal" title="Tag"><i
+                                data-feather="tag"></i></button>
+                        <button id="btn-bulk-color" class="btn-icon-minimal" title="Color Code"><i
+                                data-feather="disc"></i></button>
+                        <button id="btn-bulk-pin" class="btn-icon-minimal" title="Pin/Unpin"><i
+                                data-feather="map-pin"></i></button>
+                        <button id="btn-bulk-duplicate" class="btn-icon-minimal" title="Duplicate"><i
+                                data-feather="copy"></i></button>
+                        <button id="btn-bulk-move" class="btn-icon-minimal" title="Move to Folder"><i
+                                data-feather="folder"></i></button>
+                        <button id="btn-bulk-export" class="btn-icon-minimal" title="Export"><i
+                                data-feather="download"></i></button>
+                        <button id="btn-bulk-merge" class="btn-icon-minimal" title="Merge Notes"><i
+                                data-feather="git-merge"></i></button>
+                        <button id="btn-bulk-archive" class="btn-icon-minimal" title="Archive"><i
+                                data-feather="archive"></i></button>
+                        <button id="btn-bulk-delete" class="btn-icon-minimal" title="Delete"><i
+                                data-feather="trash-2"></i></button>
+                        <button id="btn-bulk-cancel" class="btn-icon-minimal" title="Cancel"><i
+                                data-feather="x"></i></button>
+                    </div>
+                </div>
+
                 <div class="search-wrapper">
                     <i data-feather="search" class="search-icon"></i>
                     <input type="text" id="search-input" placeholder="Search..." class="search-input-minimal"
@@ -501,6 +531,9 @@
                     <button id="btn-empty-trash" class="btn-icon-minimal hidden" title="Empty Trash"
                         aria-label="Empty Trash">
                         <i data-feather="trash-2"></i>
+                    </button>
+                    <button id="btn-toggle-select" class="btn-icon-minimal" title="Select" aria-label="Select Mode">
+                        <i data-feather="check-square"></i>
                     </button>
                     <button id="btn-new-note" class="btn-new-minimal" title="New Note (N)"
                         data-i18n-title="newNoteTooltip">+</button>
@@ -1347,6 +1380,20 @@
                     </div>
                     <button id="btn-find-duplicates" class="btn btn-secondary mt-1">Find All
                         Duplicates</button>
+
+                    <div class="divider"></div>
+                    <h4>Storage & Cache</h4>
+                    <div class="settings-cache-control">
+                        <div class="cache-stats-row">
+                            <span>Approx. Storage Used</span>
+                            <strong id="cache-size-display">Calculating...</strong>
+                        </div>
+                        <button class="btn btn-secondary danger mt-1" id="btn-clear-cache">Clear Local Cache &
+                            Data</button>
+                        <p class="hint">This will remove all locally stored data and log you out. This action cannot be
+                            undone.</p>
+                    </div>
+
                     <div class="divider"></div>
                     <h4>Diagnostics</h4>
                     <div class="settings-item diagnostics-panel">
