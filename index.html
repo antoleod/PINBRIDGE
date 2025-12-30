@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -237,6 +237,9 @@
                 <button type="button" class="btn btn-icon" id="btn-settings" title="Settings"
                     aria-label="Open settings">
                     <i data-feather="settings"></i>
+                </button>
+                <button type="button" class="btn btn-text hidden" id="btn-install-app">
+                    <i data-feather="download"></i> Install
                 </button>
                 <button type="button" class="btn btn-text" id="btn-account-recovery"><i data-feather="shield"></i>
                     Recovery</button>
@@ -1206,6 +1209,14 @@
                 <!-- General Settings Panel -->
                 <div id="settings-general" class="settings-content">
                     <h3>General Settings</h3>
+                    <div class="settings-item hidden" id="install-settings-item">
+                        <div class="settings-item-content">
+                            <span class="settings-item-title">Install Application</span>
+                            <span class="settings-item-desc">Add to home screen for offline access.</span>
+                        </div>
+                        <button id="btn-install-app-settings" class="btn btn-secondary">Install</button>
+                    </div>
+                    <div class="divider"></div>
                     <h4>Theme</h4>
                     <div id="theme-switcher" class="settings-grid">
                         <!-- Theme options are injected here -->
@@ -1625,6 +1636,40 @@
 
 
     <script type="module" src="./src/app.js"></script>
+    <script>
+        // Service Worker Registration & PWA Install Logic
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW fail:', err));
+            });
+        }
+
+        let deferredPrompt;
+        const installBtnAuth = document.getElementById('btn-install-app');
+        const installItemSettings = document.getElementById('install-settings-item');
+        const installBtnSettings = document.getElementById('btn-install-app-settings');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (installBtnAuth) installBtnAuth.classList.remove('hidden');
+            if (installItemSettings) installItemSettings.classList.remove('hidden');
+        });
+
+        async function installPWA() {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                deferredPrompt = null;
+                if (installBtnAuth) installBtnAuth.classList.add('hidden');
+                if (installItemSettings) installItemSettings.classList.add('hidden');
+            }
+        }
+
+        if (installBtnAuth) installBtnAuth.addEventListener('click', installPWA);
+        if (installBtnSettings) installBtnSettings.addEventListener('click', installPWA);
+    </script>
 </body>
 
 </html>
