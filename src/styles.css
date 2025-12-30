@@ -324,8 +324,30 @@ body {
     }
 }
 
+/* --- LOADING SCREEN --- */
+#loading-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2rem;
+}
+
+.logo-mark {
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--brand-primary);
+    letter-spacing: -0.05em;
+    animation: fadeIn 0.5s ease;
+}
+
 .loader-pulse {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--brand-primary);
     animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
 }
 
 .btn-feedback {
@@ -451,10 +473,10 @@ body {
     width: clamp(320px, 92vw, 400px);
     text-align: center;
     padding: 2rem 2rem;
-    border-radius: 16px;
-    background: linear-gradient(160deg, rgba(31, 41, 55, 0.85), rgba(21, 30, 42, 0.85));
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    border-radius: var(--radius-lg);
+    background: var(--bg-glass);
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
@@ -1222,25 +1244,25 @@ body.stealth-mode .note-item:hover .note-preview {
 input {
     width: 100%;
     padding: 0.875rem 1rem;
-    background: rgba(0, 0, 0, 0.3);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 10px;
-    color: white;
+    background: var(--bg-glass);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
     font-size: 0.95rem;
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     transition: all 0.2s ease;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    min-height: 44px; /* Better mobile touch target */
 }
 
 input::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: var(--text-muted);
 }
 
 input:focus {
     outline: none;
     border-color: var(--brand-primary);
-    background: rgba(10, 10, 15, 0.45);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25), inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    background: var(--bg-glass-high);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
 }
 
 .input-focus-hint {
@@ -1868,31 +1890,35 @@ button.btn:active {
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1.5rem;
 }
 
 .dashboard-card {
-    padding: 1.25rem;
-    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    border-radius: var(--radius-lg);
+    background: var(--bg-glass);
+    border: 1px solid var(--border-subtle);
     display: flex;
     align-items: center;
     gap: 1rem;
     transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
 }
 
 .dashboard-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--border-active);
 }
 
 .dashboard-card .card-icon {
-    width: 36px;
-    height: 36px;
+    width: 48px;
+    height: 48px;
     display: grid;
     place-items: center;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    background: var(--bg-glass-high);
     color: var(--brand-primary);
 }
 
@@ -2886,8 +2912,8 @@ button.btn:active {
 }
 
 .note-item:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
+    background: var(--bg-glass-high);
+    border-color: var(--border-active);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
