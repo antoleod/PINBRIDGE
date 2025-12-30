@@ -1640,7 +1640,9 @@
         // Service Worker Registration & PWA Install Logic
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.error('SW fail:', err));
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => console.log('SW registered'))
+                    .catch(err => console.error('SW fail:', err));
             });
         }
 
@@ -1650,6 +1652,7 @@
         const installBtnSettings = document.getElementById('btn-install-app-settings');
 
         window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('beforeinstallprompt fired');
             e.preventDefault();
             deferredPrompt = e;
             if (installBtnAuth) installBtnAuth.classList.remove('hidden');
@@ -1660,11 +1663,11 @@
             if (!deferredPrompt) return;
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') {
-                deferredPrompt = null;
-                if (installBtnAuth) installBtnAuth.classList.add('hidden');
-                if (installItemSettings) installItemSettings.classList.add('hidden');
-            }
+            console.log('Install prompt outcome:', outcome);
+            deferredPrompt = null;
+            // Hide buttons after prompt interaction (cannot prompt again immediately)
+            if (installBtnAuth) installBtnAuth.classList.add('hidden');
+            if (installItemSettings) installItemSettings.classList.add('hidden');
         }
 
         if (installBtnAuth) installBtnAuth.addEventListener('click', installPWA);
