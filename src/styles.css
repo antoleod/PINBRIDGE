@@ -4859,6 +4859,20 @@ input[type="file"]::file-selector-button {
     word-wrap: break-word;
 }
 
+.ocr-modal-content .ocr-scanner-frame {
+    width: min(520px, 100%);
+    margin: 0 auto;
+    aspect-ratio: 4 / 3;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.ocr-modal-content #ocr-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 /* Responsive tweaks */
 @media (max-width: 900px) {
     :root {

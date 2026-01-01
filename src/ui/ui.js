@@ -70,6 +70,9 @@ class UIService {
             chunkIndex: 0,
             chunkTotal: 0,
             isPaused: false,
+            noteId: null,
+            isCreatingNote: false,
+            seenChunks: new Set(),
             _canvas: null,
             _context: null,
             _chunkCanvas: null,
@@ -2545,13 +2548,13 @@ class UIService {
             modal.id = 'ocr-modal';
             modal.className = 'modal-overlay hidden';
             modal.innerHTML = `
-                <div class="modal-content">
+                <div class="modal-content ocr-modal-content">
                     <div class="modal-header">
                         <h2>Scan Text</h2>
                         <button class="modal-close" id="close-ocr-modal">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div class="qr-scanner-container">
+                        <div class="qr-scanner-container ocr-scanner-frame">
                             <video id="ocr-video" playsinline></video>
                             <div class="qr-scanner-overlay"></div>
                         </div>
@@ -2595,6 +2598,9 @@ class UIService {
         this.ocr.lastChunkText = '';
         this.ocr.lastChunkAt = 0;
         this.ocr.isPaused = false;
+        this.ocr.noteId = null;
+        this.ocr.isCreatingNote = false;
+        this.ocr.seenChunks.clear();
         if (toggleBtn) toggleBtn.textContent = 'Pause';
         this._setOcrState('idle', 'Preparing scanner...');
 
@@ -2623,6 +2629,11 @@ class UIService {
             await this.ocrWorker.setParameters({
                 tessedit_pageseg_mode: Tesseract.PSM.AUTO,
             });
+        }
+
+        if (this.ocr.stream) {
+            this._setOcrState('scanning', 'Point camera at text');
+            if (toggleBtn) toggleBtn.disabled = false;
         }
     }
 
@@ -2836,8 +2847,48 @@ class UIService {
         previewEl.textContent = existing ? `${existing}\n${text}` : text;
         previewEl.scrollTop = previousScroll;
 
+        this._appendOcrToNote(text);
+
         this.ocr.lastChunkText = text;
         this.ocr.lastChunkAt = now;
+    }
+
+    _normalizeOcrText(text) {
+        return (text || '')
+            .toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    async _appendOcrToNote(text) {
+        const normalized = this._normalizeOcrText(text);
+        if (!normalized) return;
+        if (this.ocr.seenChunks.has(normalized)) return;
+
+        if (!this.ocr.noteId && !this.ocr.isCreatingNote) {
+            this.ocr.isCreatingNote = true;
+            try {
+                await this.handleNewNote();
+                this.ocr.noteId = this.activeNoteId;
+            } finally {
+                this.ocr.isCreatingNote = false;
+            }
+        }
+
+        const contentArea = this.inputs.noteContent;
+        if (!contentArea) return;
+
+        const current = contentArea.value || '';
+        if (current.toLowerCase().includes(normalized)) {
+            this.ocr.seenChunks.add(normalized);
+            return;
+        }
+
+        const separator = current && !current.endsWith('\n') ? '\n' : '';
+        contentArea.value = `${current}${separator}${text}`.trim() + '\n';
+        contentArea.dispatchEvent(new Event('input'));
+        this.ocr.seenChunks.add(normalized);
     }
 
     toggleOcrScan() {
