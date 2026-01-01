@@ -73,6 +73,8 @@ class UIService {
             noteId: null,
             isCreatingNote: false,
             seenChunks: new Set(),
+            recentLines: [],
+            lastAppendAt: 0,
             cameraReady: false,
             workerReady: false,
             _canvas: null,
@@ -2560,11 +2562,11 @@ class UIService {
                             <video id="ocr-video" playsinline></video>
                             <div class="qr-scanner-overlay"></div>
                         </div>
-                        <div id="ocr-status" class="hint center">Point camera at text</div>
+                        <div id="ocr-status" class="hint center">Preparing scanner...</div>
                         <div id="ocr-result-preview" class="ocr-preview"></div>
                         <div class="modal-actions">
                             <button id="btn-ocr-toggle" class="btn btn-secondary">Pause</button>
-                            <button id="btn-insert-ocr" class="btn btn-primary">Insert Text</button>
+                            <button id="btn-ocr-stop" class="btn btn-primary">Stop</button>
                         </div>
                     </div>
                 </div>
@@ -2573,10 +2575,7 @@ class UIService {
 
             this._getById('close-ocr-modal').onclick = () => this.hideOCRModal();
             this._getById('btn-ocr-toggle').onclick = () => this.toggleOcrScan();
-            this._getById('btn-insert-ocr').onclick = () => {
-                this.insertOcrText();
-                this.hideOCRModal();
-            };
+            this._getById('btn-ocr-stop').onclick = () => this.hideOCRModal();
             // Close on backdrop click (predictable cleanup of camera + timers).
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) this.hideOCRModal();
@@ -2589,11 +2588,9 @@ class UIService {
         // Reset UI state on each open to avoid confusing stale results.
         const statusEl = this._getById('ocr-status');
         const previewEl = this._getById('ocr-result-preview');
-        const insertBtn = this._getById('btn-insert-ocr');
         const toggleBtn = this._getById('btn-ocr-toggle');
         if (statusEl) statusEl.innerText = 'Preparing scanner...';
         if (previewEl) previewEl.textContent = '';
-        if (insertBtn) insertBtn.disabled = true;
         if (toggleBtn) toggleBtn.disabled = true;
         this.ocr.lastGoodText = '';
         this.ocr.lastGoodAt = 0;
@@ -2603,6 +2600,8 @@ class UIService {
         this.ocr.noteId = null;
         this.ocr.isCreatingNote = false;
         this.ocr.seenChunks.clear();
+        this.ocr.recentLines = [];
+        this.ocr.lastAppendAt = 0;
         this.ocr.cameraReady = false;
         this.ocr.workerReady = false;
         if (toggleBtn) toggleBtn.textContent = 'Pause';
@@ -2610,6 +2609,10 @@ class UIService {
 
         // Start camera immediately in the click gesture to ensure permissions prompt.
         this.startOCRCamera({ immediate: true });
+
+        // Create the destination note up front so text streams in immediately.
+        // If note creation fails (offline/auth), we still keep scanning and show preview.
+        this._ensureOcrNote().catch(err => console.warn('OCR note creation failed', err));
 
         // Load and initialize Tesseract without blocking the permission prompt.
         try {
@@ -2728,6 +2731,18 @@ class UIService {
         }
     }
 
+    async _ensureOcrNote() {
+        if (!this.ensureAuthenticated()) return;
+        if (this.ocr.noteId || this.ocr.isCreatingNote) return;
+        this.ocr.isCreatingNote = true;
+        try {
+            await this.handleNewNote();
+            this.ocr.noteId = this.activeNoteId;
+        } finally {
+            this.ocr.isCreatingNote = false;
+        }
+    }
+
     async scanFrame() {
         const video = this._getById('ocr-video');
         const modal = this._getById('ocr-modal');
@@ -2779,19 +2794,20 @@ class UIService {
         canvas.width = targetWidth;
         canvas.height = targetHeight;
 
+        // Lightweight preprocessing using canvas filters (keeps main thread work low).
+        context.save();
+        context.clearRect(0, 0, targetWidth, targetHeight);
+        context.filter = 'grayscale(1) contrast(1.25)';
         context.drawImage(video, cropX, cropY, cropWidth, cropHeight, 0, 0, targetWidth, targetHeight);
-
-        this._preprocessCanvas(canvas);
+        context.restore();
 
         try {
             const chunkCount = this._getOcrChunkCount(targetHeight);
             this.ocr.chunkTotal = chunkCount;
             for (let i = 0; i < chunkCount; i += 1) {
                 if (!this.ocrWorker) break;
-                const chunkText = await this._recognizeOcrChunk(canvas, i, chunkCount);
-                this._appendOcrText(previewEl, chunkText);
-                const insertBtn = this._getById('btn-insert-ocr');
-                if (insertBtn) insertBtn.disabled = !previewEl.textContent.trim();
+                const chunkLines = await this._recognizeOcrChunk(canvas, i, chunkCount);
+                this._appendOcrLines(previewEl, chunkLines);
             }
 
             const hasText = previewEl.textContent.trim();
@@ -2819,7 +2835,7 @@ class UIService {
     async _recognizeOcrChunk(sourceCanvas, index, total) {
         const chunkCanvas = this.ocr._chunkCanvas;
         const chunkContext = this.ocr._chunkContext;
-        if (!chunkCanvas || !chunkContext) return '';
+        if (!chunkCanvas || !chunkContext) return [];
 
         const chunkHeight = Math.max(1, Math.floor(sourceCanvas.height / total));
         const chunkY = Math.min(sourceCanvas.height - chunkHeight, index * chunkHeight);
@@ -2842,25 +2858,82 @@ class UIService {
         this.ocr.chunkIndex = index;
         this.ocr.chunkTotal = total;
         const { data } = await this.ocrWorker.recognize(chunkCanvas);
-        if (data.confidence < 60) return '';
-        return this._postProcessOcrText(data.text);
+        if (!data || data.confidence < 60) return [];
+        return this._extractOcrLines(data);
     }
 
-    _appendOcrText(previewEl, chunkText) {
-        const text = (chunkText || '').trim();
-        if (!text) return;
+    _appendOcrLines(previewEl, lines) {
+        const cleanedLines = (lines || [])
+            .map(line => (line === '' ? '' : this._postProcessOcrText(line)))
+            .filter(line => line !== null && line !== undefined);
+        if (!cleanedLines.length) return;
+
         const now = Date.now();
-        if (text === this.ocr.lastChunkText && now - this.ocr.lastChunkAt < 2000) return;
+        const joined = cleanedLines.join('\n').trim();
+        if (joined === this.ocr.lastChunkText && now - this.ocr.lastChunkAt < 2000) return;
 
-        const previousScroll = previewEl.scrollTop;
-        const existing = previewEl.textContent.trim();
-        previewEl.textContent = existing ? `${existing}\n${text}` : text;
-        previewEl.scrollTop = previousScroll;
+        const existingLines = previewEl.textContent ? previewEl.textContent.split('\n') : [];
+        const nextLines = existingLines.concat(cleanedLines).filter(line => line !== null && line !== undefined);
+        const trimmed = nextLines.slice(-40);
+        previewEl.textContent = trimmed.join('\n');
 
-        this._appendOcrToNote(text);
+        this._appendOcrToNoteLines(cleanedLines);
 
-        this.ocr.lastChunkText = text;
+        this.ocr.lastChunkText = joined;
         this.ocr.lastChunkAt = now;
+    }
+
+    _extractOcrLines(data) {
+        const minConfidence = 70;
+        const minLen = 3;
+
+        const fromLines = Array.isArray(data.lines) ? data.lines : [];
+        const lines = fromLines
+            .map(l => ({
+                text: (l.text || '').trim(),
+                confidence: typeof l.confidence === 'number' ? l.confidence : data.confidence,
+                bbox: l.bbox || null,
+            }))
+            .filter(l => l.text.length >= minLen && l.confidence >= minConfidence);
+
+        if (!lines.length) {
+            const fallback = this._postProcessOcrText(data.text || '');
+            return fallback ? [fallback] : [];
+        }
+
+        // Preserve reading order within the chunk.
+        lines.sort((a, b) => {
+            const ay = a.bbox?.y0 ?? 0;
+            const by = b.bbox?.y0 ?? 0;
+            if (ay !== by) return ay - by;
+            const ax = a.bbox?.x0 ?? 0;
+            const bx = b.bbox?.x0 ?? 0;
+            return ax - bx;
+        });
+
+        const medianHeight = (() => {
+            const heights = lines
+                .map(l => (l.bbox?.y1 ?? 0) - (l.bbox?.y0 ?? 0))
+                .filter(h => h > 0)
+                .sort((a, b) => a - b);
+            if (!heights.length) return 0;
+            return heights[Math.floor(heights.length / 2)];
+        })();
+
+        const verticalGapThreshold = medianHeight ? Math.max(12, Math.round(medianHeight * 1.6)) : 24;
+
+        const out = [];
+        let prevY1 = null;
+        for (const line of lines) {
+            const y0 = line.bbox?.y0 ?? null;
+            if (prevY1 !== null && y0 !== null && (y0 - prevY1) > verticalGapThreshold) {
+                out.push('');
+            }
+            out.push(line.text);
+            prevY1 = line.bbox?.y1 ?? prevY1;
+        }
+
+        return out.filter(l => l !== null);
     }
 
     _maybeStartOcrLoop() {
@@ -2877,19 +2950,22 @@ class UIService {
             .trim();
     }
 
-    async _appendOcrToNote(text) {
+    async _appendOcrToNoteLines(lines) {
+        if (!lines || !lines.length) return;
         if (!this.ensureAuthenticated()) return;
-        const normalized = this._normalizeOcrText(text);
-        if (!normalized) return;
-        if (this.ocr.seenChunks.has(normalized)) return;
 
-        if (!this.ocr.noteId && !this.ocr.isCreatingNote) {
-            this.ocr.isCreatingNote = true;
-            try {
-                await this.handleNewNote();
-                this.ocr.noteId = this.activeNoteId;
-            } finally {
-                this.ocr.isCreatingNote = false;
+        await this._ensureOcrNote();
+        if (!this.ocr.noteId) return;
+
+        if (this.activeNoteId && this.activeNoteId !== this.ocr.noteId && !this._ocrSelectingNote) {
+            const target = notesService.notes?.find(n => n.id === this.ocr.noteId);
+            if (target) {
+                this._ocrSelectingNote = true;
+                try {
+                    await this.selectNote(target);
+                } finally {
+                    this._ocrSelectingNote = false;
+                }
             }
         }
 
@@ -2897,15 +2973,72 @@ class UIService {
         if (!contentArea) return;
 
         const current = contentArea.value || '';
-        if (current.toLowerCase().includes(normalized)) {
+
+        const now = Date.now();
+        const shouldParagraphBreak = this.ocr.lastAppendAt && (now - this.ocr.lastAppendAt) > 2500;
+        this.ocr.lastAppendAt = now;
+
+        const outLines = [];
+        if (shouldParagraphBreak && current.trim()) outLines.push('');
+
+        for (const rawLine of lines) {
+            const line = (rawLine || '').trim();
+            if (!line) {
+                outLines.push('');
+                continue;
+            }
+
+            const normalized = this._normalizeOcrText(line);
+            if (!normalized) continue;
+            if (this._isDuplicateOcrLine(normalized)) continue;
+            if (current.toLowerCase().includes(normalized)) {
+                this.ocr.seenChunks.add(normalized);
+                continue;
+            }
+
+            outLines.push(line);
             this.ocr.seenChunks.add(normalized);
-            return;
+            this.ocr.recentLines.push(normalized);
+            if (this.ocr.recentLines.length > 50) this.ocr.recentLines.shift();
         }
 
+        const toAppend = outLines
+            .join('\n')
+            .replace(/\n{3,}/g, '\n\n')
+            .trimEnd();
+        if (!toAppend) return;
+
         const separator = current && !current.endsWith('\n') ? '\n' : '';
-        contentArea.value = `${current}${separator}${text}`.trim() + '\n';
+        contentArea.value = `${current}${separator}${toAppend}`.trimEnd() + '\n';
         contentArea.dispatchEvent(new Event('input'));
-        this.ocr.seenChunks.add(normalized);
+    }
+
+    _isDuplicateOcrLine(normalizedLine) {
+        if (!normalizedLine) return true;
+        if (this.ocr.seenChunks.has(normalizedLine)) return true;
+
+        // Near-duplicate check against a small sliding window (cheap + resilient to OCR jitter).
+        const recent = this.ocr.recentLines.slice(-15);
+        if (!recent.length) return false;
+
+        const tokensA = new Set(normalizedLine.split(' ').filter(Boolean));
+        if (tokensA.size < 2) return true;
+
+        for (const other of recent) {
+            if (!other) continue;
+            if (other === normalizedLine) return true;
+            if (other.includes(normalizedLine) || normalizedLine.includes(other)) return true;
+
+            const tokensB = new Set(other.split(' ').filter(Boolean));
+            if (tokensB.size < 2) continue;
+            let intersection = 0;
+            for (const t of tokensA) if (tokensB.has(t)) intersection += 1;
+            const union = tokensA.size + tokensB.size - intersection;
+            const similarity = union ? intersection / union : 0;
+            if (similarity >= 0.92) return true;
+        }
+
+        return false;
     }
 
     toggleOcrScan() {
@@ -2969,7 +3102,7 @@ class UIService {
             .map(line => line.trim())
             .filter(line => line.length > 2 && !/^[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]+$/.test(line))
             .join('\n')
-            .replace(/\s+/g, ' ');
+            .replace(/[ \t]+/g, ' ');
     }
 
     insertOcrText() {

@@ -34,9 +34,9 @@
     /* Typography - Improved hierarchy */
     --font-sans: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Consolas', monospace;
-    --font-size-base: clamp(13px, 0.9vw + 9px, 15px);
-    --font-size-sm: clamp(11px, 0.7vw + 8px, 13px);
-    --font-size-xs: clamp(10px, 0.55vw + 7px, 12px);
+    --font-size-base: clamp(12px, 0.75vw + 8px, 14px);
+    --font-size-sm: clamp(11px, 0.65vw + 7px, 13px);
+    --font-size-xs: clamp(10px, 0.55vw + 6px, 12px);
 
     /* Spacing - More generous */
     --radius-sm: 8px;
@@ -1786,6 +1786,9 @@ button.btn:active {
     border-top: 1px solid var(--border-subtle);
     z-index: 18;
     transition: transform 0.25s ease, opacity 0.25s ease;
+    font-size: var(--font-size-xs);
+    line-height: 1.25;
+    touch-action: manipulation;
 }
 
 #mobile-footer.glass-panel {
@@ -1802,6 +1805,7 @@ button.btn:active {
 .mobile-footer.footer-hidden {
     transform: translateY(100%);
     opacity: 0;
+    pointer-events: none;
 }
 
 .mobile-nav-item {
@@ -4854,7 +4858,7 @@ input[type="file"]::file-selector-button {
     padding: 0.5rem;
     margin: 1rem 0;
     font-family: var(--font-mono);
-    font-size: 0.9rem;
+    font-size: var(--font-size-sm);
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -6120,7 +6124,7 @@ input[type="file"]::file-selector-button {
 
     #mobile-footer-menu-modal.modal-overlay::backdrop {
         background: rgba(0, 0, 0, 0.6);
-        backdrop-filter: blur(10px);
+        backdrop-filter: none;
     }
 
     .modal-content.mobile-footer-menu-sheet {
@@ -6150,7 +6154,7 @@ input[type="file"]::file-selector-button {
         top: 0;
         z-index: 2;
         background: rgba(24, 24, 27, 0.95);
-        backdrop-filter: blur(10px);
+        backdrop-filter: none;
         border-bottom: 1px solid var(--border-subtle);
         padding-top: calc(0.75rem + env(safe-area-inset-top));
     }
