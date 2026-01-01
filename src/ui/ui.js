@@ -64,6 +64,15 @@ class UIService {
             isStarting: false,
             lastGoodText: '',
             lastGoodAt: 0,
+            state: 'idle', // idle | scanning | processing | completed | error
+            lastChunkText: '',
+            lastChunkAt: 0,
+            chunkIndex: 0,
+            chunkTotal: 0,
+            _canvas: null,
+            _context: null,
+            _chunkCanvas: null,
+            _chunkContext: null
         };
         this.loginAttempts = 0;
         this.ocrScanInterval = null;
@@ -2534,6 +2543,9 @@ class UIService {
         if (insertBtn) insertBtn.disabled = true;
         this.ocr.lastGoodText = '';
         this.ocr.lastGoodAt = 0;
+        this.ocr.lastChunkText = '';
+        this.ocr.lastChunkAt = 0;
+        this._setOcrState('idle', 'Preparing scanner...');
 
         // Load and initialize Tesseract
         if (!this.ocrWorker) {
@@ -2546,7 +2558,11 @@ class UIService {
                 logger: m => {
                     if (m.status === 'recognizing text') {
                         const statusEl = this._getById('ocr-status');
-                        if (statusEl) statusEl.innerText = `Scanning: ${Math.round(m.progress * 100)}%`;
+                        if (!statusEl) return;
+                        const chunk = this.ocr.chunkTotal > 0
+                            ? `Chunk ${this.ocr.chunkIndex + 1}/${this.ocr.chunkTotal}`
+                            : 'Processing';
+                        statusEl.innerText = `${chunk} - ${Math.round(m.progress * 100)}%`;
                     }
                 }
             });
@@ -2563,6 +2579,7 @@ class UIService {
         this.stopOCRCamera();
         // Release OCR processing resources so repeated usage doesn't degrade over time.
         this.isOcrProcessing = false;
+        this._setOcrState('idle', 'OCR idle.');
     }
 
     async startOCRCamera() {
@@ -2591,12 +2608,12 @@ class UIService {
             video.srcObject = stream;
             video.setAttribute('playsinline', '');
             await video.play();
-            if (statusEl) statusEl.innerText = 'Point camera at text';
+            this._setOcrState('scanning', 'Point camera at text');
             this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 1200);
         } catch (err) {
             console.error("OCR Camera Error:", err);
             const message = this._formatMediaError(err);
-            if (statusEl) statusEl.innerText = message;
+            this._setOcrState('error', message);
             this.showToast(message, 'error');
         } finally {
             this.ocr.isStarting = false;
@@ -2609,6 +2626,8 @@ class UIService {
             this.ocr.scanIntervalId = null;
         }
         this.isOcrProcessing = false;
+        this.ocr.chunkIndex = 0;
+        this.ocr.chunkTotal = 0;
         const video = this._getById('ocr-video');
         if (video && video.srcObject) {
             video.pause?.();
@@ -2632,18 +2651,22 @@ class UIService {
         if (!video.videoWidth || !video.videoHeight) return;
 
         this.isOcrProcessing = true;
-        statusEl.innerText = 'Capturing...';
+        this._setOcrState('processing', 'Capturing...');
 
         // Reuse a single canvas/context to reduce allocations and improve stability on mobile.
         if (!this.ocr._canvas) {
             this.ocr._canvas = document.createElement('canvas');
             this.ocr._context = this.ocr._canvas.getContext('2d', { willReadFrequently: true });
         }
+        if (!this.ocr._chunkCanvas) {
+            this.ocr._chunkCanvas = document.createElement('canvas');
+            this.ocr._chunkContext = this.ocr._chunkCanvas.getContext('2d', { willReadFrequently: true });
+        }
         const canvas = this.ocr._canvas;
         const context = this.ocr._context;
         if (!context) {
             this.isOcrProcessing = false;
-            statusEl.innerText = 'Camera error.';
+            this._setOcrState('error', 'Camera error.');
             return;
         }
 
@@ -2672,33 +2695,89 @@ class UIService {
         this._preprocessCanvas(canvas);
 
         try {
-            const { data } = await this.ocrWorker.recognize(canvas);
-            const processedText = this._postProcessOcrText(data.text);
-
-            if (data.confidence > 60) {
-                statusEl.innerText = `Confidence: ${data.confidence.toFixed(0)}%`;
-                // Avoid visually "jittering" by re-rendering identical content on every interval.
-                if (processedText && processedText !== this.ocr.lastGoodText) {
-                    this.ocr.lastGoodText = processedText;
-                    this.ocr.lastGoodAt = Date.now();
-                    previewEl.textContent = processedText;
-                    const insertBtn = this._getById('btn-insert-ocr');
-                    if (insertBtn) insertBtn.disabled = false;
-                }
-            } else {
-                statusEl.innerText = "Text not clear yet ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â adjust angle or lighting";
+            const chunkCount = this._getOcrChunkCount(targetHeight);
+            this.ocr.chunkTotal = chunkCount;
+            for (let i = 0; i < chunkCount; i += 1) {
+                if (!this.ocrWorker) break;
+                const chunkText = await this._recognizeOcrChunk(canvas, i, chunkCount);
+                this._appendOcrText(previewEl, chunkText);
+                const insertBtn = this._getById('btn-insert-ocr');
+                if (insertBtn) insertBtn.disabled = !previewEl.textContent.trim();
             }
 
-            // Sanitize any accidental mojibake in the "not clear" message.
-            if (statusEl.innerText?.startsWith('Text not clear yet')) {
-                statusEl.innerText = 'Text not clear yet — adjust angle or lighting.';
+            const hasText = previewEl.textContent.trim();
+            if (!hasText) {
+                this._setOcrState('scanning', 'Text not clear yet. Adjust angle or lighting.');
+            } else if (Date.now() - this.ocr.lastChunkAt > 4000) {
+                this._setOcrState('completed', 'OCR stabilized. Insert or keep scanning.');
+            } else {
+                this._setOcrState('scanning', 'Live transcription active.');
             }
         } catch (err) {
             console.error(err);
-            statusEl.innerText = 'Scan failed. Try again.';
+            this._setOcrState('error', 'Scan failed. Try again.');
         } finally {
             this.isOcrProcessing = false;
         }
+    }
+
+    _getOcrChunkCount(height) {
+        if (height >= 900) return 4;
+        if (height >= 600) return 3;
+        return 2;
+    }
+
+    async _recognizeOcrChunk(sourceCanvas, index, total) {
+        const chunkCanvas = this.ocr._chunkCanvas;
+        const chunkContext = this.ocr._chunkContext;
+        if (!chunkCanvas || !chunkContext) return '';
+
+        const chunkHeight = Math.max(1, Math.floor(sourceCanvas.height / total));
+        const chunkY = Math.min(sourceCanvas.height - chunkHeight, index * chunkHeight);
+
+        chunkCanvas.width = sourceCanvas.width;
+        chunkCanvas.height = chunkHeight;
+        chunkContext.clearRect(0, 0, chunkCanvas.width, chunkCanvas.height);
+        chunkContext.drawImage(
+            sourceCanvas,
+            0,
+            chunkY,
+            sourceCanvas.width,
+            chunkHeight,
+            0,
+            0,
+            chunkCanvas.width,
+            chunkHeight
+        );
+
+        this.ocr.chunkIndex = index;
+        this.ocr.chunkTotal = total;
+        const { data } = await this.ocrWorker.recognize(chunkCanvas);
+        if (data.confidence < 60) return '';
+        return this._postProcessOcrText(data.text);
+    }
+
+    _appendOcrText(previewEl, chunkText) {
+        const text = (chunkText || '').trim();
+        if (!text) return;
+        const now = Date.now();
+        if (text === this.ocr.lastChunkText && now - this.ocr.lastChunkAt < 2000) return;
+
+        const previousScroll = previewEl.scrollTop;
+        const existing = previewEl.textContent.trim();
+        previewEl.textContent = existing ? `${existing}\n${text}` : text;
+        previewEl.scrollTop = previousScroll;
+
+        this.ocr.lastChunkText = text;
+        this.ocr.lastChunkAt = now;
+    }
+
+    _setOcrState(state, message) {
+        this.ocr.state = state;
+        const statusEl = this._getById('ocr-status');
+        if (!statusEl) return;
+        statusEl.dataset.state = state;
+        if (message) statusEl.innerText = message;
     }
 
     _preprocessCanvas(canvas) {
