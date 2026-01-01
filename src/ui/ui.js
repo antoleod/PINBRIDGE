@@ -2049,7 +2049,17 @@ class UIService {
         // Tools lives inside the settings modal; treat it as a first-class panel state.
         if (panel !== 'settings' && panel !== 'tools') {
             this.settingsModal.overlay?.classList.add('hidden');
-            document.getElementById('settings-modal')?.classList.add('hidden');
+            const settingsModal = document.getElementById('settings-modal');
+            settingsModal?.classList.add('hidden');
+            if (settingsModal?.tagName === 'DIALOG' && typeof settingsModal.close === 'function') {
+                try {
+                    if (settingsModal.open) {
+                        settingsModal.close();
+                    }
+                } catch (err) {
+                    console.warn('Settings modal close failed', err);
+                }
+            }
             document.body.style.overflow = '';
         }
         if (panel !== 'tools') {
@@ -2123,9 +2133,9 @@ class UIService {
                 const btn = document.createElement('button');
                 btn.id = 'btn-ocr-scan';
                 btn.className = 'btn-tool-minimal';
-                btn.title = 'Scan Text (OCR)';
-                btn.innerHTML = '<i data-feather="camera"></i>';
-                btn.onclick = () => this.initOCR();
+                btn.title = 'Scan QR';
+                btn.innerHTML = '<i data-feather="qr-code"></i>';
+                btn.onclick = () => this.showScanQRModal();
                 toolbarActions.insertBefore(btn, toolbarActions.firstChild);
             }
         }
@@ -2238,10 +2248,30 @@ class UIService {
         // Settings Modal (vault-only)
         document.getElementById('btn-vault-settings')?.addEventListener('click', () => this.openSettingsModal());
         document.getElementById('close-settings-modal')?.addEventListener('click', () => {
-            document.getElementById('settings-modal').classList.add('hidden');
+            const modal = document.getElementById('settings-modal');
+            modal?.classList.add('hidden');
+            if (modal?.tagName === 'DIALOG' && typeof modal.close === 'function') {
+                try {
+                    if (modal.open) {
+                        modal.close();
+                    }
+                } catch (err) {
+                    console.warn('Settings modal close failed', err);
+                }
+            }
         });
         this.admin.openBtn?.addEventListener('click', () => {
-            document.getElementById('settings-modal')?.classList.add('hidden');
+            const modal = document.getElementById('settings-modal');
+            modal?.classList.add('hidden');
+            if (modal?.tagName === 'DIALOG' && typeof modal.close === 'function') {
+                try {
+                    if (modal.open) {
+                        modal.close();
+                    }
+                } catch (err) {
+                    console.warn('Settings modal close failed', err);
+                }
+            }
             this.openAdminPanel();
         });
         this.admin.exitBtn?.addEventListener('click', () => this.exitAdminPanel());
@@ -2958,6 +2988,15 @@ class UIService {
         const clearToggle = document.getElementById('toggle-clear-on-exit');
         if (clearToggle) clearToggle.checked = clearOnExit;
         modal.classList.remove('hidden');
+        if (typeof modal.showModal === 'function') {
+            try {
+                if (!modal.open) {
+                    modal.showModal();
+                }
+            } catch (err) {
+                console.warn('Settings modal showModal failed', err);
+            }
+        }
         // Update dependent toggles
         const tagSyncToggle = this._getById('toggle-tag-sync');
         if (tagSyncToggle) tagSyncToggle.disabled = !syncEnabled;
@@ -2979,6 +3018,15 @@ class UIService {
         document.querySelectorAll('.modal-overlay').forEach(el => {
             if (keep.has(el.id)) return;
             el.classList.add('hidden');
+            if (el.tagName === 'DIALOG' && typeof el.close === 'function') {
+                try {
+                    if (el.open) {
+                        el.close();
+                    }
+                } catch (err) {
+                    console.warn('Dialog close failed', err);
+                }
+            }
         });
 
         if (reason) {
