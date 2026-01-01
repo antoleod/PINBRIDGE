@@ -190,7 +190,7 @@ async function init() {
                             // Insert before the first child (usually download/open) or append
                             actions.appendChild(btn);
 
-                            if (typeof feather !== 'undefined') feather.replace();
+                            try { if (window.feather?.replace) window.feather.replace(); } catch (err) { console.warn('Feather replace failed', err); }
                         }
                     }
                 });
@@ -399,7 +399,7 @@ async function init() {
                         btnDelete.innerHTML = '<i data-feather="trash-2"></i>';
                         actionsContainer.appendChild(btnDelete);
 
-                        if (typeof feather !== 'undefined') feather.replace();
+                        try { if (window.feather?.replace) window.feather.replace(); } catch (err) { console.warn('Feather replace failed', err); }
                     }
                 });
             });
@@ -510,7 +510,7 @@ async function init() {
                                 listContainer.appendChild(item);
                             });
 
-                            if (typeof feather !== 'undefined') feather.replace();
+                            try { if (window.feather?.replace) window.feather.replace(); } catch (err) { console.warn('Feather replace failed', err); }
                         }
                     }
 
@@ -742,7 +742,7 @@ async function init() {
         backBtn.ariaLabel = 'Back to list';
         // Insert after menu button
         mobileTopbar.insertBefore(backBtn, mobileTopbar.children[1]);
-        if (typeof feather !== 'undefined') feather.replace();
+        try { if (window.feather?.replace) window.feather.replace(); } catch (err) { console.warn('Feather replace failed', err); }
 
         // 2. Handle Back Button Click
         backBtn.addEventListener('click', () => {

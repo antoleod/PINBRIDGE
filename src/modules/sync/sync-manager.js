@@ -31,6 +31,7 @@ class SyncManager {
             console.warn('SyncManager: Missing UID, cannot enqueue');
             return;
         }
+        if (!storageService.db) return;
         await storageService.addToSyncQueue({ type, payload, uid, retry: 0 });
         bus.emit('sync:status', 'local_saved'); // Immediate feedback
         this.processQueue();
@@ -78,6 +79,7 @@ class SyncManager {
 
     async processQueue() {
         if (this.isProcessing || !this.isOnline) return;
+        if (!storageService.db) return;
         this.isProcessing = true;
 
         try {

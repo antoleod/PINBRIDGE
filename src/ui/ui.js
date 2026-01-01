@@ -391,6 +391,15 @@ class UIService {
         return el;
     }
 
+    _safeFeatherReplace(target) {
+        if (!window.feather?.replace) return;
+        try {
+            window.feather.replace(target);
+        } catch (err) {
+            console.warn('Feather replace failed', err);
+        }
+    }
+
     _formatMediaError(err) {
         const name = err?.name || 'Error';
         if (name === 'NotAllowedError' || name === 'PermissionDeniedError') return 'Permission denied. Please allow access and retry.';
@@ -493,7 +502,7 @@ class UIService {
         this.initDiagnostics();
 
         if (typeof feather !== 'undefined') {
-            feather.replace();
+            this._safeFeatherReplace();
         }
 
         // Keep media resources stable across background/foreground transitions (mobile-first).
@@ -628,7 +637,7 @@ class UIService {
         if (topBar) {
             topBar.parentNode.insertBefore(toolbar, topBar.nextSibling);
         }
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
         this.updateMarkdownToolbarState();
     }
 
@@ -758,7 +767,9 @@ class UIService {
             });
 
             container.appendChild(accordion);
-            if (typeof feather !== 'undefined') feather.replace();
+            if (typeof feather !== 'undefined' && feather?.replace) {
+                this._safeFeatherReplace();
+            }
             return;
         }
 
@@ -855,7 +866,7 @@ class UIService {
         });
 
         document.body.appendChild(footer);
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
     }
 
     enterMobileEditor() {
@@ -867,7 +878,7 @@ class UIService {
         this.mobile.btnMenu?.classList.add('hidden');
         document.body.classList.add('mobile-editor-active');
         document.body.classList.remove('mobile-list-active');
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
     }
 
     exitMobileEditor() {
@@ -1658,7 +1669,7 @@ class UIService {
                 dropdown.classList.remove('hidden');
                 btn.setAttribute('aria-expanded', 'true');
                 // Ensure icons render if menu opened after initial feather replace.
-                if (typeof feather !== 'undefined') feather.replace();
+                this._safeFeatherReplace();
             }
         };
 
@@ -2115,7 +2126,7 @@ class UIService {
             exitBtn.onclick = () => this.toggleFocusMode(false);
             document.body.appendChild(exitBtn);
         }
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
 
         // Inject Capture Tools (Voice & OCR)
         if (toolbarActions) {
@@ -2134,7 +2145,7 @@ class UIService {
                 btn.id = 'btn-ocr-scan';
                 btn.className = 'btn-tool-minimal';
                 btn.title = 'Scan QR';
-                btn.innerHTML = '<i data-feather="qr-code"></i>';
+                btn.innerHTML = '<i data-feather="hash"></i>';
                 btn.onclick = () => this.showScanQRModal();
                 toolbarActions.insertBefore(btn, toolbarActions.firstChild);
             }
@@ -3632,7 +3643,7 @@ class UIService {
             const isFeatherName = /^[a-z0-9-]+$/i.test(raw);
             el.innerHTML = `<i data-feather="${isFeatherName ? raw : 'shield'}"></i>`;
         });
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
     }
 
     async generateBackupCodes() {
@@ -4023,7 +4034,7 @@ class UIService {
         initial?.focus();
         this.mobileFooterMenuTrap = this.trapFocus(this.mobile.footerMenuModal);
 
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
     }
 
     closeMobileFooterMenu() {
@@ -5104,7 +5115,7 @@ class UIService {
             listEl.appendChild(fragment);
             this._bindNoteListEvents();
             if (typeof feather !== 'undefined') {
-                feather.replace(listEl.querySelectorAll('i[data-feather]'));
+                this._safeFeatherReplace(listEl.querySelectorAll('i[data-feather]'));
             }
             this._renderNotesFrame = null;
         };
@@ -5412,7 +5423,7 @@ class UIService {
             </div>
         `;
 
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
 
         // Bind actions
         overlay.querySelectorAll('.ctx-item').forEach(btn => {
@@ -5701,7 +5712,7 @@ class UIService {
             <span title="Time spent working"><i data-feather="clock"></i><span class="note-meta-text">${timeStr}</span></span>
             <span title="Version count"><i data-feather="git-commit"></i><span class="note-meta-text">v${version}</span></span>
         `;
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
     }
 
     renderFolders() {
@@ -5738,7 +5749,7 @@ class UIService {
         this.recoveryModal.keyDisplay.classList.add('blurred-text');
         if (this.recoveryModal.toggleBtn) {
             this.recoveryModal.toggleBtn.innerHTML = '<i data-feather="eye"></i>';
-            if (window.feather) window.feather.replace();
+            this._safeFeatherReplace();
         }
         if (this.recoveryModal.emailSection) {
             this.recoveryModal.emailSection.classList.add('hidden');
@@ -5750,7 +5761,7 @@ class UIService {
             this.recoveryModal.toggleBtn.onclick = () => {
                 const isBlurred = this.recoveryModal.keyDisplay.classList.toggle('blurred-text');
                 this.recoveryModal.toggleBtn.innerHTML = isBlurred ? '<i data-feather="eye"></i>' : '<i data-feather="eye-off"></i>';
-                if (window.feather) window.feather.replace();
+                this._safeFeatherReplace();
                 this.logActivity(`Recovery Key: ${isBlurred ? 'hidden' : 'revealed'}`);
             };
         }
@@ -6053,7 +6064,7 @@ class UIService {
             listEl.appendChild(row);
         });
 
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
     }
 
     updateCompactViewUI() {
@@ -6557,7 +6568,7 @@ class UIService {
                 : '<p class="hint">No recent activity logged.</p>';
         }
         await this.renderAdminInvite();
-        if (typeof feather !== 'undefined') feather.replace();
+        this._safeFeatherReplace();
     }
 
     updateAttachmentStatus(attachmentId, status, message, { retryMode = 'upload' } = {}) {
