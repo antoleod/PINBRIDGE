@@ -73,6 +73,8 @@ class UIService {
             noteId: null,
             isCreatingNote: false,
             seenChunks: new Set(),
+            cameraReady: false,
+            workerReady: false,
             _canvas: null,
             _context: null,
             _chunkCanvas: null,
@@ -2601,6 +2603,8 @@ class UIService {
         this.ocr.noteId = null;
         this.ocr.isCreatingNote = false;
         this.ocr.seenChunks.clear();
+        this.ocr.cameraReady = false;
+        this.ocr.workerReady = false;
         if (toggleBtn) toggleBtn.textContent = 'Pause';
         this._setOcrState('idle', 'Preparing scanner...');
 
@@ -2608,32 +2612,35 @@ class UIService {
         this.startOCRCamera({ immediate: true });
 
         // Load and initialize Tesseract without blocking the permission prompt.
-        if (!this.ocrWorker) {
-            this.showToast('Loading OCR engine...', 'info');
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-            document.head.appendChild(script);
-            await new Promise(resolve => script.onload = resolve);
-            this.ocrWorker = await Tesseract.createWorker('eng', 1, {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        const statusEl = this._getById('ocr-status');
-                        if (!statusEl) return;
-                        const chunk = this.ocr.chunkTotal > 0
-                            ? `Chunk ${this.ocr.chunkIndex + 1}/${this.ocr.chunkTotal}`
-                            : 'Processing';
-                        statusEl.innerText = `${chunk} - ${Math.round(m.progress * 100)}%`;
+        try {
+            if (!this.ocrWorker) {
+                this.showToast('Loading OCR engine...', 'info');
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                document.head.appendChild(script);
+                await new Promise(resolve => script.onload = resolve);
+                this.ocrWorker = await Tesseract.createWorker('eng', 1, {
+                    logger: m => {
+                        if (m.status === 'recognizing text') {
+                            const statusEl = this._getById('ocr-status');
+                            if (!statusEl) return;
+                            const chunk = this.ocr.chunkTotal > 0
+                                ? `Chunk ${this.ocr.chunkIndex + 1}/${this.ocr.chunkTotal}`
+                                : 'Processing';
+                            statusEl.innerText = `${chunk} - ${Math.round(m.progress * 100)}%`;
+                        }
                     }
-                }
-            });
-            await this.ocrWorker.setParameters({
-                tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-            });
-        }
-
-        if (this.ocr.stream) {
-            this._setOcrState('scanning', 'Point camera at text');
-            if (toggleBtn) toggleBtn.disabled = false;
+                });
+                await this.ocrWorker.setParameters({
+                    tessedit_pageseg_mode: Tesseract.PSM.AUTO,
+                });
+            }
+            this.ocr.workerReady = true;
+            this._maybeStartOcrLoop();
+        } catch (err) {
+            console.error('OCR engine load failed', err);
+            this._setOcrState('error', 'OCR engine failed to load.');
+            this.showToast('OCR engine failed to load.', 'error');
         }
     }
 
@@ -2683,7 +2690,8 @@ class UIService {
             this.ocr.isPaused = false;
             const toggleBtn = this._getById('btn-ocr-toggle');
             if (toggleBtn) toggleBtn.disabled = false;
-            this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 900);
+            this.ocr.cameraReady = true;
+            this._maybeStartOcrLoop();
         } catch (err) {
             console.error("OCR Camera Error:", err);
             const message = this._formatMediaError(err);
@@ -2706,6 +2714,8 @@ class UIService {
         this.ocr.isPaused = false;
         this.ocr.chunkIndex = 0;
         this.ocr.chunkTotal = 0;
+        this.ocr.cameraReady = false;
+        this.ocr.workerReady = false;
         const video = this._getById('ocr-video');
         if (video && video.srcObject) {
             video.pause?.();
@@ -2853,6 +2863,12 @@ class UIService {
         this.ocr.lastChunkAt = now;
     }
 
+    _maybeStartOcrLoop() {
+        if (!this.ocr.cameraReady || !this.ocr.workerReady || this.ocr.isPaused) return;
+        if (this.ocr.scanIntervalId) return;
+        this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 900);
+    }
+
     _normalizeOcrText(text) {
         return (text || '')
             .toLowerCase()
@@ -2862,6 +2878,7 @@ class UIService {
     }
 
     async _appendOcrToNote(text) {
+        if (!this.ensureAuthenticated()) return;
         const normalized = this._normalizeOcrText(text);
         if (!normalized) return;
         if (this.ocr.seenChunks.has(normalized)) return;
@@ -2897,9 +2914,7 @@ class UIService {
 
         if (this.ocr.isPaused) {
             this.ocr.isPaused = false;
-            if (!this.ocr.scanIntervalId) {
-                this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 900);
-            }
+            this._maybeStartOcrLoop();
             if (toggleBtn) toggleBtn.textContent = 'Pause';
             this._setOcrState('scanning', 'Resumed. Reading text...');
             return;
