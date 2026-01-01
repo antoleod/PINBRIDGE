@@ -69,6 +69,7 @@ class UIService {
             lastChunkAt: 0,
             chunkIndex: 0,
             chunkTotal: 0,
+            isPaused: false,
             _canvas: null,
             _context: null,
             _chunkCanvas: null,
@@ -2144,9 +2145,9 @@ class UIService {
                 const btn = document.createElement('button');
                 btn.id = 'btn-ocr-scan';
                 btn.className = 'btn-tool-minimal';
-                btn.title = 'Scan QR';
-                btn.innerHTML = '<i data-feather="hash"></i>';
-                btn.onclick = () => this.showScanQRModal();
+                btn.title = 'Scan Text (OCR)';
+                btn.innerHTML = '<i data-feather="camera"></i>';
+                btn.onclick = () => this.initOCR();
                 toolbarActions.insertBefore(btn, toolbarActions.firstChild);
             }
         }
@@ -2557,6 +2558,7 @@ class UIService {
                         <div id="ocr-status" class="hint center">Point camera at text</div>
                         <div id="ocr-result-preview" class="ocr-preview"></div>
                         <div class="modal-actions">
+                            <button id="btn-ocr-toggle" class="btn btn-secondary">Pause</button>
                             <button id="btn-insert-ocr" class="btn btn-primary">Insert Text</button>
                         </div>
                     </div>
@@ -2565,6 +2567,7 @@ class UIService {
             document.body.appendChild(modal);
 
             this._getById('close-ocr-modal').onclick = () => this.hideOCRModal();
+            this._getById('btn-ocr-toggle').onclick = () => this.toggleOcrScan();
             this._getById('btn-insert-ocr').onclick = () => {
                 this.insertOcrText();
                 this.hideOCRModal();
@@ -2589,6 +2592,9 @@ class UIService {
         this.ocr.lastGoodAt = 0;
         this.ocr.lastChunkText = '';
         this.ocr.lastChunkAt = 0;
+        this.ocr.isPaused = false;
+        const toggleBtn = this._getById('btn-ocr-toggle');
+        if (toggleBtn) toggleBtn.textContent = 'Pause';
         this._setOcrState('idle', 'Preparing scanner...');
 
         // Load and initialize Tesseract
@@ -2623,6 +2629,7 @@ class UIService {
         this.stopOCRCamera();
         // Release OCR processing resources so repeated usage doesn't degrade over time.
         this.isOcrProcessing = false;
+        this.ocr.isPaused = false;
         this._setOcrState('idle', 'OCR idle.');
     }
 
@@ -2653,7 +2660,8 @@ class UIService {
             video.setAttribute('playsinline', '');
             await video.play();
             this._setOcrState('scanning', 'Point camera at text');
-            this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 1200);
+            this.ocr.isPaused = false;
+            this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 900);
         } catch (err) {
             console.error("OCR Camera Error:", err);
             const message = this._formatMediaError(err);
@@ -2670,6 +2678,7 @@ class UIService {
             this.ocr.scanIntervalId = null;
         }
         this.isOcrProcessing = false;
+        this.ocr.isPaused = false;
         this.ocr.chunkIndex = 0;
         this.ocr.chunkTotal = 0;
         const video = this._getById('ocr-video');
@@ -2692,6 +2701,7 @@ class UIService {
         const previewEl = this._getById('ocr-result-preview');
 
         if (!video || !overlay || !statusEl || !previewEl || this.isOcrProcessing || !this.ocrWorker) return;
+        if (this.ocr.isPaused) return;
         if (!video.videoWidth || !video.videoHeight) return;
 
         this.isOcrProcessing = true;
@@ -2814,6 +2824,29 @@ class UIService {
 
         this.ocr.lastChunkText = text;
         this.ocr.lastChunkAt = now;
+    }
+
+    toggleOcrScan() {
+        const toggleBtn = this._getById('btn-ocr-toggle');
+        if (!this.ocr.stream) return;
+
+        if (this.ocr.isPaused) {
+            this.ocr.isPaused = false;
+            if (!this.ocr.scanIntervalId) {
+                this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 900);
+            }
+            if (toggleBtn) toggleBtn.textContent = 'Pause';
+            this._setOcrState('scanning', 'Resumed. Reading text...');
+            return;
+        }
+
+        this.ocr.isPaused = true;
+        if (this.ocr.scanIntervalId) {
+            clearInterval(this.ocr.scanIntervalId);
+            this.ocr.scanIntervalId = null;
+        }
+        if (toggleBtn) toggleBtn.textContent = 'Resume';
+        this._setOcrState('paused', 'Scanning paused.');
     }
 
     _setOcrState(state, message) {
