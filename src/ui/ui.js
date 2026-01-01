@@ -2585,19 +2585,23 @@ class UIService {
         const statusEl = this._getById('ocr-status');
         const previewEl = this._getById('ocr-result-preview');
         const insertBtn = this._getById('btn-insert-ocr');
+        const toggleBtn = this._getById('btn-ocr-toggle');
         if (statusEl) statusEl.innerText = 'Preparing scanner...';
         if (previewEl) previewEl.textContent = '';
         if (insertBtn) insertBtn.disabled = true;
+        if (toggleBtn) toggleBtn.disabled = true;
         this.ocr.lastGoodText = '';
         this.ocr.lastGoodAt = 0;
         this.ocr.lastChunkText = '';
         this.ocr.lastChunkAt = 0;
         this.ocr.isPaused = false;
-        const toggleBtn = this._getById('btn-ocr-toggle');
         if (toggleBtn) toggleBtn.textContent = 'Pause';
         this._setOcrState('idle', 'Preparing scanner...');
 
-        // Load and initialize Tesseract
+        // Start camera immediately in the click gesture to ensure permissions prompt.
+        this.startOCRCamera({ immediate: true });
+
+        // Load and initialize Tesseract without blocking the permission prompt.
         if (!this.ocrWorker) {
             this.showToast('Loading OCR engine...', 'info');
             const script = document.createElement('script');
@@ -2620,8 +2624,6 @@ class UIService {
                 tessedit_pageseg_mode: Tesseract.PSM.AUTO,
             });
         }
-
-        this.startOCRCamera();
     }
 
     hideOCRModal() {
@@ -2633,7 +2635,7 @@ class UIService {
         this._setOcrState('idle', 'OCR idle.');
     }
 
-    async startOCRCamera() {
+    async startOCRCamera({ immediate = false } = {}) {
         const video = this._getById('ocr-video');
         if (!video) return;
         if (this.ocr.isStarting) return;
@@ -2647,27 +2649,39 @@ class UIService {
 
         const statusEl = this._getById('ocr-status');
         if (statusEl) statusEl.innerText = 'Requesting camera permission...';
+        let readyTimeout = null;
         try {
-            const stream = await this._getCameraStream({
+            const streamPromise = this._getCameraStream({
                 video: {
                     facingMode: { ideal: 'environment' },
                     width: { ideal: 1920 },
                     height: { ideal: 1080 },
                 }
             });
+            readyTimeout = setTimeout(() => {
+                if (!this.ocr.stream) {
+                    this._setOcrState('error', 'Camera did not start. Check permissions and retry.');
+                }
+            }, 4000);
+            const stream = immediate ? await streamPromise : await streamPromise;
             this.ocr.stream = stream;
             video.srcObject = stream;
             video.setAttribute('playsinline', '');
             await video.play();
             this._setOcrState('scanning', 'Point camera at text');
             this.ocr.isPaused = false;
+            const toggleBtn = this._getById('btn-ocr-toggle');
+            if (toggleBtn) toggleBtn.disabled = false;
             this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 900);
         } catch (err) {
             console.error("OCR Camera Error:", err);
             const message = this._formatMediaError(err);
             this._setOcrState('error', message);
             this.showToast(message, 'error');
+            const toggleBtn = this._getById('btn-ocr-toggle');
+            if (toggleBtn) toggleBtn.disabled = true;
         } finally {
+            if (readyTimeout) clearTimeout(readyTimeout);
             this.ocr.isStarting = false;
         }
     }
