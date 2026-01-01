@@ -1391,7 +1391,7 @@ async function init() {
             try {
                 stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
                 video.srcObject = stream;
-                video.play();
+                await video.play();
                 resultContainer.classList.add('hidden');
                 btnCapture.classList.remove('hidden');
                 processingDiv.classList.add('hidden');

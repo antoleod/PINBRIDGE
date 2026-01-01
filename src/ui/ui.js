@@ -120,6 +120,7 @@ class UIService {
             code: false
         };
         this._noteListEventsBound = false;
+        this._skipPersistOnce = false;
         this._lastPointerUpAt = 0;
         this._renderNotesFrame = null;
         this.activePanel = 'notes'; // notes | settings | tools | null
@@ -2584,6 +2585,13 @@ class UIService {
 
         const modal = this._getById('ocr-modal');
         modal.classList.remove('hidden');
+        if (typeof modal.showModal === 'function' && !modal.open) {
+            try {
+                modal.showModal();
+            } catch (err) {
+                console.warn('OCR modal showModal failed', err);
+            }
+        }
 
         // Reset UI state on each open to avoid confusing stale results.
         const statusEl = this._getById('ocr-status');
@@ -2612,16 +2620,27 @@ class UIService {
 
         // Create the destination note up front so text streams in immediately.
         // If note creation fails (offline/auth), we still keep scanning and show preview.
-        this._ensureOcrNote().catch(err => console.warn('OCR note creation failed', err));
+        console.log('[OCR] initOCR: ensuring note');
+        this._ensureOcrNote().catch(err => console.warn('[OCR] note creation failed', err));
 
         // Load and initialize Tesseract without blocking the permission prompt.
         try {
             if (!this.ocrWorker) {
                 this.showToast('Loading OCR engine...', 'info');
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
-                document.head.appendChild(script);
-                await new Promise(resolve => script.onload = resolve);
+                if (typeof window.Tesseract === 'undefined') {
+                    console.log('[OCR] Tesseract not found on window; injecting script');
+                    const script = document.createElement('script');
+                    script.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+                    document.head.appendChild(script);
+                    await new Promise((resolve, reject) => {
+                        script.onload = resolve;
+                        script.onerror = reject;
+                    });
+                }
+                if (typeof window.Tesseract === 'undefined') {
+                    throw new Error('OCR engine not available (Tesseract undefined)');
+                }
+                console.log('[OCR] Creating Tesseract worker...');
                 this.ocrWorker = await Tesseract.createWorker('eng', 1, {
                     logger: m => {
                         if (m.status === 'recognizing text') {
@@ -2639,6 +2658,7 @@ class UIService {
                 });
             }
             this.ocr.workerReady = true;
+            console.log('[OCR] Worker ready');
             this._maybeStartOcrLoop();
         } catch (err) {
             console.error('OCR engine load failed', err);
@@ -2648,12 +2668,26 @@ class UIService {
     }
 
     hideOCRModal() {
-        this._getById('ocr-modal')?.classList.add('hidden');
+        const modal = this._getById('ocr-modal');
+        modal?.classList.add('hidden');
+        if (modal?.open && typeof modal.close === 'function') {
+            try {
+                modal.close();
+            } catch (err) {
+                console.warn('OCR modal close failed', err);
+            }
+        }
         this.stopOCRCamera();
         // Release OCR processing resources so repeated usage doesn't degrade over time.
         this.isOcrProcessing = false;
         this.ocr.isPaused = false;
         this._setOcrState('idle', 'OCR idle.');
+        // Terminate OCR worker to free resources
+        if (this.ocrWorker) {
+            this.ocrWorker.terminate();
+            this.ocrWorker = null;
+        }
+        this.ocr.workerReady = false;
     }
 
     async startOCRCamera({ immediate = false } = {}) {
@@ -2675,8 +2709,8 @@ class UIService {
             const streamPromise = this._getCameraStream({
                 video: {
                     facingMode: { ideal: 'environment' },
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
                 }
             });
             readyTimeout = setTimeout(() => {
@@ -2689,7 +2723,8 @@ class UIService {
             video.srcObject = stream;
             video.setAttribute('playsinline', '');
             await video.play();
-            this._setOcrState('scanning', 'Point camera at text');
+            console.log('[OCR] Camera playing', { w: video.videoWidth, h: video.videoHeight });
+            this._setOcrState('scanning', 'Camera ready. Starting OCR...');
             this.ocr.isPaused = false;
             const toggleBtn = this._getById('btn-ocr-toggle');
             if (toggleBtn) toggleBtn.disabled = false;
@@ -2732,12 +2767,21 @@ class UIService {
     }
 
     async _ensureOcrNote() {
-        if (!this.ensureAuthenticated()) return;
+        if (!this.ensureAuthenticated()) {
+            console.log('[OCR] Not authenticated; skipping note creation');
+            return;
+        }
         if (this.ocr.noteId || this.ocr.isCreatingNote) return;
         this.ocr.isCreatingNote = true;
         try {
-            await this.handleNewNote();
-            this.ocr.noteId = this.activeNoteId;
+            const title = `Scan ${new Date().toLocaleString()}`;
+            const id = await notesService.createNote(title, '', '', [], { persist: true, allowEmpty: true, isTemplate: false });
+            const note = notesService.notes.find(n => n.id === id) || { id, title, body: '', trash: false, folder: '', tags: [], updated: Date.now() };
+            this.ocr.noteId = id;
+            console.log('[OCR] Created note', id);
+            this.renderCurrentView();
+            this._skipPersistOnce = true;
+            await this.selectNote(note);
         } finally {
             this.ocr.isCreatingNote = false;
         }
@@ -2750,12 +2794,26 @@ class UIService {
         const statusEl = this._getById('ocr-status');
         const previewEl = this._getById('ocr-result-preview');
 
-        if (!video || !overlay || !statusEl || !previewEl || this.isOcrProcessing || !this.ocrWorker) return;
+        if (!video || !overlay || !statusEl || !previewEl || this.isOcrProcessing || !this.ocrWorker) {
+            if (!this.ocr._missingLoggedAt || Date.now() - this.ocr._missingLoggedAt > 2000) {
+                this.ocr._missingLoggedAt = Date.now();
+                console.log('[OCR] scanFrame blocked', {
+                    hasVideo: !!video,
+                    hasOverlay: !!overlay,
+                    hasStatus: !!statusEl,
+                    hasPreview: !!previewEl,
+                    isOcrProcessing: this.isOcrProcessing,
+                    hasWorker: !!this.ocrWorker
+                });
+            }
+            return;
+        }
         if (this.ocr.isPaused) return;
         if (!video.videoWidth || !video.videoHeight) return;
 
         this.isOcrProcessing = true;
         this._setOcrState('processing', 'Capturing...');
+        console.log('[OCR] tick');
 
         // Reuse a single canvas/context to reduce allocations and improve stability on mobile.
         if (!this.ocr._canvas) {
@@ -2807,16 +2865,17 @@ class UIService {
             for (let i = 0; i < chunkCount; i += 1) {
                 if (!this.ocrWorker) break;
                 const chunkLines = await this._recognizeOcrChunk(canvas, i, chunkCount);
+                if (chunkLines?.length) console.log('[OCR] text detected', chunkLines);
                 this._appendOcrLines(previewEl, chunkLines);
             }
 
             const hasText = previewEl.textContent.trim();
             if (!hasText) {
-                this._setOcrState('scanning', 'Text not clear yet. Adjust angle or lighting.');
+                this._setOcrState('scanning', 'OCR active. Waiting for readable text...');
             } else if (Date.now() - this.ocr.lastChunkAt > 4000) {
-                this._setOcrState('completed', 'OCR stabilized. Insert or keep scanning.');
+                this._setOcrState('scanning', 'OCR active. Transcribing...');
             } else {
-                this._setOcrState('scanning', 'Live transcription active.');
+                this._setOcrState('scanning', 'OCR active. Transcribing...');
             }
         } catch (err) {
             console.error(err);
@@ -2858,7 +2917,8 @@ class UIService {
         this.ocr.chunkIndex = index;
         this.ocr.chunkTotal = total;
         const { data } = await this.ocrWorker.recognize(chunkCanvas);
-        if (!data || data.confidence < 60) return [];
+        if (!data) return [];
+        if (typeof data.confidence === 'number' && data.confidence < 40) return [];
         return this._extractOcrLines(data);
     }
 
@@ -2878,13 +2938,14 @@ class UIService {
         previewEl.textContent = trimmed.join('\n');
 
         this._appendOcrToNoteLines(cleanedLines);
+        console.log('[OCR] appended to note (candidate)');
 
         this.ocr.lastChunkText = joined;
         this.ocr.lastChunkAt = now;
     }
 
     _extractOcrLines(data) {
-        const minConfidence = 70;
+        const minConfidence = 50;
         const minLen = 3;
 
         const fromLines = Array.isArray(data.lines) ? data.lines : [];
@@ -2937,9 +2998,19 @@ class UIService {
     }
 
     _maybeStartOcrLoop() {
-        if (!this.ocr.cameraReady || !this.ocr.workerReady || this.ocr.isPaused) return;
+        if (!this.ocr.cameraReady || !this.ocr.workerReady || this.ocr.isPaused) {
+            console.log('[OCR] loop not started', {
+                cameraReady: this.ocr.cameraReady,
+                workerReady: this.ocr.workerReady,
+                isPaused: this.ocr.isPaused
+            });
+            return;
+        }
         if (this.ocr.scanIntervalId) return;
-        this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), 900);
+        const intervalMs = 850;
+        console.log('[OCR] starting loop', { intervalMs });
+        this._setOcrState('scanning', 'OCR active. Transcribing...');
+        this.ocr.scanIntervalId = setInterval(() => this.scanFrame(), intervalMs);
     }
 
     _normalizeOcrText(text) {
@@ -3011,6 +3082,7 @@ class UIService {
         const separator = current && !current.endsWith('\n') ? '\n' : '';
         contentArea.value = `${current}${separator}${toAppend}`.trimEnd() + '\n';
         contentArea.dispatchEvent(new Event('input'));
+        console.log('[OCR] appended to note', { noteId: this.ocr.noteId, chars: toAppend.length });
     }
 
     _isDuplicateOcrLine(normalizedLine) {
@@ -3035,7 +3107,7 @@ class UIService {
             for (const t of tokensA) if (tokensB.has(t)) intersection += 1;
             const union = tokensA.size + tokensB.size - intersection;
             const similarity = union ? intersection / union : 0;
-            if (similarity >= 0.92) return true;
+            if (similarity >= 0.85) return true;
         }
 
         return false;
@@ -3059,7 +3131,8 @@ class UIService {
             this.ocr.scanIntervalId = null;
         }
         if (toggleBtn) toggleBtn.textContent = 'Resume';
-        this._setOcrState('paused', 'Scanning paused.');
+        console.log('[OCR] paused');
+        this._setOcrState('paused', 'OCR paused.');
     }
 
     _setOcrState(state, message) {
@@ -5740,7 +5813,9 @@ class UIService {
 
     async selectNote(note) {
         // DETERMINISTIC PERSISTENCE: Save CURRENT note before switching if it has changes
-        if (this.activeNoteId && this.activeNoteId !== note.id) {
+        if (this._skipPersistOnce) {
+            this._skipPersistOnce = false;
+        } else if (this.activeNoteId && this.activeNoteId !== note.id) {
             const hasChanged = this.refreshSaveButtonState(); // This happens to return true if button would be enabled
             if (hasChanged) {
                 console.log(`[Persistence] Saving previous note ${this.activeNoteId} before switching to ${note.id}`);
