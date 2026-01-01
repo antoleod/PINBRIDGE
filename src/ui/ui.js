@@ -112,6 +112,7 @@ class UIService {
             code: false
         };
         this._noteListEventsBound = false;
+        this._lastPointerUpAt = 0;
         this._renderNotesFrame = null;
         this.activePanel = 'notes'; // notes | settings | tools | null
         this._autosave = {
@@ -119,6 +120,8 @@ class UIService {
             lastFailedAt: 0,
             debounceMs: 800
         };
+        this.debug = typeof window !== 'undefined' &&
+            new URLSearchParams(window.location.search).get('debug') === '1';
     }
 
     showLoginForm() {
@@ -5068,12 +5071,34 @@ class UIService {
         if (!listEl) return;
         this._noteListEventsBound = true;
 
-        listEl.addEventListener('click', async (e) => {
+        const handleNoteAction = async (e) => {
             const actionBtn = e.target.closest('.note-action-icon');
             const noteItem = e.target.closest('.note-item');
             if (!noteItem) return;
 
-            if (noteItem.dataset.longpress === '1') {
+            if (actionBtn) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            if (this.debug) {
+                const elementAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+                const overlay = elementAtPoint?.closest?.('.modal-overlay, .mobile-nav-backdrop, .mobile-context-menu-overlay');
+                const payload = {
+                    action: actionBtn?.dataset?.action || null,
+                    noteId: noteItem?.dataset?.id || null,
+                    target: e.target?.className || e.target?.tagName,
+                    elementAtPoint: elementAtPoint?.className || elementAtPoint?.tagName,
+                    overlayBlocked: Boolean(overlay)
+                };
+                console.debug('[debug] note-actions', payload);
+                const panel = this._ensureDebugPanel();
+                if (panel) {
+                    panel.textContent = `note-actions: ${JSON.stringify(payload)}`;
+                }
+            }
+
+            if (!actionBtn && noteItem.dataset.longpress === '1') {
                 noteItem.dataset.longpress = '0';
                 return;
             }
@@ -5083,50 +5108,70 @@ class UIService {
             if (!note) return;
 
             if (actionBtn) {
-                e.preventDefault();
-                e.stopPropagation();
                 const action = actionBtn.dataset.action;
-                switch (action) {
-                    case 'pin':
-                        await notesService.togglePin(noteId);
-                        this.renderCurrentView();
-                        return;
-                    case 'trash':
-                        if (note.trash) {
-                            let allowed = confirm('Permanently delete this note?');
-                            if (allowed && this._isGeneratedPasswordNote(note)) {
-                                allowed = await this.confirmGeneratedPasswordDeletion();
+                if (!action) return;
+                actionBtn.disabled = true;
+                try {
+                    switch (action) {
+                        case 'pin':
+                            await notesService.togglePin(noteId);
+                            this.renderCurrentView();
+                            return;
+                        case 'trash':
+                            if (note.trash) {
+                                let allowed = confirm('Permanently delete this note?');
+                                if (allowed && this._isGeneratedPasswordNote(note)) {
+                                    allowed = await this.confirmGeneratedPasswordDeletion();
+                                }
+                                if (allowed) await notesService.deleteNote(noteId);
+                            } else {
+                                await notesService.moveToTrash(noteId);
                             }
-                            if (allowed) await notesService.deleteNote(noteId);
-                        } else {
-                            await notesService.moveToTrash(noteId);
-                        }
-                        if (this.activeNoteId === noteId) {
-                            this.activeNoteId = null;
-                            this.clearEditor();
-                        }
-                        this.renderCurrentView();
-                        return;
-                    case 'archive':
-                        if (note.archived) {
-                            await notesService.unarchiveNote(noteId);
-                            this.showToast('Note unarchived', 'success');
-                        } else {
-                            await notesService.archiveNote(noteId);
-                            this.showToast('Note archived', 'success');
-                        }
-                        if (this.activeNoteId === noteId) {
-                            this.activeNoteId = null;
-                            this.clearEditor();
-                        }
-                        this.renderCurrentView();
-                        return;
-                    default:
-                        return;
+                            if (this.activeNoteId === noteId) {
+                                this.activeNoteId = null;
+                                this.clearEditor();
+                            }
+                            this.renderCurrentView();
+                            return;
+                        case 'archive':
+                            if (note.archived) {
+                                await notesService.unarchiveNote(noteId);
+                                this.showToast('Note unarchived', 'success');
+                            } else {
+                                await notesService.archiveNote(noteId);
+                                this.showToast('Note archived', 'success');
+                            }
+                            if (this.activeNoteId === noteId) {
+                                this.activeNoteId = null;
+                                this.clearEditor();
+                            }
+                            this.renderCurrentView();
+                            return;
+                        default:
+                            return;
+                    }
+                } catch (err) {
+                    console.error('Note action failed', err);
+                    this.showToast('Action failed. Try again.', 'error');
+                } finally {
+                    actionBtn.disabled = false;
                 }
             }
 
-            this.selectNote(note);
+            this.openNote(note);
+            if (window.innerWidth < 900) {
+                this.enterMobileEditor();
+            }
+        };
+
+        listEl.addEventListener('pointerup', (e) => {
+            this._lastPointerUpAt = Date.now();
+            handleNoteAction(e);
+        });
+
+        listEl.addEventListener('click', (e) => {
+            if (Date.now() - this._lastPointerUpAt < 400) return;
+            handleNoteAction(e);
         });
 
         listEl.addEventListener('contextmenu', (e) => {
@@ -5137,6 +5182,18 @@ class UIService {
             e.preventDefault();
             this.showMobileContextMenu(note);
         });
+    }
+
+    _ensureDebugPanel() {
+        if (!this.debug) return null;
+        let panel = document.getElementById('debug-panel');
+        if (panel) return panel;
+        panel = document.createElement('div');
+        panel.id = 'debug-panel';
+        panel.className = 'debug-panel';
+        panel.textContent = 'Debug mode active';
+        document.body.appendChild(panel);
+        return panel;
     }
 
     addSwipeHandlers(el, note) {
@@ -5153,6 +5210,7 @@ class UIService {
         const longPressDuration = 500;
 
         el.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.note-action-icon')) return;
             startX = e.touches[0].clientX;
             startY = e.touches[0].clientY;
             isSwiping = false;
@@ -5173,6 +5231,7 @@ class UIService {
         }, { passive: true });
 
         el.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.note-action-icon')) return;
             // Check movement to cancel long press
             const moveX = e.touches[0].clientX;
             const moveY = e.touches[0].clientY;
@@ -5215,6 +5274,7 @@ class UIService {
         }, { passive: false });
 
         el.addEventListener('touchend', async (e) => {
+            if (e.target.closest('.note-action-icon')) return;
             clearTimeout(longPressTimer);
             if (longPressTriggered) return;
             if (!isSwiping) return;

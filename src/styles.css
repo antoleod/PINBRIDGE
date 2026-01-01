@@ -267,6 +267,22 @@ body {
     border-width: 0;
 }
 
+.debug-panel {
+    position: fixed;
+    left: 0.75rem;
+    bottom: calc(0.75rem + env(safe-area-inset-bottom));
+    z-index: 9999;
+    background: rgba(12, 12, 14, 0.92);
+    color: #ffffff;
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    max-width: 90vw;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .screen {
     position: absolute;
     inset: 0;
@@ -3004,6 +3020,7 @@ button.btn:active {
     gap: 0.25rem;
     opacity: 0;
     transition: opacity 0.2s;
+    pointer-events: auto;
 }
 
 .note-item:hover .note-actions-minimal {
@@ -3024,6 +3041,7 @@ button.btn:active {
     padding: 0;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    touch-action: manipulation;
 }
 
 .note-action-icon::before {
@@ -3036,6 +3054,7 @@ button.btn:active {
     opacity: 0;
     transform: scale(0);
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
 }
 
 .note-action-icon:hover {
@@ -4963,6 +4982,10 @@ input[type="file"]::file-selector-button {
     .nav-item {
         width: 44px;
         height: 44px;
+    }
+
+    .note-actions-minimal {
+        opacity: 1;
     }
 
     .sidebar-bottom {
