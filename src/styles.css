@@ -34,6 +34,9 @@
     /* Typography - Improved hierarchy */
     --font-sans: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'IBM Plex Mono', 'JetBrains Mono', 'Consolas', monospace;
+    --font-size-base: clamp(13px, 0.9vw + 9px, 15px);
+    --font-size-sm: clamp(11px, 0.7vw + 8px, 13px);
+    --font-size-xs: clamp(10px, 0.55vw + 7px, 12px);
 
     /* Spacing - More generous */
     --radius-sm: 8px;
@@ -156,6 +159,7 @@ body {
     background-color: var(--bg-base);
     color: var(--text-primary);
     font-family: var(--font-sans);
+    line-height: 1.5;
     min-height: 100vh;
     min-height: 100dvh;
     overflow-x: hidden;
@@ -1768,6 +1772,17 @@ button.btn:active {
     transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
+#mobile-footer.glass-panel {
+    background: rgba(15, 15, 18, 0.95);
+    backdrop-filter: none;
+    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.35);
+}
+
+.mobile-footer .label {
+    font-size: var(--font-size-xs);
+    letter-spacing: 0.01em;
+}
+
 .mobile-footer.footer-hidden {
     transform: translateY(100%);
     opacity: 0;
@@ -1785,9 +1800,8 @@ button.btn:active {
     flex-direction: column;
     align-items: center;
     gap: 0.25rem;
-    font-size: 0.7rem;
+    font-size: var(--font-size-xs);
     gap: 0;
-    font-size: 0.65rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;

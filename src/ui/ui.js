@@ -3955,6 +3955,15 @@ class UIService {
         if (this.mobileFooterMenuOpen) return;
         this.mobileFooterMenuOpen = true;
         this.mobile.footerMenuModal.classList.remove('hidden');
+        if (typeof this.mobile.footerMenuModal.showModal === 'function') {
+            try {
+                if (!this.mobile.footerMenuModal.open) {
+                    this.mobile.footerMenuModal.showModal();
+                }
+            } catch (err) {
+                console.warn('Footer menu showModal failed', err);
+            }
+        }
         this.mobile.footerMenuModal.setAttribute('aria-modal', 'true');
         this.mobile.footerMenuModal.setAttribute('role', 'dialog');
 
@@ -3970,6 +3979,15 @@ class UIService {
         if (!this.mobile.footerMenuModal || !this.mobileFooterMenuOpen) return;
         this.mobileFooterMenuOpen = false;
         this.mobile.footerMenuModal.classList.add('hidden');
+        if (typeof this.mobile.footerMenuModal.close === 'function') {
+            try {
+                if (this.mobile.footerMenuModal.open) {
+                    this.mobile.footerMenuModal.close();
+                }
+            } catch (err) {
+                console.warn('Footer menu close failed', err);
+            }
+        }
         this.mobileFooterMenuModalCleanup();
         this.mobile.footerMenuBtn?.focus();
     }
