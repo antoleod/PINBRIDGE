@@ -217,6 +217,86 @@ class CoachStore {
     }
 
     // --- Packs & Content Management ---
+    /**
+     * SAFEST DEFAULT (Phase 1): store pack content under the user's own document tree.
+     * This works with the existing `users/{uid}` owner-only rules and avoids requiring
+     * any global `coach_packs/*` rules for reads/writes during import.
+     *
+     * Path:
+     * - users/{uid}/coach_packs/{packId}
+     * - users/{uid}/coach_packs/{packId}/versions/{version}
+     * - users/{uid}/coach_packs/{packId}/versions/{version}/cards/{card_id}
+     */
+
+    async getUserPackHeader(uid, packId) {
+        if (!uid || !packId) return null;
+        const ref = doc(db, `users/${uid}/coach_packs/${packId}`);
+        const snap = await getDoc(ref);
+        return snap.exists() ? snap.data() : null;
+    }
+
+    async getUserPackVersion(uid, packId, version) {
+        if (!uid || !packId || !version) return null;
+        const ref = doc(db, `users/${uid}/coach_packs/${packId}/versions/${version}`);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return null;
+
+        const data = snap.data();
+        const cardsCol = collection(db, `users/${uid}/coach_packs/${packId}/versions/${version}/cards`);
+        const cardsSnap = await getDocs(cardsCol);
+        const cards = cardsSnap.docs.map(d => d.data());
+        return { ...data, cards };
+    }
+
+    async saveUserPack(uid, packId, version, packData, cards, { deprecateMissing = false } = {}) {
+        if (!uid || !packId || !version) return;
+
+        const headerRef = doc(db, `users/${uid}/coach_packs/${packId}`);
+        await setDoc(headerRef, {
+            pack_id: packId,
+            latest_version: version,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        const versionRef = doc(db, `users/${uid}/coach_packs/${packId}/versions/${version}`);
+        await setDoc(versionRef, {
+            ...packData,
+            pack_id: packId,
+            version,
+            card_count: cards.length,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
+
+        // Upsert cards by stable card_id (never delete).
+        const batchSize = 400;
+        for (let i = 0; i < cards.length; i += batchSize) {
+            const chunk = cards.slice(i, i + batchSize);
+            await Promise.all(chunk.map(c => {
+                const cardRef = doc(db, `users/${uid}/coach_packs/${packId}/versions/${version}/cards/${c.card_id}`);
+                return setDoc(cardRef, { ...c, card_id: c.card_id }, { merge: true });
+            }));
+        }
+
+        if (deprecateMissing) {
+            const cardsCol = collection(db, `users/${uid}/coach_packs/${packId}/versions/${version}/cards`);
+            const existingSnap = await getDocs(cardsCol);
+            const incomingIds = new Set(cards.map(c => c.card_id));
+            const toDeprecate = existingSnap.docs
+                .filter(d => !incomingIds.has(d.id))
+                .map(d => d.id);
+
+            const depBatchSize = 400;
+            for (let i = 0; i < toDeprecate.length; i += depBatchSize) {
+                const chunk = toDeprecate.slice(i, i + depBatchSize);
+                await Promise.all(chunk.map(cardId => {
+                    const cardRef = doc(db, `users/${uid}/coach_packs/${packId}/versions/${version}/cards/${cardId}`);
+                    return setDoc(cardRef, { deprecated: true, deprecatedAt: serverTimestamp() }, { merge: true });
+                }));
+            }
+        }
+    }
 
     async getGlobalPackVersion(packId, version) {
         if (!packId || !version) return null;
@@ -280,16 +360,21 @@ class CoachStore {
         return snap.docs.map(d => d.data());
     }
 
-    async installUserPack(uid, packId, version, packData) {
+    async installUserPack(uid, packId, version, packData, { pack_name } = {}) {
         if (!uid) return;
         const ref = doc(db, `users/${uid}/coach_user_packs/${packId}`);
         await setDoc(ref, {
             pack_id: packId,
             installed_version: version,
+            pack_name: pack_name || null,
             title_i18n: packData.title_i18n,
             description_i18n: packData.description_i18n,
-            installedAt: serverTimestamp()
-        });
+            level: packData.level || null,
+            languages: packData.languages || null,
+            card_count: packData.card_count || packData.cards?.length || null,
+            installedAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+        }, { merge: true });
     }
 
     async getCardProgress(uid, cardIds) {
@@ -311,6 +396,39 @@ class CoachStore {
             }
         });
         return progressMap;
+    }
+
+    async updateCardProgress(uid, cardId, { isCorrect, confidence_1to5 = null, pack_id = null } = {}) {
+        if (!uid || !cardId) return;
+        const ref = doc(db, `users/${uid}/coach_card_progress/${cardId}`);
+        const snap = await getDoc(ref);
+        const prev = snap.exists() ? snap.data() : {};
+
+        const now = new Date();
+        const prevIntervalDays = typeof prev.interval_days === 'number' ? prev.interval_days : 0;
+
+        let intervalDays = prevIntervalDays;
+        if (isCorrect) {
+            intervalDays = prevIntervalDays > 0 ? Math.min(prevIntervalDays * 2, 30) : 1;
+        } else {
+            intervalDays = 0;
+        }
+
+        const nextReview = new Date(now);
+        nextReview.setDate(nextReview.getDate() + (isCorrect ? intervalDays : 1));
+
+        await setDoc(ref, {
+            card_id: cardId,
+            pack_id: pack_id || prev.pack_id || null,
+            seen_count: increment(1),
+            correct_count: increment(isCorrect ? 1 : 0),
+            wrong_count: increment(isCorrect ? 0 : 1),
+            last_seen_at: serverTimestamp(),
+            next_review_at: nextReview,
+            interval_days: intervalDays,
+            last_confidence: confidence_1to5,
+            updatedAt: serverTimestamp()
+        }, { merge: true });
     }
 }
 

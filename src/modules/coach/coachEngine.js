@@ -82,8 +82,8 @@ class CoachEngine {
             throw new Error("Missing required pack fields (pack_id, version, cards).");
         }
 
-        // 1. Save Global
-        await coachStore.saveGlobalPack(data.pack.pack_id, data.pack.version, data.pack, data.cards);
+        // Save under user tree (global catalog writes are not enabled by default in rules)
+        await coachStore.saveUserPack(uid, data.pack.pack_id, data.pack.version, data.pack, data.cards);
 
         // 2. Install User (Update registry)
         await coachStore.installUserPack(uid, data.pack.pack_id, data.pack.version, data.pack);
@@ -101,7 +101,7 @@ class CoachEngine {
         if (!userPack) throw new Error("Pack not installed.");
 
         // 2. Get Pack Content (Cards)
-        const packVersionData = await coachStore.getGlobalPackVersion(packId, userPack.installed_version);
+        const packVersionData = await coachStore.getUserPackVersion(uid, packId, userPack.installed_version);
         if (!packVersionData) throw new Error("Pack content not found.");
 
         const allCards = packVersionData.cards;

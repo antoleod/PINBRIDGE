@@ -24,10 +24,10 @@ export const quizEngine = {
         const userPack = userPacks.find(p => p.pack_id === packId);
         if (!userPack) throw new Error("Pack not installed locally.");
 
-        const packData = await coachStore.getGlobalPackVersion(packId, userPack.installed_version);
+        const packData = await coachStore.getUserPackVersion(uid, packId, userPack.installed_version);
         if (!packData || !packData.cards) throw new Error("Pack content missing.");
 
-        const allCards = packData.cards;
+        const allCards = packData.cards.filter(c => !c.deprecated);
         const cardIds = allCards.map(c => c.card_id);
         const progressMap = await coachStore.getCardProgress(uid, cardIds);
 

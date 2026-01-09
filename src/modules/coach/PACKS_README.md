@@ -1,13 +1,12 @@
 # Coach Cards Import - Quick Guide
 
 ## How to Import a Pack
-1. In the App, go to **Coach > Settings**.
-2. Click **"Manage Packs"**.
-3. Click **"Import Pack"**.
-4. You can either:
+1. Go to **COACH**. If you have no packs installed, you will be prompted to import one first.
+2. You can import via:
+   - **Bundled:** pick the bundled pack (includes `tests/fr_b1_mixed_premium_pack_100.json`).
    - **Upload:** Select the `.json` file.
    - **Paste:** Copy the entire JSON content into the text area.
-5. Click **Import**.
+3. Review the preview (pack id/version/title/cards) and click **Import Pack**.
 
 ## Testing Logic
 1. After import, go to **Coach > Packs**.
@@ -18,3 +17,6 @@
 
 ## File Format
 Use the standard V2 Pack JSON format found in `tests/fr_b1_mixed_premium_pack_100.json`.
+
+## Bundled pack serving
+For robust static serving, a copy is also kept at `src/public/packs/fr_b1_mixed_premium_pack_100.json` and the loader will fall back to it if `/tests` is not served by your hosting setup.

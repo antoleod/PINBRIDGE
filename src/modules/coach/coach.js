@@ -16,6 +16,8 @@ class CoachService {
         this.activeSkill = null;
         this.currentView = 'dashboard';
         this.currentPackId = null;
+        this._hasAnyPack = null;
+        this._activeQuiz = null;
     }
 
     async init() {
@@ -35,8 +37,7 @@ class CoachService {
         });
 
         bus.on('coach:navigate', (view) => {
-            this.currentView = view;
-            this.renderCurrentView();
+            this.safeNavigate(view);
         });
 
         bus.on('coach:update-settings', async (settings) => {
@@ -44,21 +45,59 @@ class CoachService {
             bus.emit('ui:toast', { message: 'Settings saved', type: 'success' });
         });
 
-        // Pack Sync via Wizard
+        // Pack Sync via Wizard (legacy/dev)
         bus.on('coach:sync-local-pack', () => {
             packImportWizard.start();
         });
 
         bus.on('coach:update-pack-content', async ({ packId, version }) => {
+            // Reserved for Phase 3/Sync. For Phase 1 we only manage user-owned pack content.
             try {
-                const globalData = await coachStore.getGlobalPackVersion(packId, version);
-                if (globalData) {
-                    await coachStore.installUserPack(this.currentUser.uid, packId, version, globalData);
-                    bus.emit('ui:toast', { message: `Updated to v${version}`, type: 'success' });
-                    this.renderCurrentView();
-                }
+                const uid = this.currentUser?.uid;
+                if (!uid) return;
+                const userData = await coachStore.getUserPackVersion(uid, packId, version);
+                if (!userData) throw new Error('PACK_VERSION_NOT_FOUND');
+                await coachStore.installUserPack(uid, packId, version, userData);
+                bus.emit('ui:toast', { message: `Installed v${version}`, type: 'success' });
+                this._hasAnyPack = true;
+                this.currentView = 'packs';
+                this.renderCurrentView();
             } catch (e) {
                 console.error(e);
+                bus.emit('ui:toast', { message: `Update failed: ${e.message}`, type: 'error' });
+            }
+        });
+
+        bus.on('coach:import-pack', async ({ packData, packName, targetPackId, importMode }) => {
+            try {
+                const uid = this.currentUser?.uid;
+                if (!uid) throw new Error('NOT_AUTHENTICATED');
+                if (!packData?.pack?.pack_id || !packData?.pack?.version || !Array.isArray(packData?.cards)) {
+                    throw new Error('INVALID_PACK');
+                }
+
+                const originalPackId = packData.pack.pack_id;
+                const packId = (targetPackId || originalPackId).trim();
+                const version = String(packData.pack.version).trim();
+                if (!packId) throw new Error('PACK_ID_REQUIRED');
+
+                const deprecateMissing = importMode === 'overwrite';
+                const normalizedPack = {
+                    ...packData.pack,
+                    pack_id: packId,
+                    version
+                };
+
+                await coachStore.saveUserPack(uid, packId, version, normalizedPack, packData.cards, { deprecateMissing });
+                await coachStore.installUserPack(uid, packId, version, normalizedPack, { pack_name: packName || null });
+
+                bus.emit('ui:toast', { message: 'Pack imported', type: 'success' });
+                this._hasAnyPack = true;
+                this.currentView = 'packs';
+                this.renderCurrentView();
+            } catch (e) {
+                console.error(e);
+                bus.emit('ui:toast', { message: `Import failed: ${e.message}`, type: 'error' });
             }
         });
 
@@ -66,13 +105,30 @@ class CoachService {
         bus.on('coach:start-quiz', async ({ packId }) => {
             try {
                 const quizParams = await quizEngine.generateSession(packId, this.settings.content_language);
-                if (!quizParams) {
+                if (!quizParams || !quizParams.card) {
                     bus.emit('ui:toast', { message: 'No cards available to review right now.', type: 'info' });
                     return;
                 }
                 this.currentPackId = packId;
                 this.currentView = 'quiz';
-                uiRenderer.render('quiz', { ...quizParams, pack_title: "Pack Practice" });
+                this._activeQuiz = { ...quizParams, packId };
+
+                const card = quizParams.card;
+                uiRenderer.render('quiz', {
+                    pack_title: 'Pack Practice',
+                    card_id: card.card_id,
+                    category: card.category || '',
+                    question: i18n.getContent(card.question_i18n),
+                    tts_text: card.tts?.text || i18n.getContent(card.front_i18n) || '',
+                    tts_lang: card.tts?.language || 'fr-FR',
+                    options: quizParams.options,
+                    total_cards: quizParams.totalCards,
+                    current_card_index: quizParams.sessionIndex
+                });
+
+                if (card.tts?.auto_read && card.tts?.text) {
+                    bus.emit('coach:tts-play', { text: card.tts.text, lang: card.tts.language || 'fr-FR' });
+                }
             } catch (e) {
                 console.error(e);
                 bus.emit('ui:toast', { message: `Quiz Error: ${e.message}`, type: 'error' });
@@ -82,6 +138,33 @@ class CoachService {
         bus.on('coach:quiz-next', () => {
             if (this.currentPackId) {
                 bus.emit('coach:start-quiz', { packId: this.currentPackId });
+            }
+        });
+
+        bus.on('coach:quiz-submit', async ({ selectedIndex, confidence_1to5 = null }) => {
+            try {
+                const uid = this.currentUser?.uid;
+                if (!uid) return;
+                if (!this._activeQuiz?.card?.card_id) return;
+
+                const card = this._activeQuiz.card;
+                const isCorrect = Number(selectedIndex) === Number(this._activeQuiz.correctIndex);
+
+                await coachStore.updateCardProgress(uid, card.card_id, {
+                    isCorrect,
+                    confidence_1to5,
+                    pack_id: this.currentPackId
+                });
+
+                bus.emit('coach:quiz-feedback', {
+                    isCorrect,
+                    correctText: i18n.getContent(card.correct_answer_i18n),
+                    explainText: i18n.getContent(card.example_sentence_i18n) || '',
+                    nextAction: 'next'
+                });
+            } catch (e) {
+                console.error(e);
+                bus.emit('ui:toast', { message: `Save failed: ${e.message}`, type: 'error' });
             }
         });
 
@@ -148,7 +231,7 @@ class CoachService {
 
     async onEnterCoachView() {
         if (!this.currentUser) {
-            uiRenderer.render('login-required');
+            uiRenderer.render('loginRequired');
             return;
         }
 
@@ -171,12 +254,51 @@ class CoachService {
             await coachEngine.checkMaintenance(this.currentUser.uid);
         }
 
-        if (!this.settings.active_skill_id) {
+        await this.refreshPackPresence();
+
+        // IMPORT-FIRST: if user has no installed packs, force import flow.
+        if (!this._hasAnyPack) {
+            this.currentView = 'import-pack';
+        } else if (!this.settings.active_skill_id) {
             this.currentView = 'skills';
         } else {
             this.currentView = 'dashboard';
         }
 
+        this.renderCurrentView();
+    }
+
+    async refreshPackPresence() {
+        const uid = this.currentUser?.uid;
+        if (!uid) {
+            this._hasAnyPack = false;
+            return;
+        }
+        try {
+            const packs = await coachStore.getUserPacks(uid);
+            this._hasAnyPack = packs.length > 0;
+        } catch {
+            this._hasAnyPack = false;
+        }
+    }
+
+    async safeNavigate(view) {
+        const uid = this.currentUser?.uid;
+        if (!uid) {
+            this.currentView = 'loginRequired';
+            this.renderCurrentView();
+            return;
+        }
+
+        // Guard: while no packs installed, only allow import-pack.
+        await this.refreshPackPresence();
+        if (!this._hasAnyPack && view !== 'import-pack') {
+            this.currentView = 'import-pack';
+            this.renderCurrentView();
+            return;
+        }
+
+        this.currentView = view;
         this.renderCurrentView();
     }
 
@@ -210,14 +332,11 @@ class CoachService {
 
         if (this.currentView === 'packs') {
             const packs = await coachStore.getUserPacks(this.currentUser.uid);
-            viewData.packs = await Promise.all(packs.map(async p => {
-                // Optimistic check
-                const globalMeta = await coachStore.getGlobalPackVersion(p.pack_id, p.installed_version);
-                return {
-                    ...p,
-                    title: i18n.getContent(p.title_i18n),
-                    description: i18n.getContent(p.description_i18n)
-                };
+            viewData.packs = packs.map(p => ({
+                ...p,
+                title: p.pack_name || i18n.getContent(p.title_i18n) || p.pack_id,
+                description: i18n.getContent(p.description_i18n) || '',
+                level: p.level || p?.metadata?.level || ''
             }));
         }
 
@@ -227,6 +346,10 @@ class CoachService {
                 this.renderCurrentView();
                 return;
             }
+        }
+
+        if (this.currentView === 'import-pack') {
+            viewData.hasInstalledPacks = this._hasAnyPack;
         }
 
         if (this.currentView === 'exam-center') {
