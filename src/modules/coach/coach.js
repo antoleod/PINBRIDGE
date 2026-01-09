@@ -24,16 +24,13 @@ class CoachService {
         this.currentRoadmapDay = 1;
     }
 
-    async init() {
-        this.currentUser = auth.currentUser;
-        auth.onAuthStateChanged(async (user) => {
-            this.currentUser = user;
-            if (user) {
-                await this.loadSettings();
-                if (this.currentView !== 'dashboard') this.renderCurrentView();
-            }
-        });
+    async loadPacksIndex() {
+        const response = await fetch('src/public/packs/index.json');
+        if (!response.ok) throw new Error('Failed to load packs index');
+        return await response.json();
+    }
 
+    init() {
         bus.on('view:switched', ({ view }) => {
             if (view === 'coach') {
                 this.onEnterCoachView();
@@ -395,15 +392,25 @@ class CoachService {
         }
 
         if (this.currentView === 'dashboard') {
-            if (this.activeSkill) {
-                viewData.skillName = i18n.getContent(this.activeSkill.title_i18n);
-                const maintenance = await coachStore.getMaintenanceStatus(this.currentUser.uid);
-                viewData.streak = maintenance?.streak_days || 0;
-                const reviews = await coachStore.getDueReviews(this.currentUser.uid);
-                viewData.reviewsCount = reviews.length;
-            }
-            const updates = await packRegistry.checkUpdates(this.currentUser.uid);
-            viewData.updates = updates;
+            // Load pack index
+            const packsIndex = await this.loadPacksIndex();
+            const userPacks = await coachStore.getUserPacks(this.currentUser.uid);
+            const userPackIds = new Set(userPacks.map(p => p.pack_id));
+
+            // Enrich packs with installation status
+            viewData.packs = packsIndex.packs.map(p => ({
+                ...p,
+                installed: userPackIds.has(p.id),
+                completed: false, // TODO: compute from progress
+                progress: 0 // TODO: compute
+            }));
+
+            // Active packs (installed, not completed)
+            viewData.activePacks = viewData.packs.filter(p => p.installed && !p.completed);
+
+            // Reviews due
+            const reviews = await coachStore.getDueReviews(this.currentUser.uid);
+            viewData.reviewsDue = reviews.length;
         }
 
         if (this.currentView === 'session') {

@@ -1,0 +1,90 @@
+{
+  "schema_version": "pack-index-v1",
+  "last_updated": "2026-01-09T00:00:00Z",
+  "packs": [
+    {
+      "id": "en_b1_vocab_core_40",
+      "file": "en_b1_vocab_core_40.json",
+      "title": "English B1 Core Vocabulary",
+      "subtitle": "Master essential B1 words with sentences and auto-read.",
+      "type": "language",
+      "topic": "English B1",
+      "content_language": "en",
+      "difficulty": "intermediate",
+      "duration_days": 7,
+      "size_cards": 40,
+      "ui_hint_tags": ["vocab", "sentences", "auto-read"],
+      "icon": "language"
+    },
+    {
+      "id": "fr_b1_vocab_core_40",
+      "file": "fr_b1_vocab_core_40.json",
+      "title": "French B1 Core Vocabulary",
+      "subtitle": "Build B1 French vocab with practical sentences.",
+      "type": "language",
+      "topic": "French B1",
+      "content_language": "fr",
+      "difficulty": "intermediate",
+      "duration_days": 7,
+      "size_cards": 40,
+      "ui_hint_tags": ["vocab", "sentences"],
+      "icon": "language"
+    },
+    {
+      "id": "nl_b1_vocab_core_40",
+      "file": "nl_b1_vocab_core_40.json",
+      "title": "Dutch B1 Core Vocabulary",
+      "subtitle": "Essential Dutch B1 words for daily use.",
+      "type": "language",
+      "topic": "Dutch B1",
+      "content_language": "nl",
+      "difficulty": "intermediate",
+      "duration_days": 7,
+      "size_cards": 40,
+      "ui_hint_tags": ["vocab"],
+      "icon": "language"
+    },
+    {
+      "id": "fr_b1_mixed_premium_pack_100",
+      "file": "fr_b1_mixed_premium_pack_100.json",
+      "title": "French B1 Mixed Premium",
+      "subtitle": "Comprehensive B1 French with emails, motivation, and expressions.",
+      "type": "language",
+      "topic": "French B1",
+      "content_language": "fr",
+      "difficulty": "intermediate",
+      "duration_days": 17,
+      "size_cards": 100,
+      "ui_hint_tags": ["mixed", "emails", "motivation", "expressions"],
+      "icon": "language"
+    },
+    {
+      "id": "aws_saa_c03_core_50",
+      "file": "aws_saa_c03_core_50.json",
+      "title": "AWS SAA-C03 Core",
+      "subtitle": "Daily architecture decisions with exam-style traps.",
+      "type": "certification",
+      "topic": "AWS Solutions Architect Associate",
+      "content_language": "en",
+      "difficulty": "advanced",
+      "duration_days": 30,
+      "size_cards": 50,
+      "ui_hint_tags": ["scenarios", "exam-traps", "architecture"],
+      "icon": "cloud"
+    },
+    {
+      "id": "azure_az900_core_50",
+      "file": "azure_az900_core_50.json",
+      "title": "Azure AZ-900 Core",
+      "subtitle": "Fundamentals of Azure with practical scenarios.",
+      "type": "certification",
+      "topic": "Azure Fundamentals",
+      "content_language": "en",
+      "difficulty": "intermediate",
+      "duration_days": 30,
+      "size_cards": 50,
+      "ui_hint_tags": ["fundamentals", "scenarios"],
+      "icon": "cloud"
+    }
+  ]
+}
