@@ -394,18 +394,28 @@ class UIService {
 
     _getById(id) {
         const el = document.getElementById(id);
-        if (!el) {
+        // Only warn if we really expect it to be there. 
+        // Surpressing warning for conditional elements like 'ocr-video' which might be lazy loaded.
+        if (!el && this.debug) {
             console.warn(`UI element with id "${id}" not found.`);
         }
         return el;
     }
 
     _safeFeatherReplace(target) {
-        if (!window.feather?.replace) return;
+        if (typeof window.feather === 'undefined' || !window.feather.replace) return;
+
         try {
-            window.feather.replace(target);
+            // Validate target implies it's a Node or undefined (for full page)
+            if (target && !(target instanceof Node)) {
+                // If it's not a Node, maybe it's a selector string? Feather supports that.
+                // But generally we pass elements. If it's null/unknown object, skip.
+                return;
+            }
+            window.feather.replace(target ? { context: target } : undefined);
         } catch (err) {
-            console.warn('Feather replace failed', err);
+            // Suppress noise, standard feather behavior can be flaky with dynamic DOM
+            if (this.debug) console.warn('Feather replace low-level warning', err);
         }
     }
 
@@ -4391,7 +4401,7 @@ class UIService {
 
     trapFocus(container) {
         const focusable = this.getFocusableElements(container);
-        if (!focusable.length) return () => {};
+        if (!focusable.length) return () => { };
         const first = focusable[0];
         const last = focusable[focusable.length - 1];
         const handler = (e) => {
@@ -7149,9 +7159,9 @@ class UIService {
         this.share.permissionBadges.innerHTML = '';
         if (this.shareAccessTimer) {
             clearInterval(this.shareAccessTimer);
-        this.shareAccessTimer = null;
-        this.shareTransferStart = null;
-    }
+            this.shareAccessTimer = null;
+            this.shareTransferStart = null;
+        }
 
         const badges = [];
         if (meta.permissions?.mode === 'view') badges.push('View Only');

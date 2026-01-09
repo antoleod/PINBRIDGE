@@ -1,0 +1,25 @@
+<div class="coach-exam-center glass-panel">
+    <h2>Exam Center</h2>
+    <p class="subtitle">Prove your mastery to unlock new levels.</p>
+
+    <div class="module-list">
+        {{#each modules}}
+        <div class="module-card">
+            <div class="module-header">
+                <h3>{{this.title}}</h3>
+                <span class="status-badge unlocked">Unlocked</span>
+            </div>
+            <p>{{this.summary}}</p>
+            <div class="module-stats">
+                <span><i data-feather="target"></i> Best: --%</span>
+                <span><i data-feather="clock"></i> 15m</span>
+            </div>
+            <button class="btn btn-secondary btn-block" data-action="start-module-exam" data-module-id="{{this.id}}">
+                Start Exam
+            </button>
+        </div>
+        {{/each}}
+    </div>
+
+    <button class="btn btn-text" data-action="back-to-dashboard">Back to Dashboard</button>
+</div>

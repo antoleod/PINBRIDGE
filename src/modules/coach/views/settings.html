@@ -1,44 +1,67 @@
 <div class="coach-settings glass-panel">
-    <h2>{{coach_settings_title}}</h2>
+    <h2>Coach Settings</h2>
 
-    <div class="setting-item">
-        <div>
-            <label for="coach-ui-language">{{coach_settings_ui_language}}</label>
-            <p class="hint">{{coach_settings_ui_language_hint}}</p>
+    <div class="settings-group">
+        <h3>Language</h3>
+        <div class="setting-item">
+            <label for="coach-ui-language">Interface Language</label>
+            <select id="coach-ui-language" class="settings-select">
+                <option value="en" {{#if (eq settings.ui_language "en" )}}selected{{/if}}>English</option>
+                <option value="es" {{#if (eq settings.ui_language "es" )}}selected{{/if}}>Español</option>
+                <option value="fr" {{#if (eq settings.ui_language "fr" )}}selected{{/if}}>Français</option>
+            </select>
         </div>
-        <select id="coach-ui-language" class="settings-select">
-            <option value="en" {{#if (eq settings.ui_language "en")}}selected{{/if}}>English</option>
-            <option value="es" {{#if (eq settings.ui_language "es")}}selected{{/if}}>Español</option>
-            <option value="fr" {{#if (eq settings.ui_language "fr")}}selected{{/if}}>Français</option>
-        </select>
+        <div class="setting-item">
+            <label for="coach-content-language">Content Language</label>
+            <select id="coach-content-language" class="settings-select">
+                <option value="en" {{#if (eq settings.content_language "en" )}}selected{{/if}}>English</option>
+                <option value="es" {{#if (eq settings.content_language "es" )}}selected{{/if}}>Español</option>
+                <option value="fr" {{#if (eq settings.content_language "fr" )}}selected{{/if}}>Français</option>
+            </select>
+        </div>
     </div>
 
-    <div class="setting-item">
-        <div>
-            <label for="coach-allow-multilang">{{coach_settings_allow_toggle}}</label>
-            <p class="hint">{{coach_settings_allow_toggle_hint}}</p>
+    <div class="settings-group">
+        <h3>Learning Preferences</h3>
+        <div class="setting-item">
+            <label for="coach-time">Time Per Day (min)</label>
+            <select id="coach-time" class="settings-select">
+                <option value="15" {{#if (eq settings.time_per_day_min "15" )}}selected{{/if}}>15 min</option>
+                <option value="30" {{#if (eq settings.time_per_day_min "30" )}}selected{{/if}}>30 min</option>
+                <option value="45" {{#if (eq settings.time_per_day_min "45" )}}selected{{/if}}>45 min</option>
+                <option value="60" {{#if (eq settings.time_per_day_min "60" )}}selected{{/if}}>60 min</option>
+            </select>
         </div>
-        <label class="coach-toggle">
-            <input type="checkbox" id="coach-allow-multilang" {{#if settings.allow_multilang_toggle}}checked{{/if}}>
-            <span>{{coach_toggle_on}}</span>
-        </label>
+        <div class="setting-item">
+            <label for="coach-intensity">Intensity</label>
+            <select id="coach-intensity" class="settings-select">
+                <option value="light" {{#if (eq settings.intensity "light" )}}selected{{/if}}>Light</option>
+                <option value="normal" {{#if (eq settings.intensity "normal" )}}selected{{/if}}>Normal</option>
+                <option value="hard" {{#if (eq settings.intensity "hard" )}}selected{{/if}}>Hard</option>
+            </select>
+        </div>
+        <div class="setting-item checkbox-row">
+            <label for="coach-no-resources">No Resources Mode</label>
+            <input type="checkbox" id="coach-no-resources" {{#if settings.no_resources_mode}}checked{{/if}}>
+        </div>
+        <div class="settings-group">
+            <h3>Content Management</h3>
+            <div class="setting-item">
+                <label>Installed Packs</label>
+                <button class="btn btn-secondary btn-sm" id="btn-manage-packs"><i data-feather="package"></i> Manage
+                    Packs</button>
+            </div>
+            <div class="setting-item">
+                <label>Developer Tools</label>
+                <button class="btn btn-accent btn-sm" id="btn-seed-pack"><i data-feather="refresh-cw"></i> Sync Local
+                    Pack to Firestore</button>
+                <p class="hint">Uploads <code>fr_b1_mixed_premium_pack_100.json</code> to global catalog.</p>
+            </div>
+        </div>
     </div>
 
-    {{#if settings.allow_multilang_toggle}}
-    <div class="setting-item">
-        <div>
-            <label for="coach-content-language">{{coach_settings_content_language}}</label>
-            <p class="hint">{{coach_settings_content_language_hint}}</p>
-        </div>
-        <select id="coach-content-language" class="settings-select">
-            <option value="en" {{#if (eq settings.content_language "en")}}selected{{/if}}>English</option>
-            <option value="es" {{#if (eq settings.content_language "es")}}selected{{/if}}>Español</option>
-            <option value="fr" {{#if (eq settings.content_language "fr")}}selected{{/if}}>Français</option>
-        </select>
-    </div>
-    {{/if}}
-
-    <div class="setting-actions">
-        <button class="btn btn-secondary" data-action="back-to-dashboard">{{coach_action_back}}</button>
+    <div class="settings-actions">
+        <button class="btn btn-secondary" data-action="back-to-dashboard">Cancel</button>
+        <button class="btn btn-primary" id="btn-save-settings">Save Changes</button>
     </div>
 </div>

@@ -1,0 +1,5175 @@
+{
+  "schema_version": "v2-pack",
+  "generated_at": "2026-01-09T00:00:00Z",
+  "pack": {
+    "pack_id": "fr_b1_mixed_premium_seed_100",
+    "version": "1.0.0",
+    "level": "B1",
+    "mode": "MIXED",
+    "languages": [
+      "fr",
+      "es",
+      "en"
+    ],
+    "title_i18n": {
+      "fr": "Français B1 — Mixte (FR→ES / FR→EN) — Pack 100",
+      "es": "Francés B1 — Mixto (FR→ES / FR→EN) — Pack 100",
+      "en": "French B1 — Mixed (FR→ES / FR→EN) — Pack 100"
+    },
+    "description_i18n": {
+      "fr": "100 cartes B1 mixtes avec auto-lecture, phrases motivantes et formules email.",
+      "es": "100 tarjetas B1 mixtas con autolectura, frases motivadoras y fórmulas de email.",
+      "en": "100 mixed B1 cards with auto-read, encouraging sentences and email-ready wording."
+    },
+    "categories": [
+      {
+        "id": "vie_quotidienne",
+        "title_i18n": {
+          "fr": "Vie quotidienne & émotions",
+          "es": "Vida diaria y emociones",
+          "en": "Daily life & emotions"
+        }
+      },
+      {
+        "id": "motivation",
+        "title_i18n": {
+          "fr": "Motivation & progrès",
+          "es": "Motivación y progreso",
+          "en": "Motivation & progress"
+        }
+      },
+      {
+        "id": "expressions",
+        "title_i18n": {
+          "fr": "Expressions & proverbes",
+          "es": "Expresiones y dichos",
+          "en": "Expressions & sayings"
+        }
+      },
+      {
+        "id": "email_elegant",
+        "title_i18n": {
+          "fr": "Emails élégants",
+          "es": "Emails elegantes",
+          "en": "Elegant emails"
+        }
+      }
+    ],
+    "quality_defaults": {
+      "source_type": "generated",
+      "source_ref": "ChatGPT seed generation",
+      "last_verified_at": null,
+      "confidence_score": 70
+    },
+    "card_count": 100
+  },
+  "cards": [
+    {
+      "card_id": "fr_b1_vocab_001",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "quilibre"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "équilibre",
+        "es": "equilibrio",
+        "en": "balance"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « équilibre » ?",
+        "es": "¿Qué significa « équilibre »?",
+        "en": "What does « équilibre » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "État de stabilité entre plusieurs éléments.",
+        "es": "État de stabilité entre plusieurs éléments.",
+        "en": "État de stabilité entre plusieurs éléments."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec équilibre, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre équilibre et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "équilibre",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_002",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "calme"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "calme",
+        "es": "calma",
+        "en": "calm"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « calme » ?",
+        "es": "¿Qué significa « calme »?",
+        "en": "What does « calme » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Absence d’agitation; attitude posée.",
+        "es": "Absence d’agitation; attitude posée.",
+        "en": "Absence d’agitation; attitude posée."
+      },
+      "example_sentence_i18n": {
+        "fr": "Calme aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre calme et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "calme",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_003",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "confiance"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "confiance",
+        "es": "confianza",
+        "en": "confidence"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « confiance » ?",
+        "es": "¿Qué significa « confiance »?",
+        "en": "What does « confiance » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Sentiment de sécurité envers soi ou autrui.",
+        "es": "Sentiment de sécurité envers soi ou autrui.",
+        "en": "Sentiment de sécurité envers soi ou autrui."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de confiance peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre confiance et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "confiance",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_004",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "effort"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "effort",
+        "es": "esfuerzo",
+        "en": "effort"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « effort » ?",
+        "es": "¿Qué significa « effort »?",
+        "en": "What does « effort » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Action de se donner du mal pour réussir.",
+        "es": "Action de se donner du mal pour réussir.",
+        "en": "Action de se donner du mal pour réussir."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la effort quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre effort et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "effort",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_005",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "progr_s"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "progrès",
+        "es": "progreso",
+        "en": "progress"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « progrès » ?",
+        "es": "¿Qué significa « progrès »?",
+        "en": "What does « progrès » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Avancée vers un meilleur résultat.",
+        "es": "Avancée vers un meilleur résultat.",
+        "en": "Avancée vers un meilleur résultat."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec progrès, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre progrès et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "progrès",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_006",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "patience"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "patience",
+        "es": "paciencia",
+        "en": "patience"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « patience » ?",
+        "es": "¿Qué significa « patience »?",
+        "en": "What does « patience » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Capacité d’attendre sans s’énerver.",
+        "es": "Capacité d’attendre sans s’énerver.",
+        "en": "Capacité d’attendre sans s’énerver."
+      },
+      "example_sentence_i18n": {
+        "fr": "Patience aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre patience et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "patience",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_007",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "r_ussite"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "réussite",
+        "es": "éxito",
+        "en": "success"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « réussite » ?",
+        "es": "¿Qué significa « réussite »?",
+        "en": "What does « réussite » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Bon résultat obtenu après des efforts.",
+        "es": "Bon résultat obtenu après des efforts.",
+        "en": "Bon résultat obtenu après des efforts."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de réussite peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre réussite et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "réussite",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_008",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "chec"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "échec",
+        "es": "fracaso",
+        "en": "failure"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « échec » ?",
+        "es": "¿Qué significa « échec »?",
+        "en": "What does « échec » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Résultat négatif qui permet d’apprendre.",
+        "es": "Résultat négatif qui permet d’apprendre.",
+        "en": "Résultat négatif qui permet d’apprendre."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la échec quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre échec et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "échec",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_009",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "d_fi"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "défi",
+        "es": "desafío",
+        "en": "challenge"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « défi » ?",
+        "es": "¿Qué significa « défi »?",
+        "en": "What does « défi » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Objectif difficile qui motive à avancer.",
+        "es": "Objectif difficile qui motive à avancer.",
+        "en": "Objectif difficile qui motive à avancer."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec défi, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre défi et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "défi",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_010",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "objectif"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "objectif",
+        "es": "objetivo",
+        "en": "goal"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « objectif » ?",
+        "es": "¿Qué significa « objectif »?",
+        "en": "What does « objectif » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "But précis que l’on veut atteindre.",
+        "es": "But précis que l’on veut atteindre.",
+        "en": "But précis que l’on veut atteindre."
+      },
+      "example_sentence_i18n": {
+        "fr": "Objectif aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre objectif et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "objectif",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_011",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "habitude"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "habitude",
+        "es": "hábito",
+        "en": "habit"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « habitude » ?",
+        "es": "¿Qué significa « habitude »?",
+        "en": "What does « habitude » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Comportement répété régulièrement.",
+        "es": "Comportement répété régulièrement.",
+        "en": "Comportement répété régulièrement."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de habitude peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre habitude et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "habitude",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_012",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "priorit"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "priorité",
+        "es": "prioridad",
+        "en": "priority"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « priorité » ?",
+        "es": "¿Qué significa « priorité »?",
+        "en": "What does « priorité » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Ce qui doit être fait avant le reste.",
+        "es": "Ce qui doit être fait avant le reste.",
+        "en": "Ce qui doit être fait avant le reste."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la priorité quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre priorité et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "priorité",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_013",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "doute"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "doute",
+        "es": "duda",
+        "en": "doubt"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « doute » ?",
+        "es": "¿Qué significa « doute »?",
+        "en": "What does « doute » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Incertitude qui peut freiner l’action.",
+        "es": "Incertitude qui peut freiner l’action.",
+        "en": "Incertitude qui peut freiner l’action."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec doute, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre doute et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "doute",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_014",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "courage"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "courage",
+        "es": "valentía",
+        "en": "courage"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « courage » ?",
+        "es": "¿Qué significa « courage »?",
+        "en": "What does « courage » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Force de faire malgré la peur.",
+        "es": "Force de faire malgré la peur.",
+        "en": "Force de faire malgré la peur."
+      },
+      "example_sentence_i18n": {
+        "fr": "Courage aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre courage et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "courage",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_015",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "respect"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "respect",
+        "es": "respeto",
+        "en": "respect"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « respect » ?",
+        "es": "¿Qué significa « respect »?",
+        "en": "What does « respect » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Attitude qui considère l’autre avec valeur.",
+        "es": "Attitude qui considère l’autre avec valeur.",
+        "en": "Attitude qui considère l’autre avec valeur."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de respect peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre respect et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "respect",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_016",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "soutien"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "soutien",
+        "es": "apoyo",
+        "en": "support"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « soutien » ?",
+        "es": "¿Qué significa « soutien »?",
+        "en": "What does « soutien » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Aide morale ou pratique.",
+        "es": "Aide morale ou pratique.",
+        "en": "Aide morale ou pratique."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la soutien quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre soutien et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "soutien",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_017",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "conseil"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "conseil",
+        "es": "consejo",
+        "en": "advice"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « conseil » ?",
+        "es": "¿Qué significa « conseil »?",
+        "en": "What does « conseil » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Recommandation pour mieux agir.",
+        "es": "Recommandation pour mieux agir.",
+        "en": "Recommandation pour mieux agir."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec conseil, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre conseil et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "conseil",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_018",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "choix"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "choix",
+        "es": "elección",
+        "en": "choice"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « choix » ?",
+        "es": "¿Qué significa « choix »?",
+        "en": "What does « choix » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Décision entre plusieurs possibilités.",
+        "es": "Décision entre plusieurs possibilités.",
+        "en": "Décision entre plusieurs possibilités."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choix aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre choix et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "choix",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_019",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "responsabilit"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "responsabilité",
+        "es": "responsabilidad",
+        "en": "responsibility"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « responsabilité » ?",
+        "es": "¿Qué significa « responsabilité »?",
+        "en": "What does « responsabilité » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Devoir d’assumer ses actes.",
+        "es": "Devoir d’assumer ses actes.",
+        "en": "Devoir d’assumer ses actes."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de responsabilité peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre responsabilité et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "responsabilité",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_020",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "solution"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "solution",
+        "es": "solución",
+        "en": "solution"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « solution » ?",
+        "es": "¿Qué significa « solution »?",
+        "en": "What does « solution » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Réponse pratique à un problème.",
+        "es": "Réponse pratique à un problème.",
+        "en": "Réponse pratique à un problème."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la solution quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre solution et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "solution",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_021",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "erreur"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "erreur",
+        "es": "error",
+        "en": "mistake"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « erreur » ?",
+        "es": "¿Qué significa « erreur »?",
+        "en": "What does « erreur » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Action incorrecte qui sert à progresser.",
+        "es": "Action incorrecte qui sert à progresser.",
+        "en": "Action incorrecte qui sert à progresser."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec erreur, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre erreur et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "erreur",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_022",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "am_lioration"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "amélioration",
+        "es": "mejora",
+        "en": "improvement"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « amélioration » ?",
+        "es": "¿Qué significa « amélioration »?",
+        "en": "What does « amélioration » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Changement vers quelque chose de mieux.",
+        "es": "Changement vers quelque chose de mieux.",
+        "en": "Changement vers quelque chose de mieux."
+      },
+      "example_sentence_i18n": {
+        "fr": "Amélioration aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre amélioration et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "amélioration",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_023",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "concentration"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "concentration",
+        "es": "concentración",
+        "en": "focus"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « concentration » ?",
+        "es": "¿Qué significa « concentration »?",
+        "en": "What does « concentration » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Attention dirigée sur une tâche.",
+        "es": "Attention dirigée sur une tâche.",
+        "en": "Attention dirigée sur une tâche."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de concentration peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre concentration et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "concentration",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_024",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "organisation"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "organisation",
+        "es": "organización",
+        "en": "organization"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « organisation » ?",
+        "es": "¿Qué significa « organisation »?",
+        "en": "What does « organisation » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Façon de structurer son travail.",
+        "es": "Façon de structurer son travail.",
+        "en": "Façon de structurer son travail."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la organisation quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre organisation et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "organisation",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_025",
+      "level": "B1",
+      "category": "vie_quotidienne",
+      "tags": [
+        "vie",
+        "emotion",
+        "clart"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "clarté",
+        "es": "claridad",
+        "en": "clarity"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « clarté » ?",
+        "es": "¿Qué significa « clarté »?",
+        "en": "What does « clarté » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Qualité d’être facile à comprendre.",
+        "es": "Qualité d’être facile à comprendre.",
+        "en": "Qualité d’être facile à comprendre."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec clarté, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre clarté et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "clarté",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_026",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "nergie"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "énergie",
+        "es": "energía",
+        "en": "energy"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « énergie » ?",
+        "es": "¿Qué significa « énergie »?",
+        "en": "What does « énergie » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Force pour agir et continuer.",
+        "es": "Force pour agir et continuer.",
+        "en": "Force pour agir et continuer."
+      },
+      "example_sentence_i18n": {
+        "fr": "Énergie aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre énergie et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "énergie",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_027",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "motivation"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "motivation",
+        "es": "motivación",
+        "en": "motivation"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « motivation » ?",
+        "es": "¿Qué significa « motivation »?",
+        "en": "What does « motivation » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Raison intérieure d’avancer.",
+        "es": "Raison intérieure d’avancer.",
+        "en": "Raison intérieure d’avancer."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de motivation peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre motivation et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "motivation",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_028",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "discipline"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "discipline",
+        "es": "disciplina",
+        "en": "discipline"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « discipline » ?",
+        "es": "¿Qué significa « discipline »?",
+        "en": "What does « discipline » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Capacité de faire même sans envie.",
+        "es": "Capacité de faire même sans envie.",
+        "en": "Capacité de faire même sans envie."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la discipline quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre discipline et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "discipline",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_029",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "bienveillance"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "bienveillance",
+        "es": "benevolencia",
+        "en": "kindness"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « bienveillance » ?",
+        "es": "¿Qué significa « bienveillance »?",
+        "en": "What does « bienveillance » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Attitude gentille et respectueuse.",
+        "es": "Attitude gentille et respectueuse.",
+        "en": "Attitude gentille et respectueuse."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec bienveillance, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre bienveillance et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "bienveillance",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_030",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "gratitude"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "gratitude",
+        "es": "gratitud",
+        "en": "gratitude"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « gratitude » ?",
+        "es": "¿Qué significa « gratitude »?",
+        "en": "What does « gratitude » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Reconnaissance pour ce qu’on reçoit.",
+        "es": "Reconnaissance pour ce qu’on reçoit.",
+        "en": "Reconnaissance pour ce qu’on reçoit."
+      },
+      "example_sentence_i18n": {
+        "fr": "Gratitude aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre gratitude et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "gratitude",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_031",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "quit"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "équité",
+        "es": "equidad",
+        "en": "fairness"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « équité » ?",
+        "es": "¿Qué significa « équité »?",
+        "en": "What does « équité » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Traitement juste des personnes.",
+        "es": "Traitement juste des personnes.",
+        "en": "Traitement juste des personnes."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de équité peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre équité et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "équité",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_032",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "simplicit"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "simplicité",
+        "es": "simplicidad",
+        "en": "simplicity"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « simplicité » ?",
+        "es": "¿Qué significa « simplicité »?",
+        "en": "What does « simplicité » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Choix du plus clair, sans complexité inutile.",
+        "es": "Choix du plus clair, sans complexité inutile.",
+        "en": "Choix du plus clair, sans complexité inutile."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la simplicité quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre simplicité et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "simplicité",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_033",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "flexibilit"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "flexibilité",
+        "es": "flexibilidad",
+        "en": "flexibility"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « flexibilité » ?",
+        "es": "¿Qué significa « flexibilité »?",
+        "en": "What does « flexibilité » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Capacité de s’adapter aux changements.",
+        "es": "Capacité de s’adapter aux changements.",
+        "en": "Capacité de s’adapter aux changements."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec flexibilité, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre flexibilité et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "flexibilité",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_034",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "pers_v_rance"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "persévérance",
+        "es": "perseverancia",
+        "en": "perseverance"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « persévérance » ?",
+        "es": "¿Qué significa « persévérance »?",
+        "en": "What does « persévérance » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Fait de continuer malgré les difficultés.",
+        "es": "Fait de continuer malgré les difficultés.",
+        "en": "Fait de continuer malgré les difficultés."
+      },
+      "example_sentence_i18n": {
+        "fr": "Persévérance aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre persévérance et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "persévérance",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_035",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "d_cision"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "décision",
+        "es": "decisión",
+        "en": "decision"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « décision » ?",
+        "es": "¿Qué significa « décision »?",
+        "en": "What does « décision » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Choix clair après réflexion.",
+        "es": "Choix clair après réflexion.",
+        "en": "Choix clair après réflexion."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de décision peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre décision et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "décision",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_036",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "confiant"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "confiant",
+        "es": "confiado",
+        "en": "confident"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « confiant » ?",
+        "es": "¿Qué significa « confiant »?",
+        "en": "What does « confiant » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Qui se sent sûr de soi.",
+        "es": "Qui se sent sûr de soi.",
+        "en": "Qui se sent sûr de soi."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la confiant quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre confiant et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "confiant",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_037",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "recul"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "recul",
+        "es": "distancia",
+        "en": "step back"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « recul » ?",
+        "es": "¿Qué significa « recul »?",
+        "en": "What does « recul » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Action de prendre de la distance pour mieux voir.",
+        "es": "Action de prendre de la distance pour mieux voir.",
+        "en": "Action de prendre de la distance pour mieux voir."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec recul, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre recul et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "recul",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_038",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "quilibre_mental"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "équilibre mental",
+        "es": "equilibrio mental",
+        "en": "mental balance"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « équilibre mental » ?",
+        "es": "¿Qué significa « équilibre mental »?",
+        "en": "What does « équilibre mental » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Stabilité émotionnelle et intérieure.",
+        "es": "Stabilité émotionnelle et intérieure.",
+        "en": "Stabilité émotionnelle et intérieure."
+      },
+      "example_sentence_i18n": {
+        "fr": "Équilibre mental aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre équilibre mental et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "équilibre mental",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_039",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "stress"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "stress",
+        "es": "estrés",
+        "en": "stress"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « stress » ?",
+        "es": "¿Qué significa « stress »?",
+        "en": "What does « stress » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Tension qui fatigue et perturbe.",
+        "es": "Tension qui fatigue et perturbe.",
+        "en": "Tension qui fatigue et perturbe."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de stress peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre stress et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "stress",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_040",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "urgence"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "urgence",
+        "es": "urgencia",
+        "en": "urgency"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « urgence » ?",
+        "es": "¿Qué significa « urgence »?",
+        "en": "What does « urgence » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Situation qui demande d’agir vite.",
+        "es": "Situation qui demande d’agir vite.",
+        "en": "Situation qui demande d’agir vite."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la urgence quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre urgence et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "urgence",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_041",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "qualit"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "qualité",
+        "es": "calidad",
+        "en": "quality"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « qualité » ?",
+        "es": "¿Qué significa « qualité »?",
+        "en": "What does « qualité » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Niveau de valeur d’un travail ou d’un objet.",
+        "es": "Niveau de valeur d’un travail ou d’un objet.",
+        "en": "Niveau de valeur d’un travail ou d’un objet."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec qualité, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre qualité et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "qualité",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_042",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "m_thode"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "méthode",
+        "es": "método",
+        "en": "method"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « méthode » ?",
+        "es": "¿Qué significa « méthode »?",
+        "en": "What does « méthode » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Façon organisée de faire une chose.",
+        "es": "Façon organisée de faire une chose.",
+        "en": "Façon organisée de faire une chose."
+      },
+      "example_sentence_i18n": {
+        "fr": "Méthode aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre méthode et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "méthode",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_043",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "r_sultat"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "résultat",
+        "es": "resultado",
+        "en": "result"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « résultat » ?",
+        "es": "¿Qué significa « résultat »?",
+        "en": "What does « résultat » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Conséquence d’une action.",
+        "es": "Conséquence d’une action.",
+        "en": "Conséquence d’une action."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de résultat peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre résultat et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "résultat",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_044",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "retard"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "retard",
+        "es": "retraso",
+        "en": "delay"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « retard » ?",
+        "es": "¿Qué significa « retard »?",
+        "en": "What does « retard » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Fait d’arriver après l’heure prévue.",
+        "es": "Fait d’arriver après l’heure prévue.",
+        "en": "Fait d’arriver après l’heure prévue."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la retard quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre retard et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "retard",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_045",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "accord"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "accord",
+        "es": "acuerdo",
+        "en": "agreement"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « accord » ?",
+        "es": "¿Qué significa « accord »?",
+        "en": "What does « accord » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Entente entre deux parties.",
+        "es": "Entente entre deux parties.",
+        "en": "Entente entre deux parties."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec accord, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre accord et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "accord",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_046",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "preuve"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "preuve",
+        "es": "prueba",
+        "en": "evidence"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « preuve » ?",
+        "es": "¿Qué significa « preuve »?",
+        "en": "What does « preuve » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Élément qui montre que quelque chose est vrai.",
+        "es": "Élément qui montre que quelque chose est vrai.",
+        "en": "Élément qui montre que quelque chose est vrai."
+      },
+      "example_sentence_i18n": {
+        "fr": "Preuve aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre preuve et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "preuve",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_047",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "contexte"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "contexte",
+        "es": "contexto",
+        "en": "context"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « contexte » ?",
+        "es": "¿Qué significa « contexte »?",
+        "en": "What does « contexte » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Informations autour d’une situation.",
+        "es": "Informations autour d’une situation.",
+        "en": "Informations autour d’une situation."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de contexte peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre contexte et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "contexte",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_048",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "souci"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "souci",
+        "es": "preocupación",
+        "en": "concern"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « souci » ?",
+        "es": "¿Qué significa « souci »?",
+        "en": "What does « souci » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Petit problème ou inquiétude.",
+        "es": "Petit problème ou inquiétude.",
+        "en": "Petit problème ou inquiétude."
+      },
+      "example_sentence_i18n": {
+        "fr": "Choisis la souci quand tout devient flou.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre souci et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "souci",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_049",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "disponibilit"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "disponibilité",
+        "es": "disponibilidad",
+        "en": "availability"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « disponibilité » ?",
+        "es": "¿Qué significa « disponibilité »?",
+        "en": "What does « disponibilité » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Fait d’être libre pour aider ou répondre.",
+        "es": "Fait d’être libre pour aider ou répondre.",
+        "en": "Fait d’être libre pour aider ou répondre."
+      },
+      "example_sentence_i18n": {
+        "fr": "Avec disponibilité, on avance même les jours difficiles.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre disponibilité et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "disponibilité",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_050",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "autonomie"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "autonomie",
+        "es": "autonomía",
+        "en": "autonomy"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « autonomie » ?",
+        "es": "¿Qué significa « autonomie »?",
+        "en": "What does « autonomie » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Capacité à agir seul, avec responsabilité.",
+        "es": "Capacité à agir seul, avec responsabilité.",
+        "en": "Capacité à agir seul, avec responsabilité."
+      },
+      "example_sentence_i18n": {
+        "fr": "Autonomie aujourd’hui, progrès demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre autonomie et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "autonomie",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_051",
+      "level": "B1",
+      "category": "motivation",
+      "tags": [
+        "motivation",
+        "progres",
+        "souplesse"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "souplesse",
+        "es": "flexibilidad",
+        "en": "flexibility"
+      },
+      "question_i18n": {
+        "fr": "Que signifie « souplesse » ?",
+        "es": "¿Qué significa « souplesse »?",
+        "en": "What does « souplesse » mean?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Capacité à s’adapter facilement.",
+        "es": "Capacité à s’adapter facilement.",
+        "en": "Capacité à s’adapter facilement."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un peu de souplesse peut changer toute une journée.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre souplesse et votre collaboration.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "mixed",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "souplesse",
+        "rate": 1.0
+      },
+      "distractor_pool": {
+        "strategy": "tags_level",
+        "match_tags": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_001",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_001"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Petit à petit, on avance.",
+        "es": "Poco a poco, se avanza.",
+        "en": "Little by little, we move forward."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Expression pour rappeler que les progrès viennent avec le temps.",
+        "es": "Expression pour rappeler que les progrès viennent avec le temps.",
+        "en": "Expression pour rappeler que les progrès viennent avec le temps."
+      },
+      "example_sentence_i18n": {
+        "fr": "Petit à petit, on avance.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Petit à petit, on avance. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Petit à petit, on avance.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_002",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_002"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Mieux vaut tard que jamais.",
+        "es": "Mejor tarde que nunca.",
+        "en": "Better late than never."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Dicho pour encourager l’action même si elle arrive tard.",
+        "es": "Dicho pour encourager l’action même si elle arrive tard.",
+        "en": "Dicho pour encourager l’action même si elle arrive tard."
+      },
+      "example_sentence_i18n": {
+        "fr": "Mieux vaut tard que jamais.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Mieux vaut tard que jamais. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Mieux vaut tard que jamais.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_003",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_003"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Chaque pas compte.",
+        "es": "Cada paso cuenta.",
+        "en": "Every step counts."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Phrase motivante sur l’importance des petits progrès.",
+        "es": "Phrase motivante sur l’importance des petits progrès.",
+        "en": "Phrase motivante sur l’importance des petits progrès."
+      },
+      "example_sentence_i18n": {
+        "fr": "Chaque pas compte.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Chaque pas compte. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Chaque pas compte.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_004",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_004"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Ce qui compte, c’est de commencer.",
+        "es": "Lo importante es empezar.",
+        "en": "What matters is starting."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Encourage à passer à l’action.",
+        "es": "Encourage à passer à l’action.",
+        "en": "Encourage à passer à l’action."
+      },
+      "example_sentence_i18n": {
+        "fr": "Ce qui compte, c’est de commencer.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Ce qui compte, c’est de commencer. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Ce qui compte, c’est de commencer.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_005",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_005"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "On apprend en essayant.",
+        "es": "Se aprende intentando.",
+        "en": "We learn by trying."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Met l’accent sur la pratique et l’erreur utile.",
+        "es": "Met l’accent sur la pratique et l’erreur utile.",
+        "en": "Met l’accent sur la pratique et l’erreur utile."
+      },
+      "example_sentence_i18n": {
+        "fr": "On apprend en essayant.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "On apprend en essayant. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "On apprend en essayant.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_006",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_006"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Rien ne sert de courir, il faut partir à point.",
+        "es": "No sirve de nada correr, hay que salir a tiempo.",
+        "en": "No need to rush; start on time."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Proverbe sur la patience et la régularité.",
+        "es": "Proverbe sur la patience et la régularité.",
+        "en": "Proverbe sur la patience et la régularité."
+      },
+      "example_sentence_i18n": {
+        "fr": "Rien ne sert de courir, il faut partir à point.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Rien ne sert de courir, il faut partir à point. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Rien ne sert de courir, il faut partir à point.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_007",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_007"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Je préfère être clair plutôt que parfait.",
+        "es": "Prefiero ser claro que perfecto.",
+        "en": "I’d rather be clear than perfect."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Phrase pro pour éviter le perfectionnisme.",
+        "es": "Phrase pro pour éviter le perfectionnisme.",
+        "en": "Phrase pro pour éviter le perfectionnisme."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je préfère être clair plutôt que parfait.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je préfère être clair plutôt que parfait. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je préfère être clair plutôt que parfait.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_008",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_008"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Merci pour votre retour.",
+        "es": "Gracias por su respuesta.",
+        "en": "Thank you for your feedback."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Formule email simple et élégante.",
+        "es": "Formule email simple et élégante.",
+        "en": "Formule email simple et élégante."
+      },
+      "example_sentence_i18n": {
+        "fr": "Merci pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Merci pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Merci pour votre retour.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_009",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_009"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Je vous remercie par avance.",
+        "es": "Le agradezco de antemano.",
+        "en": "Thank you in advance."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Formule email polie.",
+        "es": "Formule email polie.",
+        "en": "Formule email polie."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous remercie par avance.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie par avance.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous remercie par avance.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_010",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_010"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Je reste à votre disposition.",
+        "es": "Quedo a su disposición.",
+        "en": "I remain at your disposal."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Formule email professionnelle.",
+        "es": "Formule email professionnelle.",
+        "en": "Formule email professionnelle."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je reste à votre disposition.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je reste à votre disposition. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je reste à votre disposition.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_011",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_011"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Veuillez trouver ci-joint le document demandé.",
+        "es": "Adjunto encontrará el documento solicitado.",
+        "en": "Please find attached the requested document."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Formule email standard.",
+        "es": "Formule email standard.",
+        "en": "Formule email standard."
+      },
+      "example_sentence_i18n": {
+        "fr": "Veuillez trouver ci-joint le document demandé.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Veuillez trouver ci-joint le document demandé.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Veuillez trouver ci-joint le document demandé.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_012",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_012"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Je me permets de vous contacter concernant…",
+        "es": "Me permito contactarle sobre…",
+        "en": "I’m reaching out regarding…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Formule email pour introduire un sujet.",
+        "es": "Formule email pour introduire un sujet.",
+        "en": "Formule email pour introduire un sujet."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je me permets de vous contacter concernant…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je me permets de vous contacter concernant… — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je me permets de vous contacter concernant…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_013",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_013"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Pourriez-vous me confirmer…",
+        "es": "¿Podría confirmarme…?",
+        "en": "Could you please confirm…?"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Demande polie en email.",
+        "es": "Demande polie en email.",
+        "en": "Demande polie en email."
+      },
+      "example_sentence_i18n": {
+        "fr": "Pourriez-vous me confirmer…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Pourriez-vous me confirmer…",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Pourriez-vous me confirmer…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_014",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_014"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Afin d’éviter tout malentendu…",
+        "es": "Para evitar cualquier malentendido…",
+        "en": "To avoid any misunderstanding…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Formule pour clarifier.",
+        "es": "Formule pour clarifier.",
+        "en": "Formule pour clarifier."
+      },
+      "example_sentence_i18n": {
+        "fr": "Afin d’éviter tout malentendu…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Afin d’éviter tout malentendu… — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Afin d’éviter tout malentendu…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_015",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_015"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Dans l’attente de votre réponse…",
+        "es": "A la espera de su respuesta…",
+        "en": "Looking forward to your reply…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Clôture email.",
+        "es": "Clôture email.",
+        "en": "Clôture email."
+      },
+      "example_sentence_i18n": {
+        "fr": "Dans l’attente de votre réponse…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Dans l’attente de votre réponse…",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Dans l’attente de votre réponse…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_016",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_016"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Comme convenu…",
+        "es": "Como acordado…",
+        "en": "As agreed…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Rappel professionnel.",
+        "es": "Rappel professionnel.",
+        "en": "Rappel professionnel."
+      },
+      "example_sentence_i18n": {
+        "fr": "Comme convenu…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Comme convenu…",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Comme convenu…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_017",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_017"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Je vous prie de m’excuser pour le retard.",
+        "es": "Le ruego me disculpe por el retraso.",
+        "en": "Please accept my apologies for the delay."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Excuse email élégante.",
+        "es": "Excuse email élégante.",
+        "en": "Excuse email élégante."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous prie de m’excuser pour le retard.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous prie de m’excuser pour le retard.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous prie de m’excuser pour le retard.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_018",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_018"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Merci de votre compréhension.",
+        "es": "Gracias por su comprensión.",
+        "en": "Thank you for your understanding."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Phrase utile.",
+        "es": "Phrase utile.",
+        "en": "Phrase utile."
+      },
+      "example_sentence_i18n": {
+        "fr": "Merci de votre compréhension.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Merci de votre compréhension.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Merci de votre compréhension.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_019",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_019"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Je vous confirme la bonne réception.",
+        "es": "Confirmo la buena recepción.",
+        "en": "I confirm receipt."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Phrase pro.",
+        "es": "Phrase pro.",
+        "en": "Phrase pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous confirme la bonne réception.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous confirme la bonne réception.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous confirme la bonne réception.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_020",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_020"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Je vous envoie ci-dessous…",
+        "es": "Le envío a continuación…",
+        "en": "I’m sending below…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Transition email.",
+        "es": "Transition email.",
+        "en": "Transition email."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous envoie ci-dessous…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous envoie ci-dessous…",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous envoie ci-dessous…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_021",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_021"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Il vaut mieux prévenir que guérir.",
+        "es": "Más vale prevenir que curar.",
+        "en": "Better safe than sorry."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Proverbe sur la prévention.",
+        "es": "Proverbe sur la prévention.",
+        "en": "Proverbe sur la prévention."
+      },
+      "example_sentence_i18n": {
+        "fr": "Il vaut mieux prévenir que guérir.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Il vaut mieux prévenir que guérir. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Il vaut mieux prévenir que guérir.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_022",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_022"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Qui ne tente rien n’a rien.",
+        "es": "Quien no arriesga no gana.",
+        "en": "Nothing ventured, nothing gained."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Encourage à oser.",
+        "es": "Encourage à oser.",
+        "en": "Encourage à oser."
+      },
+      "example_sentence_i18n": {
+        "fr": "Qui ne tente rien n’a rien.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Qui ne tente rien n’a rien. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Qui ne tente rien n’a rien.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_023",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_023"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "On n’est jamais trop prudent.",
+        "es": "Nunca se es demasiado prudente.",
+        "en": "You can never be too careful."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Expression de prudence.",
+        "es": "Expression de prudence.",
+        "en": "Expression de prudence."
+      },
+      "example_sentence_i18n": {
+        "fr": "On n’est jamais trop prudent.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "On n’est jamais trop prudent. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "On n’est jamais trop prudent.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_024",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_024"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Ça vaut le coup.",
+        "es": "Vale la pena.",
+        "en": "It’s worth it."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Expression de motivation.",
+        "es": "Expression de motivation.",
+        "en": "Expression de motivation."
+      },
+      "example_sentence_i18n": {
+        "fr": "Ça vaut le coup.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Ça vaut le coup. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Ça vaut le coup.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_025",
+      "level": "B1",
+      "category": "expressions",
+      "tags": [
+        "expression",
+        "b1",
+        "phrase_025"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Garder la tête froide.",
+        "es": "Mantener la cabeza fría.",
+        "en": "Keep a cool head."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Conseil pour rester calme.",
+        "es": "Conseil pour rester calme.",
+        "en": "Conseil pour rester calme."
+      },
+      "example_sentence_i18n": {
+        "fr": "Garder la tête froide.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Garder la tête froide. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Garder la tête froide.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_026",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_026"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Prendre du recul.",
+        "es": "Tomar distancia.",
+        "en": "Take a step back."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Expression pour mieux analyser.",
+        "es": "Expression pour mieux analyser.",
+        "en": "Expression pour mieux analyser."
+      },
+      "example_sentence_i18n": {
+        "fr": "Prendre du recul.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Prendre du recul. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Prendre du recul.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_027",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_027"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Mettre les choses au clair.",
+        "es": "Aclarar las cosas.",
+        "en": "Clear things up."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Expression pro.",
+        "es": "Expression pro.",
+        "en": "Expression pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Mettre les choses au clair.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Mettre les choses au clair. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Mettre les choses au clair.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_028",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_028"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Aller droit au but.",
+        "es": "Ir al grano.",
+        "en": "Get straight to the point."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Expression de communication.",
+        "es": "Expression de communication.",
+        "en": "Expression de communication."
+      },
+      "example_sentence_i18n": {
+        "fr": "Aller droit au but.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Aller droit au but. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Aller droit au but.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_029",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_029"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Faire de son mieux.",
+        "es": "Hacer lo mejor posible.",
+        "en": "Do one’s best."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Motivation.",
+        "es": "Motivation.",
+        "en": "Motivation."
+      },
+      "example_sentence_i18n": {
+        "fr": "Faire de son mieux.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Faire de son mieux. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Faire de son mieux.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_030",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_030"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Ne pas lâcher.",
+        "es": "No rendirse.",
+        "en": "Don’t give up."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Encourage la persévérance.",
+        "es": "Encourage la persévérance.",
+        "en": "Encourage la persévérance."
+      },
+      "example_sentence_i18n": {
+        "fr": "Ne pas lâcher.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Ne pas lâcher. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Ne pas lâcher.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_031",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_031"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Se donner les moyens.",
+        "es": "Darse los medios.",
+        "en": "Give yourself the means."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Parler d’efforts concrets.",
+        "es": "Parler d’efforts concrets.",
+        "en": "Parler d’efforts concrets."
+      },
+      "example_sentence_i18n": {
+        "fr": "Se donner les moyens.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Se donner les moyens. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Se donner les moyens.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_032",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_032"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Trouver un juste milieu.",
+        "es": "Encontrar un punto medio.",
+        "en": "Find a middle ground."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Expression d’équilibre.",
+        "es": "Expression d’équilibre.",
+        "en": "Expression d’équilibre."
+      },
+      "example_sentence_i18n": {
+        "fr": "Trouver un juste milieu.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Trouver un juste milieu. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Trouver un juste milieu.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_033",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_033"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "C’est en forgeant qu’on devient forgeron.",
+        "es": "La práctica hace al maestro.",
+        "en": "Practice makes perfect."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Proverbe sur l’apprentissage.",
+        "es": "Proverbe sur l’apprentissage.",
+        "en": "Proverbe sur l’apprentissage."
+      },
+      "example_sentence_i18n": {
+        "fr": "C’est en forgeant qu’on devient forgeron.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "C’est en forgeant qu’on devient forgeron. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "C’est en forgeant qu’on devient forgeron.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_034",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_034"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Qui va doucement va sûrement.",
+        "es": "Despacio se llega lejos.",
+        "en": "Slow and steady wins."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Proverbe de patience.",
+        "es": "Proverbe de patience.",
+        "en": "Proverbe de patience."
+      },
+      "example_sentence_i18n": {
+        "fr": "Qui va doucement va sûrement.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Qui va doucement va sûrement. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Qui va doucement va sûrement.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_035",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_035"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Mieux vaut faire simple.",
+        "es": "Mejor hacerlo simple.",
+        "en": "Better keep it simple."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Conseil pour éviter la complexité.",
+        "es": "Conseil pour éviter la complexité.",
+        "en": "Conseil pour éviter la complexité."
+      },
+      "example_sentence_i18n": {
+        "fr": "Mieux vaut faire simple.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Mieux vaut faire simple. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Mieux vaut faire simple.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_036",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_036"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Je vous propose la solution suivante…",
+        "es": "Le propongo la siguiente solución…",
+        "en": "I propose the following solution…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Email pro.",
+        "es": "Email pro.",
+        "en": "Email pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous propose la solution suivante…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous propose la solution suivante…",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous propose la solution suivante…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_037",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_037"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Sauf erreur de ma part…",
+        "es": "Salvo error por mi parte…",
+        "en": "Unless I’m mistaken…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Nuance pro.",
+        "es": "Nuance pro.",
+        "en": "Nuance pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Sauf erreur de ma part…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Sauf erreur de ma part…",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Sauf erreur de ma part…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_038",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_038"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Pour information…",
+        "es": "Para su información…",
+        "en": "For your information…"
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Email pro.",
+        "es": "Email pro.",
+        "en": "Email pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Pour information…",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Pour information…",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Pour information…",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_039",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_039"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Je vous remercie pour votre disponibilité.",
+        "es": "Gracias por su disponibilidad.",
+        "en": "Thank you for your availability."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Email pro.",
+        "es": "Email pro.",
+        "en": "Email pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous remercie pour votre disponibilité.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous remercie pour votre disponibilité.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous remercie pour votre disponibilité.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_040",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_040"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "N’hésitez pas à me contacter.",
+        "es": "No dude en contactarme.",
+        "en": "Feel free to contact me."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Email pro.",
+        "es": "Email pro.",
+        "en": "Email pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "N’hésitez pas à me contacter.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "N’hésitez pas à me contacter.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "N’hésitez pas à me contacter.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_041",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_041"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Je prends note.",
+        "es": "Tomo nota.",
+        "en": "Noted."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Réponse pro concise.",
+        "es": "Réponse pro concise.",
+        "en": "Réponse pro concise."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je prends note.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je prends note.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je prends note.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_042",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_042"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Je vous tiendrai informé.",
+        "es": "Le mantendré informado.",
+        "en": "I will keep you informed."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Email pro.",
+        "es": "Email pro.",
+        "en": "Email pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous tiendrai informé.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous tiendrai informé.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous tiendrai informé.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_043",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_043"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "C’est noté.",
+        "es": "Está anotado.",
+        "en": "It’s noted."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Réponse rapide.",
+        "es": "Réponse rapide.",
+        "en": "Réponse rapide."
+      },
+      "example_sentence_i18n": {
+        "fr": "C’est noté.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "C’est noté.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "C’est noté.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_044",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_044"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "On fait le point demain.",
+        "es": "Hacemos un punto mañana.",
+        "en": "Let’s touch base tomorrow."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Phrase de travail.",
+        "es": "Phrase de travail.",
+        "en": "Phrase de travail."
+      },
+      "example_sentence_i18n": {
+        "fr": "On fait le point demain.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "On fait le point demain. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "On fait le point demain.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_045",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_045"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "On avance étape par étape.",
+        "es": "Avanzamos paso a paso.",
+        "en": "We move forward step by step."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Motivation.",
+        "es": "Motivation.",
+        "en": "Motivation."
+      },
+      "example_sentence_i18n": {
+        "fr": "On avance étape par étape.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "On avance étape par étape. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "On avance étape par étape.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_046",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_046"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "Un problème à la fois.",
+        "es": "Un problema a la vez.",
+        "en": "One problem at a time."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Gestion du stress.",
+        "es": "Gestion du stress.",
+        "en": "Gestion du stress."
+      },
+      "example_sentence_i18n": {
+        "fr": "Un problème à la fois.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Un problème à la fois. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Un problème à la fois.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_047",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_047"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Respirer, puis décider.",
+        "es": "Respirar y luego decidir.",
+        "en": "Breathe, then decide."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Calme + décision.",
+        "es": "Calme + décision.",
+        "en": "Calme + décision."
+      },
+      "example_sentence_i18n": {
+        "fr": "Respirer, puis décider.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Respirer, puis décider. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Respirer, puis décider.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_048",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_048"
+      ],
+      "direction": "FR→EN",
+      "front_i18n": {
+        "fr": "La régularité bat l’intensité.",
+        "es": "La constancia vence a la intensidad.",
+        "en": "Consistency beats intensity."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Habitude et progrès.",
+        "es": "Habitude et progrès.",
+        "en": "Habitude et progrès."
+      },
+      "example_sentence_i18n": {
+        "fr": "La régularité bat l’intensité.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "La régularité bat l’intensité. — Je vous remercie par avance pour votre retour.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "La régularité bat l’intensité.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_phrase_049",
+      "level": "B1",
+      "category": "email_elegant",
+      "tags": [
+        "email",
+        "pro",
+        "phrase_049"
+      ],
+      "direction": "FR→ES",
+      "front_i18n": {
+        "fr": "Je vous confirme le rendez-vous.",
+        "es": "Confirmo la cita.",
+        "en": "I confirm the appointment."
+      },
+      "question_i18n": {
+        "fr": "Quelle est l’idée principale de cette phrase ?",
+        "es": "¿Cuál es la idea principal de esta frase?",
+        "en": "What is the main idea of this sentence?"
+      },
+      "correct_answer_i18n": {
+        "fr": "Email pro.",
+        "es": "Email pro.",
+        "en": "Email pro."
+      },
+      "example_sentence_i18n": {
+        "fr": "Je vous confirme le rendez-vous.",
+        "es": "",
+        "en": ""
+      },
+      "email_variant_i18n": {
+        "fr": "Je vous confirme le rendez-vous.",
+        "es": "",
+        "en": ""
+      },
+      "usage_type": "phrase",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "Je vous confirme le rendez-vous.",
+        "rate": 0.95
+      },
+      "distractor_pool": {
+        "strategy": "category_level",
+        "same_category": true,
+        "same_level": true,
+        "avoid_recent_correct": 2,
+        "n_options_total": 3
+      },
+      "difficulty_1to5": 3
+    }
+  ],
+  "import_instructions": {
+    "firestore_suggested_path": "coach_packs/{pack_id}/versions/{version}",
+    "user_progress_paths": [
+      "users/{uid}/coach_user_packs/{pack_id}",
+      "users/{uid}/coach_card_progress/{card_id}"
+    ]
+  }
+}

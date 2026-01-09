@@ -2,51 +2,38 @@
 import { i18n } from './i18n.js';
 import { bus } from '../../core/bus.js';
 
-function getByPath(obj, path) {
-    if (!path) return undefined;
-    const parts = path.split('.').map(p => p.trim()).filter(Boolean);
-    let cur = obj;
-    for (const part of parts) {
-        if (cur == null) return undefined;
-        cur = cur[part];
-    }
-    return cur;
-}
-
-function isTruthy(val) {
-    if (Array.isArray(val)) return val.length > 0;
-    return !!val;
-}
-
 class UiRenderer {
     constructor() {
         this.container = document.getElementById('coach-content');
         this.viewCache = new Map();
-        this.roadmapExpanded = false;
     }
 
     async render(view, data) {
         if (!this.container) {
-            console.error('Coach content container not found!');
+            console.error("Coach content container not found!");
             return;
         }
 
         try {
             const template = await this.getViewTemplate(view);
-            const html = this.compileTemplate(template, data);
+            const html = this.compileTemplate(template, data || {});
             this.container.innerHTML = html;
             this.bindEventListeners(view, data);
             if (window.feather?.replace) window.feather.replace();
         } catch (error) {
             console.error(`Error rendering view ${view}:`, error);
-            this.container.innerHTML = `<div class="glass-panel"><p>Coach: failed to load view.</p></div>`;
+            this.container.innerHTML = `<div class="glass-panel"><p>Error loading view: ${error.message}</p></div>`;
         }
     }
 
     async getViewTemplate(view) {
-        if (this.viewCache.has(view)) return this.viewCache.get(view);
+        if (this.viewCache.has(view)) {
+            return this.viewCache.get(view);
+        }
         const response = await fetch(`src/modules/coach/views/${view}.html`);
-        if (!response.ok) throw new Error(`Could not fetch template for view: ${view}`);
+        if (!response.ok) {
+            throw new Error(`Could not fetch template for view: ${view}`);
+        }
         const template = await response.text();
         this.viewCache.set(view, template);
         return template;
@@ -57,219 +44,213 @@ class UiRenderer {
 
         let compiled = template;
 
-        // {{#each path}}...{{/each}}
-        compiled = compiled.replace(/\{\{#each (.*?)\}\}(.*?)\{\{\/each\}\}/gs, (_match, rawPath, body) => {
-            const path = rawPath.trim();
-            const array = getByPath(data, path);
-            if (!Array.isArray(array) || array.length === 0) return '';
+        // {{#each array}}...{{/each}}
+        compiled = compiled.replace(/\{\{#each (.*?)\}\}(.*?)\{\{\/each\}\}/gs, (match, arrayName, body) => {
+            const keys = arrayName.trim().split('.');
+            let array = data;
+            for (const key of keys) {
+                array = array ? array[key] : undefined;
+            }
+            if (!array && keys.length === 1) {
+                array = data[arrayName.trim()];
+            }
+
+            if (!array || !Array.isArray(array)) return '';
+
             return array.map((item, index) => {
-                let itemBody = body.replace(/\{\{@index\}\}/g, String(index));
-                itemBody = itemBody.replace(/\{\{this\}\}/g, () => {
-                    if (typeof item === 'object' && item !== null) return i18n.getContent(item);
-                    return item ?? '';
+                let itemBody = body.replace(/\{\{@index\}\}/g, index);
+
+                itemBody = itemBody.replace(/\{\{this\}\}/g, (m) => {
+                    if (typeof item === 'object' && item !== null) {
+                        return i18n.getContent(item);
+                    }
+                    return item;
                 });
-                return itemBody.replace(/\{\{this\.(.*?)\}\}/g, (_m, propPath) => {
-                    const value = getByPath(item, propPath.trim());
-                    if (typeof value === 'object' && value !== null) return i18n.getContent(value);
-                    return value ?? '';
+
+                return itemBody.replace(/\{\{this\.(.*?)\}\}/g, (m, prop) => {
+                    const value = item[prop.trim()];
+                    if (typeof value === 'object' && value !== null) {
+                        return i18n.getContent(value);
+                    }
+                    return value !== undefined ? value : '';
                 });
             }).join('');
         });
 
-        // {{#if condition}}...{{else}}...{{/if}}
-        compiled = compiled.replace(/\{\{#if (.*?)\}\}(.*?)\{\{else\}\}(.*?)\{\{\/if\}\}/gs, (_match, condition, bodyIf, bodyElse) => {
-            const result = this.evalCondition(condition.trim(), data);
-            return result ? bodyIf : bodyElse;
-        });
+        // Standalone {{key}}
+        compiled = compiled.replace(/\{\{(.*?)\}\}/g, (match, key) => {
+            const k = key.trim();
+            if (k.startsWith('#') || k.startsWith('/')) return match;
 
-        // {{#if condition}}...{{/if}}
-        compiled = compiled.replace(/\{\{#if (.*?)\}\}(.*?)\{\{\/if\}\}/gs, (_match, condition, body) => {
-            const result = this.evalCondition(condition.trim(), data);
-            return result ? body : '';
-        });
-
-        // Standalone {{key}} (supports nested paths)
-        compiled = compiled.replace(/\{\{(.*?)\}\}/g, (_match, keyRaw) => {
-            const key = keyRaw.trim();
-            const val = getByPath(data, key);
-            if (val !== undefined) {
-                if (typeof val === 'object' && val !== null) return i18n.getContent(val);
-                return val ?? '';
+            const keys = k.split('.');
+            let val = data;
+            for (const subKey of keys) {
+                val = val ? val[subKey] : undefined;
             }
-            return uiStrings[key] || `{{${key}}}`;
+            if (val !== undefined) {
+                if (typeof val === 'object' && val !== null) {
+                    return i18n.getContent(val);
+                }
+                return val;
+            }
+
+            return uiStrings[k] || ``;
+        });
+
+        // Basic {{#if (eq var "value")}} or {{#if var}}
+        compiled = compiled.replace(/\{\{#if (.*?)\}\}(.*?)\{\{(?:else\}\}(.*?)\{\{)?\/if\}\}/gs, (match, condition, bodyIf, bodyElse) => {
+            let result = false;
+
+            if (condition.includes('eq')) {
+                const [_, varName, value] = condition.match(/eq (.*?) "(.*?)"/);
+                // Hack for simple matching within current context
+                let actualValue = data;
+
+                // Try finding in settings first if it looks like a setting
+                if (data.settings && data.settings[varName.split('.').pop()]) {
+                    actualValue = data.settings[varName.split('.').pop()];
+                } else if (data[varName]) {
+                    actualValue = data[varName];
+                } else if (varName.includes('.')) {
+                    // Nested check
+                    const keys = varName.split('.');
+                    let val = data;
+                    for (const subKey of keys) {
+                        val = val ? val[subKey] : undefined;
+                    }
+                    actualValue = val;
+                } else {
+                    // Check 'this' if inside loop (not supported well here, but let's try data root)
+                    actualValue = data[varName];
+                }
+
+                result = (String(actualValue) === value);
+            } else {
+                // Simple boolean check
+                result = !!data[condition.trim()];
+            }
+
+            return result ? bodyIf : (bodyElse || '');
         });
 
         return compiled;
     }
 
-    evalCondition(condition, data) {
-        // (eq path "value")
-        if (condition.startsWith('(eq ')) {
-            const m = condition.match(/^\(eq\s+([^\s]+)\s+"(.*)"\)$/);
-            if (!m) return false;
-            const path = m[1].trim();
-            const expected = m[2];
-            return String(getByPath(data, path) ?? '') === expected;
-        }
-        // path truthy (supports nested paths like weak_domains.length)
-        const val = getByPath(data, condition);
-        return isTruthy(val);
-    }
-
     bindEventListeners(view, data) {
         this.container.onclick = (e) => {
-            const actionEl = e.target.closest('[data-action]');
-            if (!actionEl) return;
+            const action = e.target.closest('[data-action]');
+            if (!action) return;
 
-            const action = actionEl.dataset.action;
-            switch (action) {
+            const actionName = action.dataset.action;
+
+            switch (actionName) {
                 case 'back-to-dashboard':
                     bus.emit('coach:navigate', 'dashboard');
+                    break;
+                case 'back-to-skills':
+                    bus.emit('coach:navigate', 'skills');
+                    break;
+                case 'view-my-skills':
+                    bus.emit('coach:navigate', 'skills');
                     break;
                 case 'open-settings':
                     bus.emit('coach:navigate', 'settings');
                     break;
-                case 'view-roadmap':
-                    bus.emit('coach:navigate', 'roadmap');
+                case 'start-exam-center':
+                    bus.emit('coach:navigate', 'exam-center');
                     break;
-                case 'open-modules':
-                    bus.emit('coach:navigate', 'module');
+                case 'open-error-cards':
+                    bus.emit('coach:navigate', 'error-cards');
+                    break;
+                case 'add-new-skill':
+                    bus.emit('coach:navigate', 'add-skill');
                     break;
                 case 'start-session':
-                    bus.emit('coach:start-session');
+                    bus.emit('coach:navigate', 'session');
                     break;
-                case 'retry-assisted':
-                    bus.emit('coach:retry-assisted');
+                case 'set-active-skill':
+                    const skillId = action.dataset.id;
+                    bus.emit('coach:activate-skill', skillId);
                     break;
-                case 'next-session': {
-                    const teachBack = this.container.querySelector('#coach-teachback-text')?.value?.trim() || '';
-                    bus.emit('coach:feedback-continue', { teachBack });
+                case 'start-module-exam':
+                    const moduleId = action.dataset.moduleId;
+                    bus.emit('coach:start-exam', { moduleId });
                     break;
-                }
-                case 'start-exam':
-                    bus.emit('coach:start-exam', { scope: 'skill' });
-                    break;
-                case 'start-drill':
-                    bus.emit('coach:start-drill');
-                    break;
-                case 'start-module-exam': {
-                    const moduleId = actionEl.dataset.moduleId;
-                    bus.emit('coach:start-exam', { scope: 'module', moduleId });
-                    break;
-                }
-                case 'change-skill':
-                    bus.emit('coach:change-skill');
-                    break;
-                case 'toggle-roadmap-sessions':
-                    this.roadmapExpanded = !this.roadmapExpanded;
-                    bus.emit('coach:toggle-roadmap-sessions', { expanded: this.roadmapExpanded });
+                case 'next-session':
+                    bus.emit('coach:navigate', 'dashboard');
                     break;
             }
         };
 
+        if (view === 'add-skill') {
+            const btnCreate = document.getElementById('btn-create-skill');
+            if (btnCreate) {
+                btnCreate.onclick = () => {
+                    const topic = document.getElementById('skill-topic').value;
+                    const goal = document.getElementById('skill-goal').value;
+                    const intensity = document.getElementById('skill-intensity').value;
+                    const language = document.getElementById('skill-language').value;
+
+                    if (!topic || !goal) return;
+
+                    bus.emit('coach:create-skill', { topic, goal, intensity, language });
+                };
+            }
+        }
+
         if (view === 'session') {
             const options = this.container.querySelectorAll('.option-btn');
-            const submitBtn = this.container.querySelector('#btn-submit-answer');
-            const whyEl = this.container.querySelector('#thought-process');
+            const submitBtn = document.getElementById('btn-submit-answer');
             let selectedIndex = null;
-
-            const updateSubmitState = () => {
-                const whyOk = (whyEl?.value || '').trim().length > 0;
-                submitBtn.disabled = selectedIndex === null || !whyOk;
-            };
 
             options.forEach(opt => {
                 opt.addEventListener('click', () => {
                     options.forEach(o => o.classList.remove('active'));
                     opt.classList.add('active');
-                    selectedIndex = Number(opt.dataset.index);
-                    updateSubmitState();
+                    selectedIndex = opt.dataset.index;
+                    submitBtn.disabled = false;
                 });
             });
 
-            whyEl?.addEventListener('input', updateSubmitState);
+            submitBtn.addEventListener('click', () => {
+                const confidence = document.getElementById('confidence-slider').value;
+                const justification = document.getElementById('thought-process').value;
 
-            submitBtn?.addEventListener('click', () => {
-                const confidence = Number(this.container.querySelector('#confidence-slider')?.value || 3);
-                const justification = (whyEl?.value || '').trim();
-                if (selectedIndex === null || !justification) return;
                 bus.emit('coach:submit-answer', {
-                    selectedIndex,
+                    session: data.session,
+                    answerIndex: selectedIndex,
                     confidence,
                     justification
                 });
-            });
-        }
-
-        if (view === 'feedback') {
-            const teachBackEl = this.container.querySelector('#coach-teachback-text');
-            const continueBtn = this.container.querySelector('#btn-feedback-continue');
-            if (teachBackEl && continueBtn) {
-                const update = () => {
-                    continueBtn.disabled = teachBackEl.value.trim().length === 0;
-                };
-                teachBackEl.addEventListener('input', update);
-                update();
-            }
-
-            const toggle = this.container.querySelector('#coach-toggle-no-resources');
-            const resourcesBody = this.container.querySelector('#coach-resources-body');
-            toggle?.addEventListener('change', () => {
-                if (!resourcesBody) return;
-                resourcesBody.style.display = toggle.checked ? 'none' : '';
             });
         }
 
         if (view === 'settings') {
-            const uiLang = this.container.querySelector('#coach-ui-language');
-            const contentLang = this.container.querySelector('#coach-content-language');
-            const allowToggle = this.container.querySelector('#coach-allow-multilang');
+            // Link to packs
+            const managePacksBtn = document.getElementById('btn-manage-packs');
+            if (managePacksBtn) managePacksBtn.onclick = () => bus.emit('coach:navigate', 'packs');
 
-            const emitSettings = () => {
-                bus.emit('coach:update-settings', {
-                    ui_language: uiLang?.value,
-                    content_language: contentLang?.value,
-                    allow_multilang_toggle: !!allowToggle?.checked
-                });
-            };
+            // Seed Local Pack (Developer Tool)
+            const seedBtn = document.getElementById('btn-seed-pack');
+            if (seedBtn) seedBtn.onclick = () => bus.emit('coach:sync-local-pack');
+            const saveBtn = document.getElementById('btn-save-settings');
+            if (saveBtn) {
+                saveBtn.onclick = () => {
+                    const ui_language = document.getElementById('coach-ui-language').value;
+                    const content_language = document.getElementById('coach-content-language').value;
+                    const time_per_day_min = document.getElementById('coach-time').value;
+                    const intensity = document.getElementById('coach-intensity').value;
+                    const no_resources_mode = document.getElementById('coach-no-resources').checked;
 
-            uiLang?.addEventListener('change', emitSettings);
-            contentLang?.addEventListener('change', emitSettings);
-            allowToggle?.addEventListener('change', emitSettings);
-        }
-
-        if (view === 'exam') {
-            const options = this.container.querySelectorAll('.option-btn');
-            const submitBtn = this.container.querySelector('#btn-submit-exam-answer');
-            const whyEl = this.container.querySelector('#exam-why');
-            let selectedIndex = null;
-
-            const updateSubmitState = () => {
-                const whyOk = (whyEl?.value || '').trim().length > 0;
-                submitBtn.disabled = selectedIndex === null || !whyOk;
-            };
-
-            options.forEach(opt => {
-                opt.addEventListener('click', () => {
-                    options.forEach(o => o.classList.remove('active'));
-                    opt.classList.add('active');
-                    selectedIndex = Number(opt.dataset.index);
-                    updateSubmitState();
-                });
-            });
-
-            whyEl?.addEventListener('input', updateSubmitState);
-
-            submitBtn?.addEventListener('click', () => {
-                const confidence = Number(this.container.querySelector('#exam-confidence')?.value || 3);
-                const justification = (whyEl?.value || '').trim();
-                if (selectedIndex === null || !justification) return;
-                bus.emit('coach:submit-exam-answer', {
-                    selectedIndex,
-                    confidence,
-                    justification
-                });
-            });
+                    bus.emit('coach:update-settings', {
+                        ui_language,
+                        content_language,
+                        time_per_day_min,
+                        intensity,
+                        no_resources_mode
+                    });
+                }
+            }
         }
     }
 }

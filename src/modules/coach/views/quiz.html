@@ -1,0 +1,36 @@
+<div class="quiz-container fade-in">
+    <div class="quiz-header">
+        <span class="badge">{{pack_title}}</span>
+        <div class="quiz-meta">
+            <span class="quiz-progress">{{current_card_index}} / {{total_cards}}</span>
+            <button class="btn-icon ghost" data-action="quit-quiz"><i data-feather="x"></i></button>
+        </div>
+    </div>
+
+    <div class="quiz-card glass-panel">
+        <div class="card-context">
+            <span class="card-tag">{{category}}</span>
+            <span class="tts-icon" data-action="play-tts" title="Read aloud"><i data-feather="volume-2"></i></span>
+        </div>
+
+        <h2 class="quiz-question">{{question}}</h2>
+
+        <div class="quiz-options">
+            {{#each options}}
+            <button class="option-btn" data-index="{{@index}}">
+                <span class="option-text">{{this}}</span>
+            </button>
+            {{/each}}
+        </div>
+    </div>
+
+    <div id="quiz-feedback" class="feedback-panel hidden">
+        <div id="feedback-icon" class="feedback-icon"></div>
+        <div class="feedback-content">
+            <h3 id="feedback-title"></h3>
+            <p id="feedback-text"></p>
+            <div id="feedback-example" class="example-box"></div>
+            <button id="btn-next-card" class="btn btn-primary">Next <i data-feather="arrow-right"></i></button>
+        </div>
+    </div>
+</div>
