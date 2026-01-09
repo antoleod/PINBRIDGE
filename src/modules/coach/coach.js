@@ -22,6 +22,7 @@ class CoachService {
         this._hasAnyPack = null;
         this._activeQuiz = null;
         this.currentRoadmapDay = 1;
+        this._viewHistory = [];
     }
 
     async loadPacksIndex() {
@@ -41,6 +42,10 @@ class CoachService {
             this.safeNavigate(view);
         });
 
+        bus.on('coach:back', () => {
+            this.goBack();
+        });
+
         bus.on('coach:update-settings', async (settings) => {
             await this.updateSettings(settings);
             bus.emit('ui:toast', { message: 'Settings saved', type: 'success' });
@@ -51,14 +56,31 @@ class CoachService {
             packImportWizard.start();
         });
 
+        bus.on('coach:start-pack', async ({ packId }) => {
+            try {
+                if (!packId) throw new Error('PACK_ID_REQUIRED');
+                const uid = this.currentUser?.uid || null;
+
+                const data = await packLoader.loadBundledPack(packId);
+                await packRegistry.installPack(uid, data.pack, data.cards, { deprecateMissing: false });
+
+                this._hasAnyPack = true;
+                bus.emit('ui:toast', { message: `Installed ${data.pack.title_i18n?.en || packId}`, type: 'success' });
+
+                bus.emit('coach:start-quiz', { packId });
+            } catch (e) {
+                console.error(e);
+                bus.emit('ui:toast', { message: `Start failed: ${e.message}`, type: 'error' });
+            }
+        });
+
         bus.on('coach:apply-update', async ({ packId }) => {
             try {
-                const uid = this.currentUser?.uid;
-                if (!uid) return;
-                
+                const uid = this.currentUser?.uid || null;
+                 
                 const data = await packLoader.loadBundledPack(packId);
                 await packRegistry.installPack(uid, data.pack, data.cards, { deprecateMissing: true });
-                
+                 
                 bus.emit('ui:toast', { message: `Updated ${data.pack.title_i18n?.en || packId} to v${data.pack.version}`, type: 'success' });
                 this.renderCurrentView();
             } catch (e) {
@@ -70,8 +92,7 @@ class CoachService {
         bus.on('coach:update-pack-content', async ({ packId, version }) => {
             // Reserved for Phase 3/Sync. For Phase 1 we only manage user-owned pack content.
             try {
-                const uid = this.currentUser?.uid;
-                if (!uid) return;
+                const uid = this.currentUser?.uid || null;
                 const userData = await coachStore.getUserPackVersion(uid, packId, version);
                 if (!userData) throw new Error('PACK_VERSION_NOT_FOUND');
                 await coachStore.installUserPack(uid, packId, version, userData);
@@ -87,8 +108,7 @@ class CoachService {
 
         bus.on('coach:import-pack', async ({ packData, packName, targetPackId, importMode }) => {
             try {
-                const uid = this.currentUser?.uid;
-                if (!uid) throw new Error('NOT_AUTHENTICATED');
+                const uid = this.currentUser?.uid || null;
                 if (!packData?.pack?.pack_id || !packData?.pack?.version || !Array.isArray(packData?.cards)) {
                     throw new Error('INVALID_PACK');
                 }
@@ -122,48 +142,18 @@ class CoachService {
 
         // Quiz Engine
         bus.on('coach:start-quiz', async ({ packId }) => {
-            try {
-                const quizParams = await quizEngine.generateSession(packId, this.settings.content_language);
-                if (!quizParams || !quizParams.card) {
-                    bus.emit('ui:toast', { message: 'No cards available to review right now.', type: 'info' });
-                    return;
-                }
-                this.currentPackId = packId;
-                this.currentView = 'quiz';
-                this._activeQuiz = { ...quizParams, packId };
-
-                const card = quizParams.card;
-                uiRenderer.render('quiz', {
-                    pack_title: 'Pack Practice',
-                    card_id: card.card_id,
-                    category: card.category || '',
-                    question: i18n.getContent(card.question_i18n),
-                    tts_text: card.tts?.text || i18n.getContent(card.front_i18n) || '',
-                    tts_lang: card.tts?.language || 'fr-FR',
-                    options: quizParams.options,
-                    total_cards: quizParams.totalCards,
-                    current_card_index: quizParams.sessionIndex
-                });
-
-                if (card.tts?.auto_read && card.tts?.text) {
-                    bus.emit('coach:tts-play', { text: card.tts.text, lang: card.tts.language || 'fr-FR' });
-                }
-            } catch (e) {
-                console.error(e);
-                bus.emit('ui:toast', { message: `Quiz Error: ${e.message}`, type: 'error' });
-            }
+            await this.startQuiz(packId, { pushHistory: true });
         });
 
         bus.on('coach:quiz-next', () => {
             if (this.currentPackId) {
-                bus.emit('coach:start-quiz', { packId: this.currentPackId });
+                this.startQuiz(this.currentPackId, { pushHistory: false });
             }
         });
 
         bus.on('coach:quiz-submit', async ({ selectedIndex, confidence_1to5 = null }) => {
             try {
-                const uid = this.currentUser?.uid;
-                if (!uid) return;
+                const uid = this.currentUser?.uid || null;
                 if (!this._activeQuiz?.card?.card_id) return;
 
                 const card = this._activeQuiz.card;
@@ -203,9 +193,10 @@ class CoachService {
         bus.on('coach:create-skill', async (payload) => {
             const { topic, goal, intensity, language } = payload;
             const blueprint = coachEngine.generateBlueprintV3(topic, goal, intensity, language);
-            const skillId = await coachStore.createSkill(this.currentUser.uid, blueprint.skill);
+            const uid = this.currentUser?.uid || null;
+            const skillId = await coachStore.createSkill(uid, blueprint.skill);
             for (const mod of blueprint.modules) {
-                await coachStore.createModule(this.currentUser.uid, { ...mod, skill_id: skillId });
+                await coachStore.createModule(uid, { ...mod, skill_id: skillId });
             }
             await this.updateSettings({ active_skill_id: skillId });
             this.activeSkill = { ...blueprint.skill, id: skillId };
@@ -293,7 +284,7 @@ class CoachService {
 
         bus.on('coach:activate-skill', async (skillId) => {
             await this.updateSettings({ active_skill_id: skillId });
-            const skill = await coachStore.getSkill(this.currentUser.uid, skillId);
+            const skill = await coachStore.getSkill(this.currentUser?.uid || null, skillId);
             this.activeSkill = skill;
             bus.emit('coach:navigate', 'dashboard');
         });
@@ -301,24 +292,37 @@ class CoachService {
         console.log("Coach Module Initialized (Premium)");
     }
 
+    async startQuiz(packId, { pushHistory = true } = {}) {
+        try {
+            if (!packId) throw new Error('PACK_ID_REQUIRED');
+            const quizParams = await quizEngine.generateSession(packId, this.settings.content_language);
+            if (!quizParams || !quizParams.card) {
+                bus.emit('ui:toast', { message: 'No cards available to review right now.', type: 'info' });
+                return;
+            }
+            this.currentPackId = packId;
+            this._activeQuiz = { ...quizParams, packId };
+            await this.safeNavigate('quiz', { pushHistory });
+        } catch (e) {
+            console.error(e);
+            bus.emit('ui:toast', { message: `Quiz Error: ${e.message}`, type: 'error' });
+        }
+    }
+
     async loadSettings() {
-        if (!this.currentUser) return;
-        this.settings = await coachStore.getSettings(this.currentUser.uid);
+        const uid = this.currentUser?.uid || null;
+        this.settings = await coachStore.getSettings(uid);
         i18n.setLanguages(this.settings.ui_language, this.settings.content_language);
         if (this.settings.active_skill_id) {
-            this.activeSkill = await coachStore.getSkill(this.currentUser.uid, this.settings.active_skill_id);
+            this.activeSkill = await coachStore.getSkill(uid, this.settings.active_skill_id);
         }
     }
 
     async onEnterCoachView() {
-        if (!this.currentUser) {
-            uiRenderer.render('loginRequired');
-            return;
-        }
-
         // Keep the main layout visible (sidebar/editor) and show Coach panel in-place.
         // This avoids "Coach-only mode" hiding the sidebar, per UX request.
         document.querySelector('.coach-panel').classList.remove('hidden');
+        this._viewHistory = [];
 
         const exitBtn = document.getElementById('btn-coach-exit');
         if (exitBtn) {
@@ -330,63 +334,61 @@ class CoachService {
             };
         }
 
+        const backBtn = document.getElementById('btn-coach-back');
+        if (backBtn) {
+            backBtn.onclick = () => this.goBack();
+        }
+        this.updateBackButton();
+        if (window.feather?.replace) window.feather.replace();
+
         await this.loadSettings();
 
-        if (this.currentUser) {
-            await coachEngine.checkMaintenance(this.currentUser.uid);
-        }
+        await coachEngine.checkMaintenance(this.currentUser?.uid || null);
 
         await this.refreshPackPresence();
 
-        // Skills-first: packs are optional (only required for Pack Practice).
-        if (!this.settings.active_skill_id) {
-            this.currentView = 'skills';
-        } else {
-            this.currentView = 'dashboard';
-        }
+        // Dashboard-first: show Learning Hub even if no active skill yet.
+        this.currentView = 'dashboard';
 
         this.renderCurrentView();
     }
 
-    async refreshPackPresence() {
-        const uid = this.currentUser?.uid;
-        if (!uid) {
-            this._hasAnyPack = false;
+    updateBackButton() {
+        const backBtn = document.getElementById('btn-coach-back');
+        if (!backBtn) return;
+        backBtn.disabled = this._viewHistory.length === 0;
+    }
+
+    goBack() {
+        const prev = this._viewHistory.pop();
+        if (!prev) {
+            this.updateBackButton();
             return;
         }
+        this.safeNavigate(prev, { pushHistory: false });
+    }
+
+    async refreshPackPresence() {
         try {
-            const packs = await packRegistry.getInstalledPacks(uid);
+            const packs = await packRegistry.getInstalledPacks(this.currentUser?.uid || null);
             this._hasAnyPack = packs.length > 0;
         } catch {
             this._hasAnyPack = false;
         }
     }
 
-    async safeNavigate(view) {
-        const uid = this.currentUser?.uid;
-        if (!uid) {
-            this.currentView = 'loginRequired';
-            this.renderCurrentView();
-            return;
+    updateBackButton() {
+        const backBtn = document.getElementById('btn-coach-back');
+        if (backBtn) {
+            backBtn.disabled = this._viewHistory.length <= 1;
         }
-
-        // Guard: only pack-required views should redirect to import-pack.
-        await this.refreshPackPresence();
-        const packRequired = new Set(['packs', 'quiz']);
-        if (!this._hasAnyPack && packRequired.has(view)) {
-            this.currentView = 'import-pack';
-            this.renderCurrentView();
-            return;
-        }
-
-        this.currentView = view;
-        this.renderCurrentView();
     }
 
     async renderCurrentView() {
         let viewData = { settings: this.settings };
+        const uid = this.currentUser?.uid || null;
 
-        const skillRequired = new Set(['dashboard', 'session', 'roadmap', 'roadmap-day', 'checklist', 'interview', 'quizzes', 'export', 'exam-center']);
+        const skillRequired = new Set(['session', 'roadmap', 'roadmap-day', 'checklist', 'interview', 'quizzes', 'export', 'exam-center']);
         if (skillRequired.has(this.currentView) && !this.activeSkill && this.currentView !== 'skills') {
             this.currentView = 'skills';
         }
@@ -394,7 +396,7 @@ class CoachService {
         if (this.currentView === 'dashboard') {
             // Load pack index
             const packsIndex = await this.loadPacksIndex();
-            const userPacks = await coachStore.getUserPacks(this.currentUser.uid);
+            const userPacks = await coachStore.getUserPacks(uid);
             const userPackIds = new Set(userPacks.map(p => p.pack_id));
 
             // Enrich packs with installation status
@@ -409,7 +411,7 @@ class CoachService {
             viewData.activePacks = viewData.packs.filter(p => p.installed && !p.completed);
 
             // Reviews due
-            const reviews = await coachStore.getDueReviews(this.currentUser.uid);
+            const reviews = await coachStore.getDueReviews(uid);
             viewData.reviewsDue = reviews.length;
         }
 
@@ -420,7 +422,7 @@ class CoachService {
         }
 
         if (this.currentView === 'skills') {
-            const skills = await coachStore.getSkills(this.currentUser.uid);
+            const skills = await coachStore.getSkills(uid);
             viewData.skills = skills.map(s => ({
                 ...s,
                 title: i18n.getContent(s.title_i18n),
@@ -539,7 +541,7 @@ class CoachService {
         }
 
         if (this.currentView === 'packs') {
-            const packs = await packRegistry.getInstalledPacks(this.currentUser.uid);
+            const packs = await packRegistry.getInstalledPacks(uid);
             viewData.packs = packs.map(p => ({
                 ...p,
                 title: p.pack_name || i18n.getContent(p.title_i18n) || p.pack_id,
@@ -549,24 +551,51 @@ class CoachService {
         }
 
         if (this.currentView === 'quiz') {
-            if (!viewData.card && !this.currentPackId) {
+            if (!this._activeQuiz?.card || !this.currentPackId) {
                 this.currentView = 'packs';
                 this.renderCurrentView();
                 return;
             }
+
+            const card = this._activeQuiz.card;
+            uiRenderer.render('quiz', {
+                pack_title: 'Pack Practice',
+                card_id: card.card_id,
+                category: card.category || '',
+                question: i18n.getContent(card.question_i18n),
+                tts_text: card.tts?.text || i18n.getContent(card.front_i18n) || '',
+                tts_lang: card.tts?.language || 'fr-FR',
+                options: this._activeQuiz.options,
+                total_cards: this._activeQuiz.totalCards,
+                current_card_index: this._activeQuiz.sessionIndex
+            });
+
+            if (card.tts?.auto_read && card.tts?.text) {
+                bus.emit('coach:tts-play', { text: card.tts.text, lang: card.tts.language || 'fr-FR' });
+            }
+
+            return;
         }
 
         if (this.currentView === 'import-pack') {
             viewData.hasInstalledPacks = this._hasAnyPack;
         }
 
+        if (this.currentView === 'create-pack') {
+            // View is self-contained; keep settings available for future enhancements.
+        }
+
+        if (this.currentView === 'generate-pack') {
+            // View is self-contained; keep settings available for future enhancements.
+        }
+
         if (this.currentView === 'exam-center') {
-            const modules = await coachStore.getModulesForSkill(this.currentUser.uid, this.settings.active_skill_id);
+            const modules = await coachStore.getModulesForSkill(uid, this.settings.active_skill_id);
             viewData.modules = modules;
         }
 
         if (this.currentView === 'error-cards') {
-            const errors = await coachStore.getErrorMemory(this.currentUser.uid);
+            const errors = await coachStore.getErrorMemory(uid);
             viewData.errors = errors;
         }
 
@@ -574,9 +603,9 @@ class CoachService {
     }
 
     async updateSettings(newSettings) {
-        if (!this.currentUser) return;
+        const uid = this.currentUser?.uid || null;
         this.settings = { ...this.settings, ...newSettings };
-        await coachStore.saveSettings(this.currentUser.uid, this.settings);
+        await coachStore.saveSettings(uid, this.settings);
         i18n.setLanguages(this.settings.ui_language, this.settings.content_language);
         this.renderCurrentView();
     }

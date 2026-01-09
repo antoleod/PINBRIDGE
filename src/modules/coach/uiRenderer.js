@@ -2,6 +2,7 @@
 import { i18n } from './i18n.js';
 import { bus } from '../../core/bus.js';
 import { packLoader } from './packLoader.js';
+import { openaiPackGenerator } from './openaiPackGenerator.js';
 
 class UiRenderer {
     constructor() {
@@ -57,7 +58,7 @@ class UiRenderer {
 
     async getViewTemplate(view) {
         if (this.viewCache.has(view)) return this.viewCache.get(view);
-        const response = await fetch(`src/modules/coach/views/${view}.html`);
+        const response = await fetch(`src/modules/coach/views/${view}.html?v=${Date.now()}`, { cache: 'no-store' });
         if (!response.ok) throw new Error(`Could not fetch template for view: ${view}`);
         const template = await response.text();
         this.viewCache.set(view, template);
@@ -138,11 +139,12 @@ class UiRenderer {
         this.container.onclick = (e) => {
             try {
                 const rawTarget = e?.target;
-                const target = rawTarget instanceof Element ? rawTarget : rawTarget?.parentElement;
-                const action = target?.closest?.('[data-action]');
+                const target = rawTarget instanceof Element ? rawTarget : rawTarget?.parentElement || null;
+                const action = (target && typeof target.closest === 'function') ? target.closest('[data-action]') : null;
                 if (!action) return;
 
                 const actionName = action.dataset.action;
+                if (!actionName) return;
 
                 switch (actionName) {
                     case 'back-to-dashboard':
@@ -190,6 +192,33 @@ class UiRenderer {
                 case 'open-error-cards':
                     bus.emit('coach:navigate', 'error-cards');
                     break;
+                case 'coach-back':
+                    bus.emit('coach:back');
+                    break;
+                // Learning Hub (dashboard)
+                case 'start-pack': {
+                    const packId = action.dataset.packId;
+                    if (packId) bus.emit('coach:start-pack', { packId });
+                    break;
+                }
+                case 'continue-pack':
+                case 'review-pack': {
+                    const packId = action.dataset.packId;
+                    if (packId) bus.emit('coach:start-quiz', { packId });
+                    break;
+                }
+                case 'start-reviews':
+                    bus.emit('coach:navigate', 'error-cards');
+                    break;
+                case 'import-pack':
+                    bus.emit('coach:navigate', 'import-pack');
+                    break;
+                case 'create-pack':
+                    bus.emit('coach:navigate', 'create-pack');
+                    break;
+                case 'generate-pack':
+                    bus.emit('coach:navigate', 'generate-pack');
+                    break;
                 case 'add-new-skill':
                     bus.emit('coach:navigate', 'add-skill');
                     break;
@@ -207,6 +236,11 @@ class UiRenderer {
                     break;
                 }
                 case 'apply-update': {
+                    const packId = action.dataset.packId;
+                    if (packId) bus.emit('coach:apply-update', { packId });
+                    break;
+                }
+                case 'update-pack': {
                     const packId = action.dataset.packId;
                     if (packId) bus.emit('coach:apply-update', { packId });
                     break;
@@ -512,6 +546,243 @@ class UiRenderer {
             }
         }
 
+        const downloadJson = (filename, data) => {
+            const json = JSON.stringify(data, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            URL.revokeObjectURL(url);
+        };
+
+        const ttsLangFor = (lang) => {
+            const l = (String(lang || '').trim() || 'en').toLowerCase();
+            if (l === 'en') return 'en-US';
+            if (l === 'es') return 'es-ES';
+            if (l === 'fr') return 'fr-FR';
+            if (l === 'nl') return 'nl-NL';
+            return 'en-US';
+        };
+
+        const sanitizePackId = (packId) => String(packId || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9_\\-]+/g, '_')
+            .replace(/^_+|_+$/g, '');
+
+        const buildStubPack = ({ pack_id, version, pack_name, source_lang, target_lang, cardCount, topic }) => {
+            const safePackId = sanitizePackId(pack_id);
+            const safeVersion = String(version || '1.0.0').trim() || '1.0.0';
+            const safeName = String(pack_name || safePackId || 'My Pack').trim() || 'My Pack';
+            const count = Math.max(1, Math.min(500, Number(cardCount) || 10));
+            const src = (String(source_lang || 'en').trim() || 'en').toLowerCase();
+            const tgt = (String(target_lang || 'en').trim() || 'en').toLowerCase();
+            const nowIso = new Date().toISOString();
+
+            const cards = Array.from({ length: count }).map((_, idx) => {
+                const n = String(idx + 1).padStart(3, '0');
+                const term = topic ? `${topic} ${n}` : `Term ${n}`;
+                return {
+                    card_id: `${safePackId || 'pack'}_${n}`,
+                    category: 'core',
+                    tags: ['generated'],
+                    front_i18n: { [src]: term, [tgt]: term },
+                    question_i18n: { [src]: `What is "${term}"?`, [tgt]: `What is "${term}"?` },
+                    correct_answer_i18n: { [src]: `Definition of ${term}`, [tgt]: `Definition of ${term}` },
+                    usage_type: 'concept',
+                    tts: { auto_read: false, language: ttsLangFor(tgt), text: term, rate: 1.0 },
+                    difficulty_1to5: 2
+                };
+            });
+
+            return {
+                schema_version: 'v2-pack',
+                generated_at: nowIso,
+                pack: {
+                    pack_id: safePackId || 'my_pack',
+                    version: safeVersion,
+                    level: 'Custom',
+                    mode: 'CUSTOM',
+                    languages: Array.from(new Set(['en', src, tgt].filter(Boolean))),
+                    title_i18n: { en: safeName, [src]: safeName, [tgt]: safeName },
+                    description_i18n: { en: 'User generated pack', [src]: 'User generated pack', [tgt]: 'User generated pack' },
+                    categories: [{ id: 'core', title_i18n: { en: 'Core', [src]: 'Core', [tgt]: 'Core' } }],
+                    card_count: cards.length
+                },
+                cards
+            };
+        };
+
+        if (view === 'create-pack') {
+            const packIdEl = document.getElementById('create-pack-id');
+            const nameEl = document.getElementById('create-pack-name');
+            const versionEl = document.getElementById('create-pack-version');
+            const srcLangEl = document.getElementById('create-pack-source-lang');
+            const tgtLangEl = document.getElementById('create-pack-target-lang');
+            const countEl = document.getElementById('create-pack-count');
+            const topicEl = document.getElementById('create-pack-topic');
+            const downloadBtn = document.getElementById('btn-create-pack-download');
+            const installBtn = document.getElementById('btn-create-pack-install');
+
+            const getPack = () => buildStubPack({
+                pack_id: packIdEl?.value,
+                version: versionEl?.value,
+                pack_name: nameEl?.value,
+                source_lang: srcLangEl?.value,
+                target_lang: tgtLangEl?.value,
+                cardCount: countEl?.value,
+                topic: topicEl?.value
+            });
+
+            if (downloadBtn) {
+                downloadBtn.onclick = () => {
+                    const pack = getPack();
+                    downloadJson(`${pack.pack.pack_id || 'pack'}.json`, pack);
+                };
+            }
+
+            if (installBtn) {
+                installBtn.onclick = () => {
+                    const packData = getPack();
+                    bus.emit('coach:import-pack', {
+                        packData,
+                        packName: packData.pack.title_i18n?.en || packData.pack.pack_id,
+                        targetPackId: packData.pack.pack_id,
+                        importMode: 'new'
+                    });
+                };
+            }
+        }
+
+        if (view === 'generate-pack') {
+            const packIdEl = document.getElementById('gen-pack-id');
+            const nameEl = document.getElementById('gen-pack-name');
+            const versionEl = document.getElementById('gen-pack-version');
+            const srcLangEl = document.getElementById('gen-pack-source-lang');
+            const tgtLangEl = document.getElementById('gen-pack-target-lang');
+            const topicEl = document.getElementById('gen-pack-topic');
+            const termsEl = document.getElementById('gen-pack-terms');
+            const downloadBtn = document.getElementById('btn-gen-pack-download');
+            const installBtn = document.getElementById('btn-gen-pack-install');
+            const aiBtn = document.getElementById('btn-gen-pack-ai');
+            const statusEl = document.getElementById('gen-pack-status');
+            const settingsDetails = document.getElementById('openai-settings');
+
+            const buildFromTerms = () => {
+                const base = buildStubPack({
+                    pack_id: packIdEl?.value,
+                    version: versionEl?.value,
+                    pack_name: nameEl?.value,
+                    source_lang: srcLangEl?.value,
+                    target_lang: tgtLangEl?.value,
+                    cardCount: 1,
+                    topic: topicEl?.value
+                });
+
+                const src = (String(srcLangEl?.value || 'en').trim() || 'en').toLowerCase();
+                const tgt = (String(tgtLangEl?.value || 'en').trim() || 'en').toLowerCase();
+                const terms = String(termsEl?.value || '')
+                    .split(/\r?\n/)
+                    .map(s => s.trim())
+                    .filter(Boolean)
+                    .slice(0, 500);
+
+                if (terms.length === 0) {
+                    bus.emit('ui:toast', { message: 'Add at least 1 term (one per line).', type: 'info' });
+                    return null;
+                }
+
+                base.cards = terms.map((term, idx) => {
+                    const n = String(idx + 1).padStart(3, '0');
+                    return {
+                        card_id: `${base.pack.pack_id}_${n}`,
+                        category: 'core',
+                        tags: ['generated', 'terms'],
+                        front_i18n: { [src]: term, [tgt]: term },
+                        question_i18n: { [src]: `What does "${term}" mean?`, [tgt]: `What does "${term}" mean?` },
+                        correct_answer_i18n: { [src]: term, [tgt]: term },
+                        usage_type: 'vocab',
+                        tts: { auto_read: false, language: ttsLangFor(tgt), text: term, rate: 1.0 },
+                        difficulty_1to5: 2
+                    };
+                });
+                base.pack.card_count = base.cards.length;
+                return base;
+            };
+
+            const setStatus = (text) => {
+                if (statusEl) statusEl.textContent = String(text || '');
+            };
+
+            if (downloadBtn) {
+                downloadBtn.onclick = () => {
+                    const pack = buildFromTerms();
+                    if (!pack) return;
+                    downloadJson(`${pack.pack.pack_id || 'pack'}.json`, pack);
+                };
+            }
+
+            if (installBtn) {
+                installBtn.onclick = () => {
+                    const packData = buildFromTerms();
+                    if (!packData) return;
+                    bus.emit('coach:import-pack', {
+                        packData,
+                        packName: packData.pack.title_i18n?.en || packData.pack.pack_id,
+                        targetPackId: packData.pack.pack_id,
+                        importMode: 'new'
+                    });
+                };
+            }
+
+            if (aiBtn) {
+                aiBtn.onclick = async () => {
+                    const args = {
+                        pack_id: packIdEl?.value,
+                        pack_name: nameEl?.value,
+                        version: versionEl?.value,
+                        source_lang: srcLangEl?.value,
+                        target_lang: tgtLangEl?.value,
+                        topic: topicEl?.value || nameEl?.value || '',
+                        cardCount: Number(document.getElementById('gen-pack-count')?.value || 20)
+                    };
+
+                    try {
+                        aiBtn.disabled = true;
+                        setStatus('Generating with OpenAI...');
+
+                        const packData = await openaiPackGenerator.generatePackJSON(args);
+                        // Validate against our pack rules.
+                        packLoader.validatePack(packData);
+
+                        setStatus(`Generated ${packData.cards?.length || 0} cards.`);
+
+                        bus.emit('coach:import-pack', {
+                            packData,
+                            packName: packData.pack?.title_i18n?.en || packData.pack?.pack_id,
+                            targetPackId: packData.pack?.pack_id,
+                            importMode: 'new'
+                        });
+                    } catch (e) {
+                        console.error(e);
+                        setStatus('');
+                        if (String(e?.message || '').includes('OPENAI_API_KEY_NOT_CONFIGURED')) {
+                            if (settingsDetails && settingsDetails.tagName === 'DETAILS') settingsDetails.open = true;
+                            bus.emit('ui:toast', { message: 'AI is not configured on the server yet. Set the Functions secret OPENAI_API_KEY.', type: 'error' });
+                            return;
+                        }
+                        bus.emit('ui:toast', { message: `AI generation failed: ${e.message}`, type: 'error' });
+                    } finally {
+                        aiBtn.disabled = false;
+                    }
+                };
+            }
+        }
+
         if (view === 'quiz') {
             const options = this.container.querySelectorAll('.option-btn');
             options.forEach(opt => {
@@ -522,6 +793,34 @@ class UiRenderer {
                     bus.emit('coach:quiz-submit', { selectedIndex });
                 });
             });
+        }
+
+        if (view === 'dashboard') {
+            const searchInput = document.getElementById('pack-search');
+            const typeSelect = document.getElementById('pack-filter-type');
+            const difficultySelect = document.getElementById('pack-filter-difficulty');
+            const packsGrid = document.getElementById('packs-grid');
+
+            const filterPacks = () => {
+                const search = (searchInput?.value || '').toLowerCase();
+                const type = typeSelect?.value || '';
+                const difficulty = difficultySelect?.value || '';
+                const cards = packsGrid?.querySelectorAll('.pack-card') || [];
+
+                cards.forEach(card => {
+                    const title = card.querySelector('.pack-title')?.textContent?.toLowerCase() || '';
+                    const cardType = card.dataset.type || '';
+                    const cardDifficulty = card.dataset.difficulty || '';
+                    const matchesSearch = !search || title.includes(search);
+                    const matchesType = !type || cardType === type;
+                    const matchesDifficulty = !difficulty || cardDifficulty === difficulty;
+                    card.style.display = matchesSearch && matchesType && matchesDifficulty ? '' : 'none';
+                });
+            };
+
+            if (searchInput) searchInput.addEventListener('input', filterPacks);
+            if (typeSelect) typeSelect.addEventListener('change', filterPacks);
+            if (difficultySelect) difficultySelect.addEventListener('change', filterPacks);
         }
     }
 }

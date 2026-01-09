@@ -18,8 +18,7 @@ export const quizEngine = {
      * - Generates distractors from same category
      */
     async generateSession(packId, userContentLang = 'en') {
-        const uid = coachStore.uid;
-        if (!uid) throw new Error("User not authenticated");
+        const uid = coachStore.uid || null;
 
         // 1. Get Pack & Progress
         const userPacks = await coachStore.getUserPacks(uid);

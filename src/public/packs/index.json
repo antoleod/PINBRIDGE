@@ -14,7 +14,7 @@
       "duration_days": 7,
       "size_cards": 40,
       "ui_hint_tags": ["vocab", "sentences", "auto-read"],
-      "icon": "language"
+      "icon": "globe"
     },
     {
       "id": "fr_b1_vocab_core_40",
@@ -28,7 +28,7 @@
       "duration_days": 7,
       "size_cards": 40,
       "ui_hint_tags": ["vocab", "sentences"],
-      "icon": "language"
+      "icon": "globe"
     },
     {
       "id": "nl_b1_vocab_core_40",
@@ -42,7 +42,7 @@
       "duration_days": 7,
       "size_cards": 40,
       "ui_hint_tags": ["vocab"],
-      "icon": "language"
+      "icon": "globe"
     },
     {
       "id": "fr_b1_mixed_premium_pack_100",
@@ -56,7 +56,7 @@
       "duration_days": 17,
       "size_cards": 100,
       "ui_hint_tags": ["mixed", "emails", "motivation", "expressions"],
-      "icon": "language"
+      "icon": "globe"
     },
     {
       "id": "aws_saa_c03_core_50",

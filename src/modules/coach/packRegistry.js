@@ -5,25 +5,23 @@ import { packLoader } from './packLoader.js';
 class PackRegistry {
     
     async getInstalledPacks(uid) {
-        if (!uid) return [];
-        return await coachStore.getUserPacks(uid);
+        return await coachStore.getUserPacks(uid || null);
     }
 
     async installPack(uid, packData, cards, options = {}) {
-        if (!uid || !packData || !cards) throw new Error('Invalid arguments');
+        if (!packData || !cards) throw new Error('Invalid arguments');
         const { pack_id, version } = packData;
         const { deprecateMissing, pack_name } = options;
         
         // Save content
-        await coachStore.saveUserPack(uid, pack_id, version, packData, cards, { deprecateMissing });
+        await coachStore.saveUserPack(uid || null, pack_id, version, packData, cards, { deprecateMissing });
         // Register installation
-        await coachStore.installUserPack(uid, pack_id, version, packData, { pack_name });
+        await coachStore.installUserPack(uid || null, pack_id, version, packData, { pack_name });
         
         return { pack_id, version };
     }
 
     async checkUpdates(uid) {
-        if (!uid) return [];
         const installed = await this.getInstalledPacks(uid);
         const bundled = packLoader.getBundledPacks();
         const updates = [];

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinbridge-v10';
+const CACHE_NAME = 'pinbridge-v12';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -68,8 +68,21 @@ const ICONS_CACHE = [
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([...ASSETS_TO_CACHE, ...ICONS_CACHE]);
+        caches.open(CACHE_NAME).then(async (cache) => {
+            const assets = [...ASSETS_TO_CACHE, ...ICONS_CACHE];
+            try {
+                await cache.addAll(assets);
+            } catch (e) {
+                // Don't brick the SW install if a single asset 404s (hosting/path differences).
+                console.warn('[SW] cache.addAll failed, falling back to per-asset caching', e);
+                for (const asset of assets) {
+                    try {
+                        await cache.add(asset);
+                    } catch (err) {
+                        console.warn('[SW] Failed to cache:', asset, err);
+                    }
+                }
+            }
         })
     );
 });

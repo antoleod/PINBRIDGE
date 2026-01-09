@@ -4,6 +4,29 @@ import { db, auth } from '../../firebase.js';
 
 class CoachStore {
 
+    // --- Local (Guest) Storage ---
+    _localPrefix() {
+        return 'pinbridge:coach:';
+    }
+
+    _localRead(key, fallback) {
+        try {
+            const raw = localStorage.getItem(this._localPrefix() + key);
+            if (!raw) return fallback;
+            return JSON.parse(raw);
+        } catch {
+            return fallback;
+        }
+    }
+
+    _localWrite(key, value) {
+        try {
+            localStorage.setItem(this._localPrefix() + key, JSON.stringify(value));
+        } catch (e) {
+            console.warn('[CoachStore] localStorage write failed', key, e);
+        }
+    }
+
     get uid() {
         return auth.currentUser?.uid;
     }
@@ -11,7 +34,10 @@ class CoachStore {
     // --- Settings ---
     async getSettings(uid) {
         const defaultSettings = this.getDefaultSettings();
-        if (!uid) return defaultSettings;
+        if (!uid) {
+            const local = this._localRead('settings', {});
+            return { ...defaultSettings, ...(local || {}) };
+        }
 
         try {
             const settingsRef = doc(db, `users/${uid}/coach_settings/main`);
@@ -30,7 +56,10 @@ class CoachStore {
     }
 
     async saveSettings(uid, settings) {
-        if (!uid) return;
+        if (!uid) {
+            this._localWrite('settings', settings || {});
+            return;
+        }
         try {
             const settingsRef = doc(db, `users/${uid}/coach_settings/main`);
             await setDoc(settingsRef, settings, { merge: true });
@@ -57,7 +86,11 @@ class CoachStore {
 
     // --- Skills ---
     async getSkills(uid) {
-        if (!uid) return [];
+        if (!uid) {
+            const skills = this._localRead('skills', {});
+            return Object.entries(skills || {}).map(([id, data]) => ({ id, ...(data || {}) }))
+                .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        }
         const skillsCol = collection(db, `users/${uid}/coach_skills`);
         const q = query(skillsCol, orderBy('updatedAt', 'desc'));
         const snapshot = await getDocs(q);
@@ -65,7 +98,11 @@ class CoachStore {
     }
 
     async getSkill(uid, skillId) {
-        if (!uid || !skillId) return null;
+        if (!skillId) return null;
+        if (!uid) {
+            const skills = this._localRead('skills', {});
+            return skills?.[skillId] ? { id: skillId, ...(skills[skillId] || {}) } : null;
+        }
         const ref = doc(db, `users/${uid}/coach_skills/${skillId}`);
         const snap = await getDoc(ref);
         return snap.exists() ? { id: snap.id, ...snap.data() } : null;
@@ -79,7 +116,20 @@ class CoachStore {
     }
 
     async createSkill(uid, skillData) {
-        if (!uid) return;
+        if (!uid) {
+            const id = `local_skill_${Date.now()}`;
+            const now = Date.now();
+            const skills = this._localRead('skills', {});
+            skills[id] = {
+                ...(skillData || {}),
+                schema_version: 'v2',
+                createdAt: now,
+                updatedAt: now,
+                status: 'active'
+            };
+            this._localWrite('skills', skills);
+            return id;
+        }
         const skillsCol = collection(db, `users/${uid}/coach_skills`);
         const docRef = await addDoc(skillsCol, {
             ...skillData,
@@ -92,14 +142,29 @@ class CoachStore {
     }
 
     async updateSkill(uid, skillId, data) {
-        if (!uid || !skillId) return;
+        if (!skillId) return;
+        if (!uid) {
+            const skills = this._localRead('skills', {});
+            const now = Date.now();
+            const prev = skills?.[skillId] || {};
+            skills[skillId] = { ...prev, ...(data || {}), updatedAt: now };
+            this._localWrite('skills', skills);
+            return;
+        }
         const ref = doc(db, `users/${uid}/coach_skills/${skillId}`);
         await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
     }
 
     // --- Modules ---
     async getModulesForSkill(uid, skillId) {
-        if (!uid || !skillId) return [];
+        if (!skillId) return [];
+        if (!uid) {
+            const modules = this._localRead('modules', {});
+            return Object.entries(modules || {})
+                .map(([id, data]) => ({ id, ...(data || {}) }))
+                .filter(m => m.skill_id === skillId)
+                .sort((a, b) => (a.order || 0) - (b.order || 0));
+        }
         const col = collection(db, `users/${uid}/coach_modules`);
         const q = query(col, where('skill_id', '==', skillId)); // Removed order for now as field might be missing in old data
         const snapshot = await getDocs(q);
@@ -107,7 +172,14 @@ class CoachStore {
     }
 
     async createModule(uid, moduleData) {
-        if (!uid) return;
+        if (!uid) {
+            const id = `local_mod_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+            const now = Date.now();
+            const modules = this._localRead('modules', {});
+            modules[id] = { ...(moduleData || {}), schema_version: 'v2', createdAt: now, updatedAt: now };
+            this._localWrite('modules', modules);
+            return id;
+        }
         const col = collection(db, `users/${uid}/coach_modules`);
         return await addDoc(col, {
             ...moduleData,
@@ -136,7 +208,10 @@ class CoachStore {
     }
 
     async getDueReviews(uid) {
-        if (!uid) return [];
+        if (!uid) {
+            // Guest mode: we only schedule reviews for Pack Practice (card_progress), not concept error memory.
+            return [];
+        }
         const errorCol = collection(db, `users/${uid}/coach_error_memory`);
         const now = new Date();
         const q = query(errorCol, where('nextRepetitionDate', '<=', now));
@@ -204,14 +279,20 @@ class CoachStore {
 
     // --- Maintenance ---
     async getMaintenanceStatus(uid) {
-        if (!uid) return null;
+        if (!uid) {
+            return this._localRead('maintenance', { streak_days: 0, last_completed_date: null });
+        }
         const ref = doc(db, `users/${uid}/coach_maintenance/main`);
         const snap = await getDoc(ref);
         return snap.exists() ? snap.data() : { streak_days: 0, last_completed_date: null };
     }
 
     async updateMaintenance(uid, data) {
-        if (!uid) return;
+        if (!uid) {
+            const prev = this._localRead('maintenance', { streak_days: 0, last_completed_date: null });
+            this._localWrite('maintenance', { ...(prev || {}), ...(data || {}) });
+            return;
+        }
         const ref = doc(db, `users/${uid}/coach_maintenance/main`);
         await setDoc(ref, data, { merge: true });
     }
@@ -229,14 +310,22 @@ class CoachStore {
      */
 
     async getUserPackHeader(uid, packId) {
-        if (!uid || !packId) return null;
+        if (!packId) return null;
+        if (!uid) {
+            const headers = this._localRead('pack_headers', {});
+            return headers?.[packId] || null;
+        }
         const ref = doc(db, `users/${uid}/coach_packs/${packId}`);
         const snap = await getDoc(ref);
         return snap.exists() ? snap.data() : null;
     }
 
     async getUserPackVersion(uid, packId, version) {
-        if (!uid || !packId || !version) return null;
+        if (!packId || !version) return null;
+        if (!uid) {
+            const versions = this._localRead('pack_versions', {});
+            return versions?.[`${packId}@${version}`] || null;
+        }
         const ref = doc(db, `users/${uid}/coach_packs/${packId}/versions/${version}`);
         const snap = await getDoc(ref);
         if (!snap.exists()) return null;
@@ -249,7 +338,23 @@ class CoachStore {
     }
 
     async saveUserPack(uid, packId, version, packData, cards, { deprecateMissing = false } = {}) {
-        if (!uid || !packId || !version) return;
+        if (!packId || !version) return;
+        if (!uid) {
+            const versions = this._localRead('pack_versions', {});
+            versions[`${packId}@${version}`] = {
+                ...(packData || {}),
+                pack_id: packId,
+                version,
+                card_count: Array.isArray(cards) ? cards.length : 0,
+                cards: Array.isArray(cards) ? cards : []
+            };
+            this._localWrite('pack_versions', versions);
+
+            const headers = this._localRead('pack_headers', {});
+            headers[packId] = { pack_id: packId, latest_version: version, updatedAt: Date.now() };
+            this._localWrite('pack_headers', headers);
+            return;
+        }
 
         const headerRef = doc(db, `users/${uid}/coach_packs/${packId}`);
         await setDoc(headerRef, {
@@ -354,14 +459,38 @@ class CoachStore {
     }
 
     async getUserPacks(uid) {
-        if (!uid) return [];
+        if (!uid) {
+            const packs = this._localRead('user_packs', []);
+            return Array.isArray(packs) ? packs : [];
+        }
         const col = collection(db, `users/${uid}/coach_user_packs`);
         const snap = await getDocs(col);
         return snap.docs.map(d => d.data());
     }
 
     async installUserPack(uid, packId, version, packData, { pack_name } = {}) {
-        if (!uid) return;
+        if (!packId || !version) return;
+        if (!uid) {
+            const packs = this._localRead('user_packs', []);
+            const next = Array.isArray(packs) ? [...packs] : [];
+            const idx = next.findIndex(p => p.pack_id === packId);
+            const row = {
+                pack_id: packId,
+                installed_version: version,
+                pack_name: pack_name || null,
+                title_i18n: packData?.title_i18n,
+                description_i18n: packData?.description_i18n,
+                level: packData?.level || null,
+                languages: packData?.languages || null,
+                card_count: packData?.card_count || packData?.cards?.length || null,
+                installedAt: Date.now(),
+                updatedAt: Date.now()
+            };
+            if (idx >= 0) next[idx] = { ...next[idx], ...row };
+            else next.push(row);
+            this._localWrite('user_packs', next);
+            return;
+        }
         const ref = doc(db, `users/${uid}/coach_user_packs/${packId}`);
         await setDoc(ref, {
             pack_id: packId,
@@ -378,7 +507,15 @@ class CoachStore {
     }
 
     async getCardProgress(uid, cardIds) {
-        if (!uid || !cardIds || cardIds.length === 0) return {};
+        if (!cardIds || cardIds.length === 0) return {};
+        if (!uid) {
+            const all = this._localRead('card_progress', {});
+            const out = {};
+            for (const id of cardIds) {
+                if (all?.[id]) out[id] = all[id];
+            }
+            return out;
+        }
         // Firestore 'in' query limited to 10.
         // We will fetch ALL progress for the user and filter in memory for MVP 
         // to avoid complexity of 10-chunking for hundreds of cards.
@@ -399,7 +536,34 @@ class CoachStore {
     }
 
     async updateCardProgress(uid, cardId, { isCorrect, confidence_1to5 = null, pack_id = null } = {}) {
-        if (!uid || !cardId) return;
+        if (!cardId) return;
+        if (!uid) {
+            const all = this._localRead('card_progress', {});
+            const prev = all?.[cardId] || {};
+            const prevIntervalDays = typeof prev.interval_days === 'number' ? prev.interval_days : 0;
+
+            let intervalDays = prevIntervalDays;
+            if (isCorrect) intervalDays = prevIntervalDays > 0 ? Math.min(prevIntervalDays * 2, 30) : 1;
+            else intervalDays = 0;
+
+            const now = Date.now();
+            const nextReview = now + (isCorrect ? intervalDays : 1) * 24 * 60 * 60 * 1000;
+
+            all[cardId] = {
+                card_id: cardId,
+                pack_id: pack_id || prev.pack_id || null,
+                seen_count: (prev.seen_count || 0) + 1,
+                correct_count: (prev.correct_count || 0) + (isCorrect ? 1 : 0),
+                wrong_count: (prev.wrong_count || 0) + (isCorrect ? 0 : 1),
+                last_seen_at: now,
+                next_review_at: nextReview,
+                interval_days: intervalDays,
+                last_confidence: confidence_1to5,
+                updatedAt: now
+            };
+            this._localWrite('card_progress', all);
+            return;
+        }
         const ref = doc(db, `users/${uid}/coach_card_progress/${cardId}`);
         const snap = await getDoc(ref);
         const prev = snap.exists() ? snap.data() : {};
@@ -433,12 +597,12 @@ class CoachStore {
 
     // --- Skill Playbook (Roadmap/Checklist/Interview/Quizzes) ---
     async updateSkillPlaybook(uid, skillId, playbook) {
-        if (!uid || !skillId) return;
+        if (!skillId) return;
         await this.updateSkill(uid, skillId, { playbook });
     }
 
     async cycleRoadmapStatus(uid, skillId, day) {
-        if (!uid || !skillId || !day) return;
+        if (!skillId || !day) return;
         const skill = await this.getSkill(uid, skillId);
         const playbook = skill?.playbook || {};
         const roadmap = Array.isArray(playbook.roadmap) ? [...playbook.roadmap] : [];
@@ -453,7 +617,7 @@ class CoachStore {
     }
 
     async setRoadmapStatus(uid, skillId, day, status) {
-        if (!uid || !skillId || !day) return;
+        if (!skillId || !day) return;
         const next = String(status || 'todo');
         const skill = await this.getSkill(uid, skillId);
         const playbook = skill?.playbook || {};
@@ -466,7 +630,7 @@ class CoachStore {
     }
 
     async setChecklistItem(uid, skillId, itemId, checked) {
-        if (!uid || !skillId || !itemId) return;
+        if (!skillId || !itemId) return;
         const skill = await this.getSkill(uid, skillId);
         const playbook = skill?.playbook || {};
         const checklist = Array.isArray(playbook.checklist) ? [...playbook.checklist] : [];

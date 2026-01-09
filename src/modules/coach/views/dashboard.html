@@ -1,7 +1,19 @@
 <div class="learning-hub">
     <div class="hub-header">
-        <h1>Learning Hub</h1>
-        <p>Discover, continue, and master new skills</p>
+        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; flex-wrap:wrap;">
+            <div>
+                <h1>Learning Hub</h1>
+                <p>Discover, continue, and master new skills</p>
+            </div>
+            <div style="display:flex; gap:.5rem; align-items:center;">
+                <button class="btn btn-secondary" data-action="view-my-skills">
+                    <i data-feather="target"></i> My Skills
+                </button>
+                <button class="btn btn-primary" data-action="add-new-skill">
+                    <i data-feather="plus"></i> Add Skill
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Pick What to Learn -->
@@ -23,9 +35,9 @@
         </div>
         <div id="packs-grid" class="packs-grid">
             {{#each packs}}
-            <div class="pack-card glass-panel" data-pack-id="{{this.id}}">
+            <div class="pack-card glass-panel" data-pack-id="{{this.id}}" data-type="{{this.type}}" data-difficulty="{{this.difficulty}}">
                 <div class="pack-header">
-                    <div class="pack-icon">{{this.icon}}</div>
+                    <div class="pack-icon"><i data-feather="{{this.icon}}"></i></div>
                     <div class="pack-meta">
                         <span class="pack-type">{{this.type}}</span>
                         <span class="pack-difficulty">{{this.difficulty}}</span>
@@ -34,6 +46,8 @@
                 <h3 class="pack-title">{{this.title}}</h3>
                 <p class="pack-subtitle">{{this.subtitle}}</p>
                 <div class="pack-tags">
+                    <span class="tag">{{this.type}}</span>
+                    <span class="tag">{{this.difficulty}}</span>
                     {{#each this.ui_hint_tags}}
                     <span class="tag">{{this}}</span>
                     {{/each}}
