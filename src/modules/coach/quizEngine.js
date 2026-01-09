@@ -1,6 +1,7 @@
 /* src/modules/coach/quizEngine.js */
 import { i18n } from './i18n.js';
 import { coachStore } from './coachStore.js';
+import { difficultyEngine } from './difficultyEngine.js';
 
 export const quizEngine = {
 
@@ -68,23 +69,13 @@ export const quizEngine = {
 
         if (!selected) return null;
 
-        // 3. Distractors (Context-aware)
-        // Pool: Same category, excluding selected
-        const categoryPool = allCards.filter(c => c.category === selected.category && c.card_id !== selected.card_id);
+        // Assess difficulty for this card
+        const { level, representation } = await difficultyEngine.assessDifficulty(uid, selected.card_id, {});
 
-        let distractors = [];
-        if (categoryPool.length >= 2) {
-            distractors = this._shuffle(categoryPool).slice(0, 2);
-        } else {
-            // Fallback to any card
-            const otherPool = allCards.filter(c => c.card_id !== selected.card_id);
-            distractors = this._shuffle(otherPool).slice(0, 2);
-        }
+        // 3. Distractors (Context-aware, adapted by difficulty)
+        const distractors = difficultyEngine.generateDistractors(selected, allCards, level);
 
         // 4. Build Options
-        // We need to display the "Answer" which is usually the definition or translation
-        // JSON structure: card.correct_answer_i18n
-
         const getOptionText = (c) => i18n.getContent(c.correct_answer_i18n);
 
         const options = [
@@ -97,7 +88,13 @@ export const quizEngine = {
         const shuffledOptions = this._shuffle(options);
         const correctIndex = shuffledOptions.findIndex(o => o.isCorrect);
 
-        // 5. Return Session Object
+        // 5. Generate Scenario, Explanation, Transfer, Reflection
+        const scenario = this.generateScenario(selected, level);
+        const explanation = this.generateExplanation(selected, distractors);
+        const transferTask = this.generateTransferTask(selected);
+        const reflectionPrompt = this.generateReflectionPrompt();
+
+        // 6. Return Enhanced Session Object
         return {
             card: selected,
             options: shuffledOptions.map(o => o.text),
@@ -108,8 +105,51 @@ export const quizEngine = {
                 due: dueCards.length,
                 new: newCards.length,
                 total: allCards.length
-            }
+            },
+            // New fields for depth
+            scenario,
+            explanation,
+            transferTask,
+            reflectionPrompt,
+            difficultyLevel: level,
+            representation
         };
+    },
+
+    generateScenario(card, level) {
+        // Generate ambiguous real-life scenario
+        const base = i18n.getContent(card.question_i18n || card.correct_answer_i18n);
+        if (level === 'advanced') {
+            return `In a professional email, you need to express: "${base}". Which option fits best in this context?`;
+        }
+        return `Translate or explain: "${base}"`;
+    },
+
+    generateExplanation(card, distractors) {
+        const correct = i18n.getContent(card.correct_answer_i18n);
+        let exp = `Correct: "${correct}" because it accurately conveys the meaning.`;
+        distractors.forEach(d => {
+            if (d) {
+                const wrong = i18n.getContent(d.correct_answer_i18n);
+                exp += ` "${wrong}" fails because it's too literal/misleading.`;
+            }
+        });
+        return exp;
+    },
+
+    generateTransferTask(card) {
+        // Same idea, different context
+        const concept = i18n.getContent(card.question_i18n || card.correct_answer_i18n);
+        return `Apply this in a business meeting: How would you use "${concept}" to respond to a colleague's question?`;
+    },
+
+    generateReflectionPrompt() {
+        const prompts = [
+            "What surprised you about this?",
+            "How might this change your approach?",
+            "Where else could you apply this?"
+        ];
+        return this._randomItem(prompts);
     },
 
     // --- Helpers ---

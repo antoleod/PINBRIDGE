@@ -13,6 +13,12 @@
             <span class="tts-icon" data-action="play-tts" title="Read aloud"><i data-feather="volume-2"></i></span>
         </div>
 
+        {{#if scenario}}
+        <div class="quiz-scenario">
+            <p>{{scenario}}</p>
+        </div>
+        {{/if}}
+
         <h2 class="quiz-question">{{question}}</h2>
 
         <div class="quiz-options">
@@ -29,7 +35,23 @@
         <div class="feedback-content">
             <h3 id="feedback-title"></h3>
             <p id="feedback-text"></p>
-            <div id="feedback-example" class="example-box"></div>
+            {{#if explanation}}
+            <div class="explanation-box">{{explanation}}</div>
+            {{/if}}
+            {{#if transferTask}}
+            <div class="transfer-task">
+                <h4>Transfer Task</h4>
+                <p>{{transferTask}}</p>
+                <textarea id="transfer-response" placeholder="Your response (1-3 lines)" rows="2"></textarea>
+            </div>
+            {{/if}}
+            {{#if reflectionPrompt}}
+            <div class="reflection-prompt">
+                <h4>Reflection</h4>
+                <p>{{reflectionPrompt}}</p>
+                <textarea id="reflection-response" placeholder="Your thoughts" rows="2"></textarea>
+            </div>
+            {{/if}}
             <button id="btn-next-card" class="btn btn-primary">Next <i data-feather="arrow-right"></i></button>
         </div>
     </div>

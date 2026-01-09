@@ -7,6 +7,7 @@ import { packImportWizard } from './packImportWizard.js';
 import { tts } from './tts.js';
 import { uiRenderer } from './uiRenderer.js';
 import { i18n } from './i18n.js';
+import { virtualCoach } from './virtualCoach.js';
 import { auth, db } from '../../firebase.js';
 
 class CoachService {

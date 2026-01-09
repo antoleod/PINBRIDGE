@@ -161,9 +161,11 @@ class CoachEngine {
                         options_i18n: options,
                         correct_index: 0,
                         justification_i18n: isLanguageSkill
-                            ? mkI18n('Meaning sticks when you force usage; sentences expose gaps fast.', 'El significado se fija cuando lo usas; las frases revelan huecos rápido.', 'Le sens s’ancre quand vous l’utilisez; les phrases révèlent vite les lacunes.', 'Betekenis blijft hangen door gebruik; zinnen tonen snel de gaten.'),
+                            ? mkI18n('Meaning sticks when you force usage; sentences expose gaps fast.', 'El significado se fija cuando lo usas; las frases revelan huecos rápido.', 'Le sens s’ancre quand vous l’utilisez; les phrases révèlent vite les lacunes.', 'Betekenis blijft hangen door gebruik; zinnen tonen snel de gaten.')
+                            : mkI18n('Validation reduces risk faster than theory.', 'La validación reduce el riesgo más rápido que la teoría.', 'La validation réduit le risque plus vite que la théorie.', 'Validatie vermindert risico sneller dan theorie.'),
                         trap_i18n: isLanguageSkill
-                            ? mkI18n('Word-for-word translation leads to wrong usage.', 'La traducción literal suele llevar a un uso incorrecto.', 'La traduction mot à mot mène souvent à un mauvais usage.', 'Woord-voor-woord vertalen leidt vaak tot verkeerd gebruik.'),
+                            ? mkI18n('Word-for-word translation leads to wrong usage.', 'La traducción literal suele llevar a un uso incorrecto.', 'La traduction mot à mot mène souvent à un mauvais usage.', 'Woord-voor-woord vertalen leidt vaak tot verkeerd gebruik.')
+                            : mkI18n('Choosing complexity just in case.', 'Elegir complejidad por si acaso.', 'Choisir la complexité au cas où.', 'Complexiteit kiezen voor de zekerheid.'),
                         _v: 1
                     }
                 });
