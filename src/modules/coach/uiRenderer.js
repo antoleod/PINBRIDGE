@@ -49,13 +49,23 @@ class UiRenderer {
             const keys = arrayName.trim().split('.');
             let array = data;
             for (const key of keys) {
-                array = array ? array[key] : undefined;
+                if (array && typeof array === 'object') {
+                    array = array[key];
+                } else {
+                    array = undefined;
+                    break;
+                }
             }
             if (!array && keys.length === 1) {
                 array = data[arrayName.trim()];
             }
 
-            if (!array || !Array.isArray(array)) return '';
+            if (!array || !Array.isArray(array)) {
+                // If array matches exactly one key in data but is not an array, maybe it's missing.
+                // Or maybe the user meant a simple block. For #each, we expect array.
+                // Return empty if not iterable.
+                return '';
+            }
 
             return array.map((item, index) => {
                 let itemBody = body.replace(/\{\{@index\}\}/g, index);

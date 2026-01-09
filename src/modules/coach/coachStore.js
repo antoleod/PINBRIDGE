@@ -215,6 +215,103 @@ class CoachStore {
         const ref = doc(db, `users/${uid}/coach_maintenance/main`);
         await setDoc(ref, data, { merge: true });
     }
+
+    // --- Packs & Content Management ---
+
+    async getGlobalPackVersion(packId, version) {
+        if (!packId || !version) return null;
+        // Try to get the version document which should contain valid Cards as a subcollection or array.
+        // For MVP/Small packs, we might store 'cards' in the version doc itself if under 1MB.
+        // But prompt suggested /cards/{card_id}.
+        // Let's Read the Version Doc first.
+        const ref = doc(db, `coach_packs/${packId}/versions/${version}`);
+        const snap = await getDoc(ref);
+        if (!snap.exists()) return null;
+
+        const data = snap.data();
+
+        // Fetch cards from subcollection
+        const cardsCol = collection(db, `coach_packs/${packId}/versions/${version}/cards`);
+        const cardsSnap = await getDocs(cardsCol);
+        const cards = cardsSnap.docs.map(d => d.data());
+
+        return { ...data, cards };
+    }
+
+    async saveGlobalPack(packId, version, packData, cards) {
+        if (!packId || !version) return;
+
+        // 1. Update Global Header
+        const headerRef = doc(db, `coach_packs/${packId}`);
+        await setDoc(headerRef, {
+            latest_version: version,
+            updatedAt: serverTimestamp(),
+            ...packData // basic meta like title
+        }, { merge: true });
+
+        // 2. Create Version Doc
+        const versionRef = doc(db, `coach_packs/${packId}/versions/${version}`);
+        await setDoc(versionRef, {
+            ...packData,
+            createdAt: serverTimestamp(),
+            card_count: cards.length
+        });
+
+        // 3. Upload Cards (Batching 500 max)
+        const batchSize = 400;
+        for (let i = 0; i < cards.length; i += batchSize) {
+            const chunk = cards.slice(i, i + batchSize);
+            // We need a specific batch object here, but import might be tricky if not top-level.
+            // We'll do parallel setDocs for simplicity if batch import missing, 
+            // but standard firestore approach is writeBatch.
+            // Assuming we change import to include writeBatch or use runTransaction.
+            // Let's use parallel promises for now as it's cleaner without changing imports heavily.
+            await Promise.all(chunk.map(c => {
+                const cardRef = doc(db, `coach_packs/${packId}/versions/${version}/cards/${c.card_id}`);
+                return setDoc(cardRef, c);
+            }));
+        }
+    }
+
+    async getUserPacks(uid) {
+        if (!uid) return [];
+        const col = collection(db, `users/${uid}/coach_user_packs`);
+        const snap = await getDocs(col);
+        return snap.docs.map(d => d.data());
+    }
+
+    async installUserPack(uid, packId, version, packData) {
+        if (!uid) return;
+        const ref = doc(db, `users/${uid}/coach_user_packs/${packId}`);
+        await setDoc(ref, {
+            pack_id: packId,
+            installed_version: version,
+            title_i18n: packData.title_i18n,
+            description_i18n: packData.description_i18n,
+            installedAt: serverTimestamp()
+        });
+    }
+
+    async getCardProgress(uid, cardIds) {
+        if (!uid || !cardIds || cardIds.length === 0) return {};
+        // Firestore 'in' query limited to 10.
+        // We will fetch ALL progress for the user and filter in memory for MVP 
+        // to avoid complexity of 10-chunking for hundreds of cards.
+        // Alternatively, since we usually ask for progress *of a specific pack*, 
+        // maybe we should query by packId if we stored it in progress.
+        // But for "Review", we want progress on these specific IDs.
+
+        const col = collection(db, `users/${uid}/coach_card_progress`);
+        const snap = await getDocs(col);
+
+        const progressMap = {};
+        snap.forEach(doc => {
+            if (cardIds.includes(doc.id)) {
+                progressMap[doc.id] = doc.data();
+            }
+        });
+        return progressMap;
+    }
 }
 
 export const coachStore = new CoachStore();
