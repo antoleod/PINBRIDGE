@@ -141,25 +141,46 @@ class UiRenderer {
 
             const actionName = action.dataset.action;
 
-            switch (actionName) {
-                case 'back-to-dashboard':
-                    bus.emit('coach:navigate', 'dashboard');
-                    break;
-                case 'back-to-skills':
-                    bus.emit('coach:navigate', 'skills');
-                    break;
-                case 'back-to-packs':
-                    bus.emit('coach:navigate', 'packs');
-                    break;
+                switch (actionName) {
+                    case 'back-to-dashboard':
+                        bus.emit('coach:navigate', 'dashboard');
+                        break;
+                    case 'back-to-roadmap':
+                        bus.emit('coach:navigate', 'roadmap');
+                        break;
+                    case 'back-to-skills':
+                        bus.emit('coach:navigate', 'skills');
+                        break;
+                    case 'back-to-packs':
+                        bus.emit('coach:navigate', 'packs');
+                        break;
                 case 'view-my-skills':
                     bus.emit('coach:navigate', 'skills');
                     break;
-                case 'open-settings':
-                    bus.emit('coach:navigate', 'settings');
-                    break;
-                case 'open-import-pack':
-                    bus.emit('coach:navigate', 'import-pack');
-                    break;
+                    case 'open-settings':
+                        bus.emit('coach:navigate', 'settings');
+                        break;
+                    case 'open-roadmap':
+                        bus.emit('coach:navigate', 'roadmap');
+                        break;
+                    case 'open-checklist':
+                        bus.emit('coach:navigate', 'checklist');
+                        break;
+                    case 'open-interview':
+                        bus.emit('coach:navigate', 'interview');
+                        break;
+                    case 'open-quizzes':
+                        bus.emit('coach:navigate', 'quizzes');
+                        break;
+                    case 'open-export':
+                        bus.emit('coach:navigate', 'export');
+                        break;
+                    case 'open-packs':
+                        bus.emit('coach:navigate', 'packs');
+                        break;
+                    case 'open-import-pack':
+                        bus.emit('coach:navigate', 'import-pack');
+                        break;
                 case 'start-exam-center':
                     bus.emit('coach:navigate', 'exam-center');
                     break;
@@ -190,6 +211,93 @@ class UiRenderer {
                 case 'quit-quiz':
                     bus.emit('coach:navigate', 'packs');
                     break;
+                case 'open-roadmap-day': {
+                    const day = Number(action.dataset.day);
+                    if (Number.isFinite(day)) bus.emit('coach:open-roadmap-day', { day });
+                    break;
+                }
+                case 'cycle-roadmap-status': {
+                    const day = Number(action.dataset.day);
+                    if (Number.isFinite(day)) bus.emit('coach:cycle-roadmap-status', { day });
+                    break;
+                }
+                case 'toggle-checklist-item': {
+                    const itemId = action.dataset.itemId;
+                    const checked = !!action.checked;
+                    if (itemId) bus.emit('coach:toggle-checklist-item', { itemId, checked });
+                    break;
+                }
+                case 'copy-export': {
+                    const text = document.getElementById('coach-export-text')?.value || '';
+                    const copy = async () => {
+                        if (!text) return;
+                        try {
+                            await navigator.clipboard.writeText(text);
+                            bus.emit('ui:toast', { message: i18n.t('coach_toast_copied'), type: 'success' });
+                        } catch {
+                            const el = document.getElementById('coach-export-text');
+                            if (el) {
+                                el.focus();
+                                el.select();
+                                document.execCommand('copy');
+                                bus.emit('ui:toast', { message: i18n.t('coach_toast_copied'), type: 'success' });
+                            }
+                        }
+                    };
+                    copy();
+                    break;
+                }
+                case 'answer-roadmap-decision': {
+                    const selectedIndex = Number(action.dataset.index);
+                    const correctIndex = Number(data?.decision_correct_index);
+                    const isCorrect = selectedIndex === correctIndex;
+
+                    const panel = document.getElementById('roadmap-decision-feedback');
+                    const icon = document.getElementById('roadmap-feedback-icon');
+                    const title = document.getElementById('roadmap-feedback-title');
+                    const why = document.getElementById('roadmap-feedback-why');
+                    const trap = document.getElementById('roadmap-feedback-trap');
+
+                    if (icon) icon.textContent = isCorrect ? '✓' : '✕';
+                    if (title) title.textContent = isCorrect ? i18n.t('coach_feedback_correct') : i18n.t('coach_feedback_incorrect');
+                    if (why) why.textContent = data?.decision_justification || '';
+                    if (trap) trap.textContent = data?.decision_trap ? `${i18n.t('coach_label_trap')}: ${data.decision_trap}` : '';
+                    if (panel) panel.classList.remove('hidden');
+
+                    // Disable buttons after answer (prevents spam taps).
+                    this.container.querySelectorAll('[data-action="answer-roadmap-decision"]').forEach(btn => (btn.disabled = true));
+
+                    bus.emit('coach:roadmap-decision-answered', {
+                        day: Number(data?.day),
+                        selectedIndex,
+                        correctIndex,
+                        isCorrect
+                    });
+                    break;
+                }
+                case 'answer-quiz': {
+                    const quizId = action.dataset.quizId;
+                    const qIndex = Number(action.dataset.qIndex);
+                    const optIndex = Number(action.dataset.optIndex);
+                    if (!quizId || !Number.isFinite(qIndex) || !Number.isFinite(optIndex)) break;
+
+                    const q = (data?.quizQuestions || []).find(x => x.quiz_id === quizId && Number(x.q_index) === qIndex);
+                    if (!q) break;
+
+                    const isCorrect = optIndex === Number(q.correct_index);
+                    const feedbackEl = document.getElementById(`quiz-feedback-${quizId}-${qIndex}`);
+                    const textEl = document.getElementById(`quiz-feedback-text-${quizId}-${qIndex}`);
+                    if (textEl) textEl.textContent = (isCorrect ? '✓ ' : '✕ ') + (q.explain || '');
+                    if (feedbackEl) feedbackEl.classList.remove('hidden');
+
+                    // Disable question options after answer.
+                    this.container
+                        .querySelectorAll(`[data-action="answer-quiz"][data-quiz-id="${quizId}"][data-q-index="${qIndex}"]`)
+                        .forEach(btn => (btn.disabled = true));
+
+                    bus.emit('coach:quiz-block-answered', { quizId, qIndex, optIndex, isCorrect });
+                    break;
+                }
                 case 'play-tts': {
                     const text = data?.tts_text || data?.question || '';
                     const lang = data?.tts_lang || 'fr-FR';

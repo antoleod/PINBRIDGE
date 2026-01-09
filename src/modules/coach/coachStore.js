@@ -430,6 +430,52 @@ class CoachStore {
             updatedAt: serverTimestamp()
         }, { merge: true });
     }
+
+    // --- Skill Playbook (Roadmap/Checklist/Interview/Quizzes) ---
+    async updateSkillPlaybook(uid, skillId, playbook) {
+        if (!uid || !skillId) return;
+        await this.updateSkill(uid, skillId, { playbook });
+    }
+
+    async cycleRoadmapStatus(uid, skillId, day) {
+        if (!uid || !skillId || !day) return;
+        const skill = await this.getSkill(uid, skillId);
+        const playbook = skill?.playbook || {};
+        const roadmap = Array.isArray(playbook.roadmap) ? [...playbook.roadmap] : [];
+        const idx = roadmap.findIndex(d => Number(d.day) === Number(day));
+        if (idx === -1) return;
+
+        const current = String(roadmap[idx].status || 'todo');
+        const next = current === 'todo' ? 'doing' : current === 'doing' ? 'done' : 'todo';
+        roadmap[idx] = { ...roadmap[idx], status: next };
+        await this.updateSkillPlaybook(uid, skillId, { ...playbook, roadmap });
+        return next;
+    }
+
+    async setRoadmapStatus(uid, skillId, day, status) {
+        if (!uid || !skillId || !day) return;
+        const next = String(status || 'todo');
+        const skill = await this.getSkill(uid, skillId);
+        const playbook = skill?.playbook || {};
+        const roadmap = Array.isArray(playbook.roadmap) ? [...playbook.roadmap] : [];
+        const idx = roadmap.findIndex(d => Number(d.day) === Number(day));
+        if (idx === -1) return;
+        roadmap[idx] = { ...roadmap[idx], status: next };
+        await this.updateSkillPlaybook(uid, skillId, { ...playbook, roadmap });
+        return next;
+    }
+
+    async setChecklistItem(uid, skillId, itemId, checked) {
+        if (!uid || !skillId || !itemId) return;
+        const skill = await this.getSkill(uid, skillId);
+        const playbook = skill?.playbook || {};
+        const checklist = Array.isArray(playbook.checklist) ? [...playbook.checklist] : [];
+        const idx = checklist.findIndex(x => String(x.id) === String(itemId));
+        if (idx === -1) return;
+        checklist[idx] = { ...checklist[idx], checked: !!checked };
+        await this.updateSkillPlaybook(uid, skillId, { ...playbook, checklist });
+        return checklist[idx];
+    }
 }
 
 export const coachStore = new CoachStore();

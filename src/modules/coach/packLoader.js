@@ -2,6 +2,21 @@
 
 const BUNDLED_PACKS = [
     {
+        id: 'en_b1_vocab_core_40',
+        title: 'English B1 — Core Vocabulary (40)',
+        pathsToTry: ['src/public/packs/en_b1_vocab_core_40.json']
+    },
+    {
+        id: 'fr_b1_vocab_core_40',
+        title: 'French B1 — Core Vocabulary (40)',
+        pathsToTry: ['src/public/packs/fr_b1_vocab_core_40.json']
+    },
+    {
+        id: 'nl_b1_vocab_core_40',
+        title: 'Dutch B1 — Core Vocabulary (40)',
+        pathsToTry: ['src/public/packs/nl_b1_vocab_core_40.json']
+    },
+    {
         id: 'fr_b1_mixed_premium_pack_100',
         title: 'French B1 · Mixed · 100 (bundled)',
         pathsToTry: [

@@ -1,0 +1,23 @@
+<div class="coach-export fade-in">
+    <div class="packs-header">
+        <h2><i data-feather="share-2"></i> {{coach_action_export}}</h2>
+        <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-action="back-to-dashboard">
+                <i data-feather="arrow-left"></i> {{coach_action_back}}
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <h3 class="skill-title">{{skillName}}</h3>
+        <p class="hint">Copy-paste into PINBRIDGE or Notion. This is designed to be interactive inside the app.</p>
+        <button class="btn btn-primary btn-sm" data-action="copy-export">
+            <i data-feather="copy"></i> {{coach_action_copy}}
+        </button>
+    </div>
+
+    <div class="glass-panel">
+        <textarea id="coach-export-text" class="input-field" rows="18" spellcheck="false">{{export_template}}</textarea>
+    </div>
+</div>
+

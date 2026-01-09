@@ -332,3 +332,244 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
 }
+
+/* Coach utility headers (shared with Packs-like views) */
+.packs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.packs-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    font-size: 1.35rem;
+}
+
+.packs-header .actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* Roadmap */
+.roadmap-summary .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.roadmap-days {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.9rem;
+    margin-top: 1rem;
+}
+
+.roadmap-day-card {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.roadmap-day-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.status-pill.todo {
+    color: var(--text-secondary);
+    border: 1px solid var(--border-subtle);
+}
+
+.status-pill.doing {
+    color: #ffd166;
+    border: 1px solid rgba(255, 209, 102, 0.35);
+}
+
+.status-pill.done {
+    color: var(--text-success);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.roadmap-day-title {
+    margin: 0.5rem 0 0.35rem 0;
+}
+
+.roadmap-day-action {
+    margin: 0;
+}
+
+.roadmap-day-view .roadmap-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 1rem 0;
+}
+
+.roadmap-feedback {
+    margin-top: 1rem;
+    padding: 0.9rem;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+}
+
+.roadmap-feedback-top {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 0.25rem;
+}
+
+.roadmap-day-footer {
+    margin-top: 0.9rem;
+}
+
+/* Checklist */
+.checklist-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.checklist-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 1rem;
+    cursor: pointer;
+}
+
+.checklist-item input[type="checkbox"] {
+    margin-top: 0.25rem;
+    width: 18px;
+    height: 18px;
+}
+
+/* Interview */
+.interview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.interview-item summary {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+.interview-item summary::-webkit-details-marker {
+    display: none;
+}
+
+.interview-a {
+    margin-top: 0.75rem;
+}
+
+/* Quizzes */
+.quiz-questions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-top: 1rem;
+}
+
+.quiz-q-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.quiz-q-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+}
+
+.quiz-q-feedback {
+    margin-top: 0.75rem;
+}
+
+/* Mobile UX (e.g., S24 Ultra ~384–430px CSS width) */
+@media (max-width: 520px) {
+    .coach-panel {
+        padding: 1rem;
+    }
+
+    .coach-header {
+        margin-bottom: 1rem;
+        padding: calc(env(safe-area-inset-top) + 0.75rem) 0 0.75rem 0;
+    }
+
+    .coach-header-top {
+        align-items: center;
+    }
+
+    .coach-header h1 {
+        font-size: 1.6rem;
+        line-height: 1.1;
+    }
+
+    .coach-dashboard,
+    .coach-skills,
+    .coach-exam-center,
+    .coach-error-cards,
+    .coach-settings {
+        max-width: 100%;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .stat-item {
+        padding: 0.9rem 0.75rem;
+        min-width: 0;
+    }
+
+    .tools-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    .tool-btn {
+        padding: 1rem;
+        justify-content: flex-start;
+        text-align: left;
+    }
+
+    .coach-wizard,
+    .coach-settings,
+    .session-card {
+        padding: 1rem;
+    }
+
+    .skill-card,
+    .module-card {
+        padding: 1rem;
+    }
+
+    .option-btn {
+        padding: 0.95rem 0.9rem;
+        min-height: 48px;
+        touch-action: manipulation;
+    }
+}

@@ -1,6 +1,6 @@
 /* src/modules/coach/i18n.js */
 
-const SUPPORTED = ['en', 'fr', 'es'];
+const SUPPORTED = ['en', 'fr', 'es', 'nl'];
 
 function safeLang(lang) {
     return SUPPORTED.includes(lang) ? lang : 'en';
@@ -33,6 +33,21 @@ class CoachI18n {
                 coach_action_create_plan: 'Create roadmap',
                 coach_action_retry_assisted: 'Retry (assisted)',
                 coach_action_show_all_30: 'Show all 30 days',
+                coach_action_checklist: 'Checklist',
+                coach_action_interview: 'Interview',
+                coach_action_quizzes: 'Quizzes',
+                coach_action_export: 'Export',
+                coach_action_packs: 'Packs',
+                coach_action_open_day: 'Open day',
+                coach_status_todo: 'To do',
+                coach_status_doing: 'Doing',
+                coach_status_done: 'Done',
+                coach_action_copy: 'Copy',
+                coach_toast_copied: 'Copied',
+
+                myPacks: 'My packs',
+                importPack: 'Import pack',
+                back: 'Back',
 
                 coach_metric_streak: 'Streak',
                 coach_metric_today: 'Today',
@@ -110,6 +125,21 @@ class CoachI18n {
                 coach_action_create_plan: 'Crear roadmap',
                 coach_action_retry_assisted: 'Reintentar (asistido)',
                 coach_action_show_all_30: 'Ver los 30 días',
+                coach_action_checklist: 'Checklist',
+                coach_action_interview: 'Entrevista',
+                coach_action_quizzes: 'Quizzes',
+                coach_action_export: 'Exportar',
+                coach_action_packs: 'Packs',
+                coach_action_open_day: 'Abrir día',
+                coach_status_todo: 'Por hacer',
+                coach_status_doing: 'Haciendo',
+                coach_status_done: 'Hecho',
+                coach_action_copy: 'Copiar',
+                coach_toast_copied: 'Copiado',
+
+                myPacks: 'Mis packs',
+                importPack: 'Importar pack',
+                back: 'Volver',
 
                 coach_metric_streak: 'Racha',
                 coach_metric_today: 'Hoy',
@@ -187,6 +217,21 @@ class CoachI18n {
                 coach_action_create_plan: 'Créer un roadmap',
                 coach_action_retry_assisted: 'Réessayer (assisté)',
                 coach_action_show_all_30: 'Voir les 30 jours',
+                coach_action_checklist: 'Checklist',
+                coach_action_interview: 'Entretien',
+                coach_action_quizzes: 'Quiz',
+                coach_action_export: 'Exporter',
+                coach_action_packs: 'Packs',
+                coach_action_open_day: 'Ouvrir le jour',
+                coach_status_todo: 'À faire',
+                coach_status_doing: 'En cours',
+                coach_status_done: 'Fait',
+                coach_action_copy: 'Copier',
+                coach_toast_copied: 'Copié',
+
+                myPacks: 'Mes packs',
+                importPack: 'Importer un pack',
+                back: 'Retour',
 
                 coach_metric_streak: 'Série',
                 coach_metric_today: "Aujourd'hui",
@@ -241,6 +286,98 @@ class CoachI18n {
 
                 coach_modules_title: 'Modules',
                 coach_modules_hint: "Interleaving activé : les sessions mélangent les modules automatiquement."
+            },
+            nl: {
+                coach_title: 'Coach',
+                coach_subtitle: 'Decision-first leren, offline-first vriendelijk.',
+
+                coach_dashboard_title: 'Je plan',
+                coach_dashboard_subtitle: 'Eén beslissing per sessie. Feedback nadat je kiest.',
+                coach_today_title: 'Beslissing van vandaag',
+                coach_no_plan_hint: 'Maak een 30-dagen roadmap voor elk onderwerp (certificering, taal, gewoonte, skill).',
+
+                coach_action_start_session: 'Start sessie',
+                coach_action_submit: 'Verstuur',
+                coach_action_continue: 'Doorgaan',
+                coach_action_back: 'Terug',
+                coach_action_settings: 'Instellingen',
+                coach_action_view_roadmap: 'Roadmap',
+                coach_action_modules: 'Modules',
+                coach_action_start_exam: 'Start examen',
+                coach_action_timed_drill: 'Timed drill',
+                coach_action_change_topic: 'Onderwerp wijzigen',
+                coach_action_create_plan: 'Roadmap maken',
+                coach_action_retry_assisted: 'Opnieuw (assisted)',
+                coach_action_show_all_30: 'Toon alle 30 dagen',
+                coach_action_checklist: 'Checklist',
+                coach_action_interview: 'Interview',
+                coach_action_quizzes: 'Quiz',
+                coach_action_export: 'Export',
+                coach_action_packs: 'Packs',
+                coach_action_open_day: 'Open dag',
+                coach_status_todo: 'Te doen',
+                coach_status_doing: 'Bezig',
+                coach_status_done: 'Klaar',
+                coach_action_copy: 'Kopiëren',
+                coach_toast_copied: 'Gekopieerd',
+
+                coach_metric_streak: 'Streak',
+                coach_metric_today: 'Vandaag',
+                coach_metric_load: 'Cognitieve belasting',
+
+                coach_label_scenario: 'Scenario',
+                coach_label_hint: 'Hint',
+                coach_label_decision: 'Beslissing',
+                coach_label_confidence: 'Zelfvertrouwen (1–5)',
+                coach_label_why: 'Waarom koos je dit?',
+                coach_label_explain: 'Uitleg',
+                coach_label_trap: 'Valkuil',
+                coach_label_calibration: 'Kalibratie',
+                coach_label_resources: 'Resources (alleen indien nodig)',
+                coach_label_teachback: 'Teach-back (verplicht)',
+                coach_label_action_practice: 'Actie-oefening (20–30 min)',
+                coach_label_mini_challenge: 'Mini-uitdaging',
+                coach_label_results: 'Resultaten',
+
+                coach_confidence_1: 'Gok',
+                coach_confidence_3: 'Twijfel',
+                coach_confidence_5: 'Zeker',
+
+                coach_placeholder_why: 'Mijn redenering is…',
+                coach_placeholder_teachback: 'Leg het uit in 1–2 zinnen alsof je het aan een collega leert.',
+                coach_hint_required: 'Verplicht.',
+                coach_hint_teachback: 'Dit verankert het leren en toont gaten.',
+                coach_toggle_no_resources: 'Geen resources',
+                coach_toggle_on: 'Aan',
+                coach_hint_sources_versioned: 'Elke resource/vraag heeft source metadata + content_version.',
+
+                coach_feedback_correct: 'Correct',
+                coach_feedback_incorrect: 'Niet helemaal',
+
+                coach_settings_title: 'Coach-instellingen',
+                coach_settings_ui_language: 'UI-taal',
+                coach_settings_ui_language_hint: 'Labels/knoppen in Coach gebruiken deze taal.',
+                coach_settings_content_language: 'Content-taal',
+                coach_settings_content_language_hint: 'Scenario’s/opties/uitleg gebruiken deze taal.',
+                coach_settings_allow_toggle: 'Content-taal wissel toestaan',
+                coach_settings_allow_toggle_hint: 'Als uit, volgt content_language de UI-taal.',
+
+                coach_exam_pass: 'Examen gehaald',
+                coach_exam_fail: 'Verbetering nodig',
+                coach_exam_score: 'Score',
+                coach_exam_weak_domains: 'Zwakke punten',
+                coach_exam_remediation_title: '3-daags remediation plan',
+                coach_drill_title: 'Timed drill',
+
+                coach_roadmap_title: 'Roadmap (30 dagen)',
+                coach_roadmap_sessions_title: 'Komende sessies',
+
+                coach_modules_title: 'Modules',
+                coach_modules_hint: 'Interleaving is aan: sessies mixen modules automatisch.',
+
+                myPacks: 'Mijn packs',
+                importPack: 'Pack importeren',
+                back: 'Terug'
             }
         };
     }
@@ -269,6 +406,7 @@ class CoachI18n {
             i18nField.en ||
             i18nField.fr ||
             i18nField.es ||
+            i18nField.nl ||
             ''
         );
     }

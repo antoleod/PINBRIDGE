@@ -1,29 +1,39 @@
-<div class="coach-roadmap glass-panel">
-    <h2>{{skillName}} — {{coach_roadmap_title}}</h2>
-    <div class="roadmap-modules">
-        {{#each modules}}
-        <div class="roadmap-module">
-            <h3>{{this.title}}</h3>
-            <p class="hint">{{this.hint}}</p>
+<div class="coach-roadmap fade-in">
+    <div class="packs-header">
+        <h2><i data-feather="calendar"></i> {{coach_roadmap_title}}</h2>
+        <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-action="back-to-dashboard">
+                <i data-feather="arrow-left"></i> {{coach_action_back}}
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel roadmap-summary">
+        <h3 class="skill-title">{{skillName}}</h3>
+        <div class="meta">
+            <span class="pill">{{roadmap_done}} / {{roadmap_total}} {{coach_status_done}}</span>
+            <span class="pill">{{roadmap_todo}} {{coach_status_todo}}</span>
+            <span class="pill">{{roadmap_doing}} {{coach_status_doing}}</span>
+        </div>
+    </div>
+
+    <div class="roadmap-days">
+        {{#each roadmap}}
+        <div class="glass-panel roadmap-day-card" data-action="open-roadmap-day" data-day="{{this.day}}">
+            <div class="roadmap-day-main">
+                <div class="roadmap-day-top">
+                    <span class="badge">Day {{this.day}}</span>
+                    <span class="pill status-pill {{this.status}}">{{this.status_label}}</span>
+                </div>
+                <h3 class="roadmap-day-title">{{this.topic_i18n}}</h3>
+                <p class="hint roadmap-day-action">{{this.action_i18n}}</p>
+            </div>
+            <div class="roadmap-day-actions">
+                <button class="btn btn-secondary btn-sm full-width" data-action="cycle-roadmap-status" data-day="{{this.day}}">
+                    <i data-feather="repeat"></i> {{this.status_label}}
+                </button>
+            </div>
         </div>
         {{/each}}
     </div>
-    <div class="roadmap-sessions">
-        <h3>{{coach_roadmap_sessions_title}}</h3>
-        <div class="session-list">
-            {{#each sessionsPreview}}
-            <div class="session-item">
-                <span class="session-day">Day {{this.day}}</span>
-                <span class="session-title">{{this.title}}</span>
-                <span class="session-concept">{{this.concept_id}}</span>
-            </div>
-            {{/each}}
-        </div>
-        {{#if hasMoreSessions}}
-        <button class="btn btn-secondary" data-action="toggle-roadmap-sessions">
-            <i data-feather="chevron-down"></i> {{coach_action_show_all_30}}
-        </button>
-        {{/if}}
-    </div>
-    <button class="btn btn-secondary" data-action="back-to-dashboard">{{coach_action_back}}</button>
 </div>

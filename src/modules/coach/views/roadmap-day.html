@@ -1,0 +1,48 @@
+<div class="roadmap-day-view fade-in">
+    <div class="packs-header">
+        <h2><i data-feather="calendar"></i> Day {{day}} • {{topic_i18n}}</h2>
+        <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-action="back-to-roadmap">
+                <i data-feather="arrow-left"></i> {{coach_action_view_roadmap}}
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <p class="eyebrow">{{coach_label_action_practice}}</p>
+        <p class="roadmap-day-action-text">{{action_i18n}}</p>
+
+        <div class="roadmap-divider"></div>
+
+        <p class="eyebrow">{{coach_label_decision}}</p>
+        <p class="roadmap-day-prompt">{{decision_prompt_i18n}}</p>
+        <div class="decision-options">
+            {{#each decision_options_i18n}}
+            <button class="btn option-btn" data-action="answer-roadmap-decision" data-index="{{@index}}">
+                {{this}}
+            </button>
+            {{/each}}
+        </div>
+
+        <div id="roadmap-decision-feedback" class="roadmap-feedback hidden">
+            <div class="roadmap-feedback-top">
+                <span id="roadmap-feedback-icon" class="pill">?</span>
+                <strong id="roadmap-feedback-title"></strong>
+            </div>
+            <p id="roadmap-feedback-why" class="hint"></p>
+            <p id="roadmap-feedback-trap" class="hint"></p>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <p class="eyebrow">{{coach_label_mini_challenge}}</p>
+        <p>{{micro_challenge_i18n}}</p>
+    </div>
+
+    <div class="roadmap-day-footer">
+        <button class="btn btn-secondary full-width" data-action="cycle-roadmap-status" data-day="{{day}}">
+            <i data-feather="repeat"></i> {{status_label}}
+        </button>
+    </div>
+</div>
+

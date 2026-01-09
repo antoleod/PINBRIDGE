@@ -1,0 +1,1679 @@
+{
+  "schema_version": "v2-pack",
+  "generated_at": "2026-01-09T21:06:34.960Z",
+  "pack": {
+    "pack_id": "fr_b1_vocab_core_40",
+    "version": "1.0.0",
+    "level": "B1",
+    "mode": "VOCAB",
+    "languages": [
+      "en",
+      "es",
+      "fr",
+      "nl"
+    ],
+    "title_i18n": {
+      "en": "French B1 ? Core Vocabulary (40)",
+      "es": "Franc?s B1 ? Vocabulario base (40)",
+      "fr": "Fran?ais B1 ? Vocabulaire de base (40)",
+      "nl": "Frans B1 ? Kernwoordenschat (40)"
+    },
+    "description_i18n": {
+      "en": "Core B1 vocabulary with short sentences and auto-read.",
+      "es": "Vocabulario B1 base con frases cortas y autolectura.",
+      "fr": "Vocabulaire B1 de base avec phrases courtes et lecture auto.",
+      "nl": "B1 kernwoordenschat met korte zinnen en auto-voorlezen."
+    },
+    "categories": [
+      {
+        "id": "daily",
+        "title_i18n": {
+          "en": "Daily life",
+          "es": "Vida diaria",
+          "fr": "Vie quotidienne",
+          "nl": "Dagelijks leven"
+        }
+      },
+      {
+        "id": "work",
+        "title_i18n": {
+          "en": "Work & planning",
+          "es": "Trabajo y planificaci?n",
+          "fr": "Travail et planning",
+          "nl": "Werk & planning"
+        }
+      },
+      {
+        "id": "progress",
+        "title_i18n": {
+          "en": "Progress & goals",
+          "es": "Progreso y objetivos",
+          "fr": "Progr?s et objectifs",
+          "nl": "Vooruitgang & doelen"
+        }
+      },
+      {
+        "id": "social",
+        "title_i18n": {
+          "en": "Social & communication",
+          "es": "Social y comunicaci?n",
+          "fr": "Social et communication",
+          "nl": "Sociaal & communicatie"
+        }
+      }
+    ],
+    "quality_defaults": {
+      "source_type": "bundled",
+      "source_ref": "PINBRIDGE offline packs",
+      "last_verified_at": null,
+      "confidence_score": 70
+    },
+    "card_count": 40
+  },
+  "cards": [
+    {
+      "card_id": "fr_b1_vocab_core_40_001",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "progress",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "improve",
+        "es": "mejorar",
+        "fr": "am?liorer",
+        "nl": "verbeteren"
+      },
+      "question_i18n": {
+        "en": "What does \"am?liorer\" mean?",
+        "es": "?Qu? significa \"am?liorer\"?",
+        "fr": "Que signifie \"am?liorer\" ?",
+        "nl": "Wat betekent \"am?liorer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "improve",
+        "es": "mejorar",
+        "fr": "D?finition: am?liorer",
+        "nl": "verbeteren"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux am?liorer un peu chaque jour.",
+        "es": "Je veux am?liorer un peu chaque jour.",
+        "fr": "Je veux am?liorer un peu chaque jour.",
+        "nl": "Je veux am?liorer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "am?liorer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_002",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "goal",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "achieve",
+        "es": "lograr",
+        "fr": "atteindre",
+        "nl": "bereiken"
+      },
+      "question_i18n": {
+        "en": "What does \"atteindre\" mean?",
+        "es": "?Qu? significa \"atteindre\"?",
+        "fr": "Que signifie \"atteindre\" ?",
+        "nl": "Wat betekent \"atteindre\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "achieve",
+        "es": "lograr",
+        "fr": "D?finition: atteindre",
+        "nl": "bereiken"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux atteindre un peu chaque jour.",
+        "es": "Je veux atteindre un peu chaque jour.",
+        "fr": "Je veux atteindre un peu chaque jour.",
+        "nl": "Je veux atteindre un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "atteindre",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_003",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "goal"
+      ],
+      "front_i18n": {
+        "en": "goal",
+        "es": "objetivo",
+        "fr": "objectif",
+        "nl": "doel"
+      },
+      "question_i18n": {
+        "en": "What does \"objectif\" mean?",
+        "es": "?Qu? significa \"objectif\"?",
+        "fr": "Que signifie \"objectif\" ?",
+        "nl": "Wat betekent \"objectif\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "goal",
+        "es": "objetivo",
+        "fr": "D?finition: objectif",
+        "nl": "doel"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux objectif un peu chaque jour.",
+        "es": "Je veux objectif un peu chaque jour.",
+        "fr": "Je veux objectif un peu chaque jour.",
+        "nl": "Je veux objectif un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "objectif",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_004",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "effort",
+        "es": "esfuerzo",
+        "fr": "effort",
+        "nl": "inspanning"
+      },
+      "question_i18n": {
+        "en": "What does \"effort\" mean?",
+        "es": "?Qu? significa \"effort\"?",
+        "fr": "Que signifie \"effort\" ?",
+        "nl": "Wat betekent \"effort\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "effort",
+        "es": "esfuerzo",
+        "fr": "D?finition: effort",
+        "nl": "inspanning"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux effort un peu chaque jour.",
+        "es": "Je veux effort un peu chaque jour.",
+        "fr": "Je veux effort un peu chaque jour.",
+        "nl": "Je veux effort un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "effort",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_005",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "challenge"
+      ],
+      "front_i18n": {
+        "en": "challenge",
+        "es": "reto",
+        "fr": "d?fi",
+        "nl": "uitdaging"
+      },
+      "question_i18n": {
+        "en": "What does \"d?fi\" mean?",
+        "es": "?Qu? significa \"d?fi\"?",
+        "fr": "Que signifie \"d?fi\" ?",
+        "nl": "Wat betekent \"d?fi\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "challenge",
+        "es": "reto",
+        "fr": "D?finition: d?fi",
+        "nl": "uitdaging"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux d?fi un peu chaque jour.",
+        "es": "Je veux d?fi un peu chaque jour.",
+        "fr": "Je veux d?fi un peu chaque jour.",
+        "nl": "Je veux d?fi un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "d?fi",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_006",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "time"
+      ],
+      "front_i18n": {
+        "en": "schedule",
+        "es": "horario",
+        "fr": "planning",
+        "nl": "schema"
+      },
+      "question_i18n": {
+        "en": "What does \"planning\" mean?",
+        "es": "?Qu? significa \"planning\"?",
+        "fr": "Que signifie \"planning\" ?",
+        "nl": "Wat betekent \"planning\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "schedule",
+        "es": "horario",
+        "fr": "D?finition: planning",
+        "nl": "schema"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux planning un peu chaque jour.",
+        "es": "Je veux planning un peu chaque jour.",
+        "fr": "Je veux planning un peu chaque jour.",
+        "nl": "Je veux planning un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "planning",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_007",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "time",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "deadline",
+        "es": "fecha l?mite",
+        "fr": "date limite",
+        "nl": "deadline"
+      },
+      "question_i18n": {
+        "en": "What does \"date limite\" mean?",
+        "es": "?Qu? significa \"date limite\"?",
+        "fr": "Que signifie \"date limite\" ?",
+        "nl": "Wat betekent \"date limite\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "deadline",
+        "es": "fecha l?mite",
+        "fr": "D?finition: date limite",
+        "nl": "deadline"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux date limite un peu chaque jour.",
+        "es": "Je veux date limite un peu chaque jour.",
+        "fr": "Je veux date limite un peu chaque jour.",
+        "nl": "Je veux date limite un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "date limite",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_008",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "life"
+      ],
+      "front_i18n": {
+        "en": "balance",
+        "es": "equilibrio",
+        "fr": "?quilibre",
+        "nl": "balans"
+      },
+      "question_i18n": {
+        "en": "What does \"?quilibre\" mean?",
+        "es": "?Qu? significa \"?quilibre\"?",
+        "fr": "Que signifie \"?quilibre\" ?",
+        "nl": "Wat betekent \"?quilibre\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "balance",
+        "es": "equilibrio",
+        "fr": "D?finition: ?quilibre",
+        "nl": "balans"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux ?quilibre un peu chaque jour.",
+        "es": "Je veux ?quilibre un peu chaque jour.",
+        "fr": "Je veux ?quilibre un peu chaque jour.",
+        "nl": "Je veux ?quilibre un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "?quilibre",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_009",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "choice"
+      ],
+      "front_i18n": {
+        "en": "decision",
+        "es": "decisi?n",
+        "fr": "d?cision",
+        "nl": "beslissing"
+      },
+      "question_i18n": {
+        "en": "What does \"d?cision\" mean?",
+        "es": "?Qu? significa \"d?cision\"?",
+        "fr": "Que signifie \"d?cision\" ?",
+        "nl": "Wat betekent \"d?cision\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "decision",
+        "es": "decisi?n",
+        "fr": "D?finition: d?cision",
+        "nl": "beslissing"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux d?cision un peu chaque jour.",
+        "es": "Je veux d?cision un peu chaque jour.",
+        "fr": "Je veux d?cision un peu chaque jour.",
+        "nl": "Je veux d?cision un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "d?cision",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_010",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "focus",
+        "es": "enfoque",
+        "fr": "concentration",
+        "nl": "focus"
+      },
+      "question_i18n": {
+        "en": "What does \"concentration\" mean?",
+        "es": "?Qu? significa \"concentration\"?",
+        "fr": "Que signifie \"concentration\" ?",
+        "nl": "Wat betekent \"concentration\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "focus",
+        "es": "enfoque",
+        "fr": "D?finition: concentration",
+        "nl": "focus"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux concentration un peu chaque jour.",
+        "es": "Je veux concentration un peu chaque jour.",
+        "fr": "Je veux concentration un peu chaque jour.",
+        "nl": "Je veux concentration un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "concentration",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_011",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "choice"
+      ],
+      "front_i18n": {
+        "en": "avoid",
+        "es": "evitar",
+        "fr": "?viter",
+        "nl": "vermijden"
+      },
+      "question_i18n": {
+        "en": "What does \"?viter\" mean?",
+        "es": "?Qu? significa \"?viter\"?",
+        "fr": "Que signifie \"?viter\" ?",
+        "nl": "Wat betekent \"?viter\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "avoid",
+        "es": "evitar",
+        "fr": "D?finition: ?viter",
+        "nl": "vermijden"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux ?viter un peu chaque jour.",
+        "es": "Je veux ?viter un peu chaque jour.",
+        "fr": "Je veux ?viter un peu chaque jour.",
+        "nl": "Je veux ?viter un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "?viter",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_012",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "choice"
+      ],
+      "front_i18n": {
+        "en": "prefer",
+        "es": "preferir",
+        "fr": "pr?f?rer",
+        "nl": "verkiezen"
+      },
+      "question_i18n": {
+        "en": "What does \"pr?f?rer\" mean?",
+        "es": "?Qu? significa \"pr?f?rer\"?",
+        "fr": "Que signifie \"pr?f?rer\" ?",
+        "nl": "Wat betekent \"pr?f?rer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "prefer",
+        "es": "preferir",
+        "fr": "D?finition: pr?f?rer",
+        "nl": "verkiezen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux pr?f?rer un peu chaque jour.",
+        "es": "Je veux pr?f?rer un peu chaque jour.",
+        "fr": "Je veux pr?f?rer un peu chaque jour.",
+        "nl": "Je veux pr?f?rer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "pr?f?rer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_013",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "logic"
+      ],
+      "front_i18n": {
+        "en": "depend",
+        "es": "depender",
+        "fr": "d?pendre",
+        "nl": "afhangen"
+      },
+      "question_i18n": {
+        "en": "What does \"d?pendre\" mean?",
+        "es": "?Qu? significa \"d?pendre\"?",
+        "fr": "Que signifie \"d?pendre\" ?",
+        "nl": "Wat betekent \"d?pendre\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "depend",
+        "es": "depender",
+        "fr": "D?finition: d?pendre",
+        "nl": "afhangen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux d?pendre un peu chaque jour.",
+        "es": "Je veux d?pendre un peu chaque jour.",
+        "fr": "Je veux d?pendre un peu chaque jour.",
+        "nl": "Je veux d?pendre un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "d?pendre",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_014",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "recommend",
+        "es": "recomendar",
+        "fr": "recommander",
+        "nl": "aanbevelen"
+      },
+      "question_i18n": {
+        "en": "What does \"recommander\" mean?",
+        "es": "?Qu? significa \"recommander\"?",
+        "fr": "Que signifie \"recommander\" ?",
+        "nl": "Wat betekent \"recommander\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "recommend",
+        "es": "recomendar",
+        "fr": "D?finition: recommander",
+        "nl": "aanbevelen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux recommander un peu chaque jour.",
+        "es": "Je veux recommander un peu chaque jour.",
+        "fr": "Je veux recommander un peu chaque jour.",
+        "nl": "Je veux recommander un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "recommander",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_015",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "suggest",
+        "es": "sugerir",
+        "fr": "sugg?rer",
+        "nl": "voorstellen"
+      },
+      "question_i18n": {
+        "en": "What does \"sugg?rer\" mean?",
+        "es": "?Qu? significa \"sugg?rer\"?",
+        "fr": "Que signifie \"sugg?rer\" ?",
+        "nl": "Wat betekent \"sugg?rer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "suggest",
+        "es": "sugerir",
+        "fr": "D?finition: sugg?rer",
+        "nl": "voorstellen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux sugg?rer un peu chaque jour.",
+        "es": "Je veux sugg?rer un peu chaque jour.",
+        "fr": "Je veux sugg?rer un peu chaque jour.",
+        "nl": "Je veux sugg?rer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "sugg?rer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_016",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "explain",
+        "es": "explicar",
+        "fr": "expliquer",
+        "nl": "uitleggen"
+      },
+      "question_i18n": {
+        "en": "What does \"expliquer\" mean?",
+        "es": "?Qu? significa \"expliquer\"?",
+        "fr": "Que signifie \"expliquer\" ?",
+        "nl": "Wat betekent \"expliquer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "explain",
+        "es": "explicar",
+        "fr": "D?finition: expliquer",
+        "nl": "uitleggen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux expliquer un peu chaque jour.",
+        "es": "Je veux expliquer un peu chaque jour.",
+        "fr": "Je veux expliquer un peu chaque jour.",
+        "nl": "Je veux expliquer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "expliquer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_017",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "describe",
+        "es": "describir",
+        "fr": "d?crire",
+        "nl": "beschrijven"
+      },
+      "question_i18n": {
+        "en": "What does \"d?crire\" mean?",
+        "es": "?Qu? significa \"d?crire\"?",
+        "fr": "Que signifie \"d?crire\" ?",
+        "nl": "Wat betekent \"d?crire\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "describe",
+        "es": "describir",
+        "fr": "D?finition: d?crire",
+        "nl": "beschrijven"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux d?crire un peu chaque jour.",
+        "es": "Je veux d?crire un peu chaque jour.",
+        "fr": "Je veux d?crire un peu chaque jour.",
+        "nl": "Je veux d?crire un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "d?crire",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_018",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "accept",
+        "es": "aceptar",
+        "fr": "accepter",
+        "nl": "accepteren"
+      },
+      "question_i18n": {
+        "en": "What does \"accepter\" mean?",
+        "es": "?Qu? significa \"accepter\"?",
+        "fr": "Que signifie \"accepter\" ?",
+        "nl": "Wat betekent \"accepter\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "accept",
+        "es": "aceptar",
+        "fr": "D?finition: accepter",
+        "nl": "accepteren"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux accepter un peu chaque jour.",
+        "es": "Je veux accepter un peu chaque jour.",
+        "fr": "Je veux accepter un peu chaque jour.",
+        "nl": "Je veux accepter un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "accepter",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_019",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "refuse",
+        "es": "rechazar",
+        "fr": "refuser",
+        "nl": "weigeren"
+      },
+      "question_i18n": {
+        "en": "What does \"refuser\" mean?",
+        "es": "?Qu? significa \"refuser\"?",
+        "fr": "Que signifie \"refuser\" ?",
+        "nl": "Wat betekent \"refuser\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "refuse",
+        "es": "rechazar",
+        "fr": "D?finition: refuser",
+        "nl": "weigeren"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux refuser un peu chaque jour.",
+        "es": "Je veux refuser un peu chaque jour.",
+        "fr": "Je veux refuser un peu chaque jour.",
+        "nl": "Je veux refuser un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "refuser",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_020",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "imagine",
+        "es": "imaginar",
+        "fr": "imaginer",
+        "nl": "zich voorstellen"
+      },
+      "question_i18n": {
+        "en": "What does \"imaginer\" mean?",
+        "es": "?Qu? significa \"imaginer\"?",
+        "fr": "Que signifie \"imaginer\" ?",
+        "nl": "Wat betekent \"imaginer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "imagine",
+        "es": "imaginar",
+        "fr": "D?finition: imaginer",
+        "nl": "zich voorstellen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux imaginer un peu chaque jour.",
+        "es": "Je veux imaginer un peu chaque jour.",
+        "fr": "Je veux imaginer un peu chaque jour.",
+        "nl": "Je veux imaginer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "imaginer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_021",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "notice",
+        "es": "notar",
+        "fr": "remarquer",
+        "nl": "opmerken"
+      },
+      "question_i18n": {
+        "en": "What does \"remarquer\" mean?",
+        "es": "?Qu? significa \"remarquer\"?",
+        "fr": "Que signifie \"remarquer\" ?",
+        "nl": "Wat betekent \"remarquer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "notice",
+        "es": "notar",
+        "fr": "D?finition: remarquer",
+        "nl": "opmerken"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux remarquer un peu chaque jour.",
+        "es": "Je veux remarquer un peu chaque jour.",
+        "fr": "Je veux remarquer un peu chaque jour.",
+        "nl": "Je veux remarquer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "remarquer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_022",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "manage",
+        "es": "gestionar",
+        "fr": "g?rer",
+        "nl": "beheren"
+      },
+      "question_i18n": {
+        "en": "What does \"g?rer\" mean?",
+        "es": "?Qu? significa \"g?rer\"?",
+        "fr": "Que signifie \"g?rer\" ?",
+        "nl": "Wat betekent \"g?rer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "manage",
+        "es": "gestionar",
+        "fr": "D?finition: g?rer",
+        "nl": "beheren"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux g?rer un peu chaque jour.",
+        "es": "Je veux g?rer un peu chaque jour.",
+        "fr": "Je veux g?rer un peu chaque jour.",
+        "nl": "Je veux g?rer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "g?rer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_023",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "support",
+        "es": "apoyar",
+        "fr": "soutenir",
+        "nl": "ondersteunen"
+      },
+      "question_i18n": {
+        "en": "What does \"soutenir\" mean?",
+        "es": "?Qu? significa \"soutenir\"?",
+        "fr": "Que signifie \"soutenir\" ?",
+        "nl": "Wat betekent \"soutenir\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "support",
+        "es": "apoyar",
+        "fr": "D?finition: soutenir",
+        "nl": "ondersteunen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux soutenir un peu chaque jour.",
+        "es": "Je veux soutenir un peu chaque jour.",
+        "fr": "Je veux soutenir un peu chaque jour.",
+        "nl": "Je veux soutenir un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "soutenir",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_024",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "responsibility",
+        "es": "responsabilidad",
+        "fr": "responsabilit?",
+        "nl": "verantwoordelijkheid"
+      },
+      "question_i18n": {
+        "en": "What does \"responsabilit?\" mean?",
+        "es": "?Qu? significa \"responsabilit?\"?",
+        "fr": "Que signifie \"responsabilit?\" ?",
+        "nl": "Wat betekent \"responsabilit?\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "responsibility",
+        "es": "responsabilidad",
+        "fr": "D?finition: responsabilit?",
+        "nl": "verantwoordelijkheid"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux responsabilit? un peu chaque jour.",
+        "es": "Je veux responsabilit? un peu chaque jour.",
+        "fr": "Je veux responsabilit? un peu chaque jour.",
+        "nl": "Je veux responsabilit? un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "responsabilit?",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_025",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "goal"
+      ],
+      "front_i18n": {
+        "en": "opportunity",
+        "es": "oportunidad",
+        "fr": "opportunit?",
+        "nl": "kans"
+      },
+      "question_i18n": {
+        "en": "What does \"opportunit?\" mean?",
+        "es": "?Qu? significa \"opportunit?\"?",
+        "fr": "Que signifie \"opportunit?\" ?",
+        "nl": "Wat betekent \"opportunit?\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "opportunity",
+        "es": "oportunidad",
+        "fr": "D?finition: opportunit?",
+        "nl": "kans"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux opportunit? un peu chaque jour.",
+        "es": "Je veux opportunit? un peu chaque jour.",
+        "fr": "Je veux opportunit? un peu chaque jour.",
+        "nl": "Je veux opportunit? un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "opportunit?",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_026",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "time"
+      ],
+      "front_i18n": {
+        "en": "immediately",
+        "es": "inmediatamente",
+        "fr": "imm?diatement",
+        "nl": "onmiddellijk"
+      },
+      "question_i18n": {
+        "en": "What does \"imm?diatement\" mean?",
+        "es": "?Qu? significa \"imm?diatement\"?",
+        "fr": "Que signifie \"imm?diatement\" ?",
+        "nl": "Wat betekent \"imm?diatement\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "immediately",
+        "es": "inmediatamente",
+        "fr": "D?finition: imm?diatement",
+        "nl": "onmiddellijk"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux imm?diatement un peu chaque jour.",
+        "es": "Je veux imm?diatement un peu chaque jour.",
+        "fr": "Je veux imm?diatement un peu chaque jour.",
+        "nl": "Je veux imm?diatement un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "imm?diatement",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_027",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "numbers"
+      ],
+      "front_i18n": {
+        "en": "increase",
+        "es": "aumentar",
+        "fr": "augmenter",
+        "nl": "verhogen"
+      },
+      "question_i18n": {
+        "en": "What does \"augmenter\" mean?",
+        "es": "?Qu? significa \"augmenter\"?",
+        "fr": "Que signifie \"augmenter\" ?",
+        "nl": "Wat betekent \"augmenter\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "increase",
+        "es": "aumentar",
+        "fr": "D?finition: augmenter",
+        "nl": "verhogen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux augmenter un peu chaque jour.",
+        "es": "Je veux augmenter un peu chaque jour.",
+        "fr": "Je veux augmenter un peu chaque jour.",
+        "nl": "Je veux augmenter un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "augmenter",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_028",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "numbers"
+      ],
+      "front_i18n": {
+        "en": "reduce",
+        "es": "reducir",
+        "fr": "r?duire",
+        "nl": "verminderen"
+      },
+      "question_i18n": {
+        "en": "What does \"r?duire\" mean?",
+        "es": "?Qu? significa \"r?duire\"?",
+        "fr": "Que signifie \"r?duire\" ?",
+        "nl": "Wat betekent \"r?duire\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "reduce",
+        "es": "reducir",
+        "fr": "D?finition: r?duire",
+        "nl": "verminderen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux r?duire un peu chaque jour.",
+        "es": "Je veux r?duire un peu chaque jour.",
+        "fr": "Je veux r?duire un peu chaque jour.",
+        "nl": "Je veux r?duire un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "r?duire",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_029",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "decision"
+      ],
+      "front_i18n": {
+        "en": "risk",
+        "es": "riesgo",
+        "fr": "risque",
+        "nl": "risico"
+      },
+      "question_i18n": {
+        "en": "What does \"risque\" mean?",
+        "es": "?Qu? significa \"risque\"?",
+        "fr": "Que signifie \"risque\" ?",
+        "nl": "Wat betekent \"risque\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "risk",
+        "es": "riesgo",
+        "fr": "D?finition: risque",
+        "nl": "risico"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux risque un peu chaque jour.",
+        "es": "Je veux risque un peu chaque jour.",
+        "fr": "Je veux risque un peu chaque jour.",
+        "nl": "Je veux risque un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "risque",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_030",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "decision"
+      ],
+      "front_i18n": {
+        "en": "require",
+        "es": "requerir",
+        "fr": "exiger",
+        "nl": "vereisen"
+      },
+      "question_i18n": {
+        "en": "What does \"exiger\" mean?",
+        "es": "?Qu? significa \"exiger\"?",
+        "fr": "Que signifie \"exiger\" ?",
+        "nl": "Wat betekent \"exiger\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "require",
+        "es": "requerir",
+        "fr": "D?finition: exiger",
+        "nl": "vereisen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux exiger un peu chaque jour.",
+        "es": "Je veux exiger un peu chaque jour.",
+        "fr": "Je veux exiger un peu chaque jour.",
+        "nl": "Je veux exiger un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "exiger",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_031",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "decision"
+      ],
+      "front_i18n": {
+        "en": "allow",
+        "es": "permitir",
+        "fr": "permettre",
+        "nl": "toestaan"
+      },
+      "question_i18n": {
+        "en": "What does \"permettre\" mean?",
+        "es": "?Qu? significa \"permettre\"?",
+        "fr": "Que signifie \"permettre\" ?",
+        "nl": "Wat betekent \"permettre\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "allow",
+        "es": "permitir",
+        "fr": "D?finition: permettre",
+        "nl": "toestaan"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux permettre un peu chaque jour.",
+        "es": "Je veux permettre un peu chaque jour.",
+        "fr": "Je veux permettre un peu chaque jour.",
+        "nl": "Je veux permettre un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "permettre",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_032",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "expect",
+        "es": "esperar",
+        "fr": "s?attendre ?",
+        "nl": "verwachten"
+      },
+      "question_i18n": {
+        "en": "What does \"s?attendre ?\" mean?",
+        "es": "?Qu? significa \"s?attendre ?\"?",
+        "fr": "Que signifie \"s?attendre ?\" ?",
+        "nl": "Wat betekent \"s?attendre ?\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "expect",
+        "es": "esperar",
+        "fr": "D?finition: s?attendre ?",
+        "nl": "verwachten"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux s?attendre ? un peu chaque jour.",
+        "es": "Je veux s?attendre ? un peu chaque jour.",
+        "fr": "Je veux s?attendre ? un peu chaque jour.",
+        "nl": "Je veux s?attendre ? un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "s?attendre ?",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_033",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "influence",
+        "es": "influir",
+        "fr": "influencer",
+        "nl": "be?nvloeden"
+      },
+      "question_i18n": {
+        "en": "What does \"influencer\" mean?",
+        "es": "?Qu? significa \"influencer\"?",
+        "fr": "Que signifie \"influencer\" ?",
+        "nl": "Wat betekent \"influencer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "influence",
+        "es": "influir",
+        "fr": "D?finition: influencer",
+        "nl": "be?nvloeden"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux influencer un peu chaque jour.",
+        "es": "Je veux influencer un peu chaque jour.",
+        "fr": "Je veux influencer un peu chaque jour.",
+        "nl": "Je veux influencer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "influencer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_034",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "relationship",
+        "es": "relaci?n",
+        "fr": "relation",
+        "nl": "relatie"
+      },
+      "question_i18n": {
+        "en": "What does \"relation\" mean?",
+        "es": "?Qu? significa \"relation\"?",
+        "fr": "Que signifie \"relation\" ?",
+        "nl": "Wat betekent \"relation\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "relationship",
+        "es": "relaci?n",
+        "fr": "D?finition: relation",
+        "nl": "relatie"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux relation un peu chaque jour.",
+        "es": "Je veux relation un peu chaque jour.",
+        "fr": "Je veux relation un peu chaque jour.",
+        "nl": "Je veux relation un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "relation",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_035",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "life"
+      ],
+      "front_i18n": {
+        "en": "environment",
+        "es": "entorno",
+        "fr": "environnement",
+        "nl": "omgeving"
+      },
+      "question_i18n": {
+        "en": "What does \"environnement\" mean?",
+        "es": "?Qu? significa \"environnement\"?",
+        "fr": "Que signifie \"environnement\" ?",
+        "nl": "Wat betekent \"environnement\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "environment",
+        "es": "entorno",
+        "fr": "D?finition: environnement",
+        "nl": "omgeving"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux environnement un peu chaque jour.",
+        "es": "Je veux environnement un peu chaque jour.",
+        "fr": "Je veux environnement un peu chaque jour.",
+        "nl": "Je veux environnement un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "environnement",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_036",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "contribute",
+        "es": "contribuir",
+        "fr": "contribuer",
+        "nl": "bijdragen"
+      },
+      "question_i18n": {
+        "en": "What does \"contribuer\" mean?",
+        "es": "?Qu? significa \"contribuer\"?",
+        "fr": "Que signifie \"contribuer\" ?",
+        "nl": "Wat betekent \"contribuer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "contribute",
+        "es": "contribuir",
+        "fr": "D?finition: contribuer",
+        "nl": "bijdragen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux contribuer un peu chaque jour.",
+        "es": "Je veux contribuer un peu chaque jour.",
+        "fr": "Je veux contribuer un peu chaque jour.",
+        "nl": "Je veux contribuer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "contribuer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_037",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "participate",
+        "es": "participar",
+        "fr": "participer",
+        "nl": "deelnemen"
+      },
+      "question_i18n": {
+        "en": "What does \"participer\" mean?",
+        "es": "?Qu? significa \"participer\"?",
+        "fr": "Que signifie \"participer\" ?",
+        "nl": "Wat betekent \"participer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "participate",
+        "es": "participar",
+        "fr": "D?finition: participer",
+        "nl": "deelnemen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux participer un peu chaque jour.",
+        "es": "Je veux participer un peu chaque jour.",
+        "fr": "Je veux participer un peu chaque jour.",
+        "nl": "Je veux participer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "participer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_038",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "prepare",
+        "es": "preparar",
+        "fr": "pr?parer",
+        "nl": "voorbereiden"
+      },
+      "question_i18n": {
+        "en": "What does \"pr?parer\" mean?",
+        "es": "?Qu? significa \"pr?parer\"?",
+        "fr": "Que signifie \"pr?parer\" ?",
+        "nl": "Wat betekent \"pr?parer\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "prepare",
+        "es": "preparar",
+        "fr": "D?finition: pr?parer",
+        "nl": "voorbereiden"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux pr?parer un peu chaque jour.",
+        "es": "Je veux pr?parer un peu chaque jour.",
+        "fr": "Je veux pr?parer un peu chaque jour.",
+        "nl": "Je veux pr?parer un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "pr?parer",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_039",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "life"
+      ],
+      "front_i18n": {
+        "en": "comfortable",
+        "es": "c?modo",
+        "fr": "? l?aise",
+        "nl": "comfortabel"
+      },
+      "question_i18n": {
+        "en": "What does \"? l?aise\" mean?",
+        "es": "?Qu? significa \"? l?aise\"?",
+        "fr": "Que signifie \"? l?aise\" ?",
+        "nl": "Wat betekent \"? l?aise\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "comfortable",
+        "es": "c?modo",
+        "fr": "D?finition: ? l?aise",
+        "nl": "comfortabel"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux ? l?aise un peu chaque jour.",
+        "es": "Je veux ? l?aise un peu chaque jour.",
+        "fr": "Je veux ? l?aise un peu chaque jour.",
+        "nl": "Je veux ? l?aise un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "? l?aise",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "fr_b1_vocab_core_40_040",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "progress",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "develop",
+        "es": "desarrollar",
+        "fr": "d?velopper",
+        "nl": "ontwikkelen"
+      },
+      "question_i18n": {
+        "en": "What does \"d?velopper\" mean?",
+        "es": "?Qu? significa \"d?velopper\"?",
+        "fr": "Que signifie \"d?velopper\" ?",
+        "nl": "Wat betekent \"d?velopper\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "develop",
+        "es": "desarrollar",
+        "fr": "D?finition: d?velopper",
+        "nl": "ontwikkelen"
+      },
+      "example_sentence_i18n": {
+        "en": "Je veux d?velopper un peu chaque jour.",
+        "es": "Je veux d?velopper un peu chaque jour.",
+        "fr": "Je veux d?velopper un peu chaque jour.",
+        "nl": "Je veux d?velopper un peu chaque jour."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "fr-FR",
+        "text": "d?velopper",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    }
+  ]
+}

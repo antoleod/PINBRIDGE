@@ -18,6 +18,7 @@ class CoachService {
         this.currentPackId = null;
         this._hasAnyPack = null;
         this._activeQuiz = null;
+        this.currentRoadmapDay = 1;
     }
 
     async init() {
@@ -183,7 +184,7 @@ class CoachService {
 
         bus.on('coach:create-skill', async (payload) => {
             const { topic, goal, intensity, language } = payload;
-            const blueprint = coachEngine.generateBlueprint(topic, goal, intensity, language);
+            const blueprint = coachEngine.generateBlueprintV3(topic, goal, intensity, language);
             const skillId = await coachStore.createSkill(this.currentUser.uid, blueprint.skill);
             for (const mod of blueprint.modules) {
                 await coachStore.createModule(this.currentUser.uid, { ...mod, skill_id: skillId });
@@ -192,6 +193,68 @@ class CoachService {
             this.activeSkill = { ...blueprint.skill, id: skillId };
             bus.emit('coach:navigate', 'dashboard');
             bus.emit('ui:toast', { message: 'Skill Created Successfully!', type: 'success' });
+        });
+
+        bus.on('coach:open-roadmap-day', ({ day }) => {
+            this.currentRoadmapDay = Number(day) || 1;
+            this.currentView = 'roadmap-day';
+            this.renderCurrentView();
+        });
+
+        bus.on('coach:cycle-roadmap-status', async ({ day }) => {
+            try {
+                const uid = this.currentUser?.uid;
+                const skillId = this.settings.active_skill_id;
+                if (!uid || !skillId) return;
+                await coachStore.cycleRoadmapStatus(uid, skillId, day);
+                this.activeSkill = await coachStore.getSkill(uid, skillId);
+                this.renderCurrentView();
+            } catch (e) {
+                console.error(e);
+                bus.emit('ui:toast', { message: `Update failed: ${e.message}`, type: 'error' });
+            }
+        });
+
+        bus.on('coach:toggle-checklist-item', async ({ itemId, checked }) => {
+            try {
+                const uid = this.currentUser?.uid;
+                const skillId = this.settings.active_skill_id;
+                if (!uid || !skillId) return;
+                await coachStore.setChecklistItem(uid, skillId, itemId, checked);
+                this.activeSkill = await coachStore.getSkill(uid, skillId);
+                this.renderCurrentView();
+            } catch (e) {
+                console.error(e);
+                bus.emit('ui:toast', { message: `Update failed: ${e.message}`, type: 'error' });
+            }
+        });
+
+        bus.on('coach:roadmap-decision-answered', async ({ day, isCorrect }) => {
+            try {
+                const uid = this.currentUser?.uid;
+                const skillId = this.settings.active_skill_id;
+                if (!uid || !skillId || !day) return;
+
+                if (isCorrect) {
+                    await coachStore.setRoadmapStatus(uid, skillId, day, 'done');
+
+                    const maintenance = await coachStore.getMaintenanceStatus(uid);
+                    const today = new Date().toDateString();
+                    if (maintenance.last_completed_date !== today) {
+                        await coachStore.updateMaintenance(uid, {
+                            streak_days: (maintenance.streak_days || 0) + 1,
+                            last_completed_date: today
+                        });
+                    }
+                } else {
+                    await coachStore.setRoadmapStatus(uid, skillId, day, 'doing');
+                }
+
+                this.activeSkill = await coachStore.getSkill(uid, skillId);
+                this.renderCurrentView();
+            } catch (e) {
+                console.error(e);
+            }
         });
 
         bus.on('coach:submit-answer', async (payload) => {
@@ -256,10 +319,8 @@ class CoachService {
 
         await this.refreshPackPresence();
 
-        // IMPORT-FIRST: if user has no installed packs, force import flow.
-        if (!this._hasAnyPack) {
-            this.currentView = 'import-pack';
-        } else if (!this.settings.active_skill_id) {
+        // Skills-first: packs are optional (only required for Pack Practice).
+        if (!this.settings.active_skill_id) {
             this.currentView = 'skills';
         } else {
             this.currentView = 'dashboard';
@@ -290,9 +351,10 @@ class CoachService {
             return;
         }
 
-        // Guard: while no packs installed, only allow import-pack.
+        // Guard: only pack-required views should redirect to import-pack.
         await this.refreshPackPresence();
-        if (!this._hasAnyPack && view !== 'import-pack') {
+        const packRequired = new Set(['packs', 'quiz']);
+        if (!this._hasAnyPack && packRequired.has(view)) {
             this.currentView = 'import-pack';
             this.renderCurrentView();
             return;
@@ -304,6 +366,11 @@ class CoachService {
 
     async renderCurrentView() {
         let viewData = { settings: this.settings };
+
+        const skillRequired = new Set(['dashboard', 'session', 'roadmap', 'roadmap-day', 'checklist', 'interview', 'quizzes', 'export', 'exam-center']);
+        if (skillRequired.has(this.currentView) && !this.activeSkill && this.currentView !== 'skills') {
+            this.currentView = 'skills';
+        }
 
         if (this.currentView === 'dashboard') {
             if (this.activeSkill) {
@@ -328,6 +395,116 @@ class CoachService {
                 title: i18n.getContent(s.title_i18n),
                 skill_type: s.skill_type || 'technical'
             }));
+        }
+
+        if (this.currentView === 'roadmap') {
+            if (!this.activeSkill?.playbook?.roadmap) {
+                this.currentView = 'dashboard';
+                this.renderCurrentView();
+                return;
+            }
+
+            const roadmap = this.activeSkill.playbook.roadmap || [];
+            const statusLabel = (status) => {
+                const s = String(status || 'todo');
+                if (s === 'doing') return i18n.t('coach_status_doing');
+                if (s === 'done') return i18n.t('coach_status_done');
+                return i18n.t('coach_status_todo');
+            };
+
+            viewData.skillName = i18n.getContent(this.activeSkill.title_i18n);
+            viewData.roadmap_total = roadmap.length || 30;
+            viewData.roadmap_done = roadmap.filter(d => d.status === 'done').length;
+            viewData.roadmap_doing = roadmap.filter(d => d.status === 'doing').length;
+            viewData.roadmap_todo = roadmap.filter(d => (d.status || 'todo') === 'todo').length;
+            viewData.roadmap = roadmap.map(d => ({
+                ...d,
+                status: d.status || 'todo',
+                status_label: statusLabel(d.status)
+            }));
+        }
+
+        if (this.currentView === 'roadmap-day') {
+            if (!this.activeSkill?.playbook?.roadmap) {
+                this.currentView = 'dashboard';
+                this.renderCurrentView();
+                return;
+            }
+
+            const day = Number(this.currentRoadmapDay) || 1;
+            const item = (this.activeSkill.playbook.roadmap || []).find(d => Number(d.day) === day);
+            if (!item) {
+                this.currentView = 'roadmap';
+                this.renderCurrentView();
+                return;
+            }
+
+            const status = item.status || 'todo';
+            const statusLabel =
+                status === 'doing' ? i18n.t('coach_status_doing') :
+                    status === 'done' ? i18n.t('coach_status_done') :
+                        i18n.t('coach_status_todo');
+
+            viewData = {
+                ...viewData,
+                day,
+                status_label: statusLabel,
+                topic_i18n: item.topic_i18n,
+                action_i18n: item.action_i18n,
+                micro_challenge_i18n: item.micro_challenge_i18n,
+                decision_prompt_i18n: item.decision?.prompt_i18n,
+                decision_options_i18n: item.decision?.options_i18n || [],
+                decision_correct_index: item.decision?.correct_index ?? 0,
+                decision_justification: i18n.getContent(item.decision?.justification_i18n) || '',
+                decision_trap: i18n.getContent(item.decision?.trap_i18n) || ''
+            };
+        }
+
+        if (this.currentView === 'checklist') {
+            const checklist = this.activeSkill?.playbook?.checklist || [];
+            viewData.skillName = i18n.getContent(this.activeSkill?.title_i18n);
+            viewData.checklist = checklist.map(item => ({
+                ...item,
+                checked_attr: item.checked ? 'checked' : ''
+            }));
+        }
+
+        if (this.currentView === 'interview') {
+            viewData.skillName = i18n.getContent(this.activeSkill?.title_i18n);
+            viewData.interview = this.activeSkill?.playbook?.interview || [];
+        }
+
+        if (this.currentView === 'quizzes') {
+            viewData.skillName = i18n.getContent(this.activeSkill?.title_i18n);
+            const quizzes = this.activeSkill?.playbook?.quizzes || [];
+            const quizQuestions = [];
+            for (const quiz of quizzes) {
+                const quizTitle = i18n.getContent(quiz.title_i18n);
+                (quiz.questions || []).forEach((q, idx) => {
+                    const explain = i18n.getContent(q.explain_i18n);
+                    quizQuestions.push({
+                        quiz_id: quiz.id,
+                        quiz_title: quizTitle,
+                        q_index: idx,
+                        q_number: idx + 1,
+                        prompt_i18n: q.prompt_i18n,
+                        correct_index: q.correct_index ?? 0,
+                        explain,
+                        options: (q.options_i18n || []).map((text_i18n, optIdx) => ({
+                            quiz_id: quiz.id,
+                            q_index: idx,
+                            opt_index: optIdx,
+                            text_i18n
+                        }))
+                    });
+                });
+            }
+            viewData.quizQuestions = quizQuestions;
+        }
+
+        if (this.currentView === 'export') {
+            viewData.skillName = i18n.getContent(this.activeSkill?.title_i18n);
+            viewData.export_template = this.activeSkill?.playbook?.export_template || '';
         }
 
         if (this.currentView === 'packs') {

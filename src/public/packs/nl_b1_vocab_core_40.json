@@ -1,0 +1,1679 @@
+{
+  "schema_version": "v2-pack",
+  "generated_at": "2026-01-09T21:06:34.960Z",
+  "pack": {
+    "pack_id": "nl_b1_vocab_core_40",
+    "version": "1.0.0",
+    "level": "B1",
+    "mode": "VOCAB",
+    "languages": [
+      "en",
+      "es",
+      "fr",
+      "nl"
+    ],
+    "title_i18n": {
+      "en": "Dutch B1 ? Core Vocabulary (40)",
+      "es": "Neerland?s B1 ? Vocabulario base (40)",
+      "fr": "N?erlandais B1 ? Vocabulaire de base (40)",
+      "nl": "Nederlands B1 ? Kernwoordenschat (40)"
+    },
+    "description_i18n": {
+      "en": "Core B1 vocabulary with short sentences and auto-read.",
+      "es": "Vocabulario B1 base con frases cortas y autolectura.",
+      "fr": "Vocabulaire B1 de base avec phrases courtes et lecture auto.",
+      "nl": "B1 kernwoordenschat met korte zinnen en auto-voorlezen."
+    },
+    "categories": [
+      {
+        "id": "daily",
+        "title_i18n": {
+          "en": "Daily life",
+          "es": "Vida diaria",
+          "fr": "Vie quotidienne",
+          "nl": "Dagelijks leven"
+        }
+      },
+      {
+        "id": "work",
+        "title_i18n": {
+          "en": "Work & planning",
+          "es": "Trabajo y planificaci?n",
+          "fr": "Travail et planning",
+          "nl": "Werk & planning"
+        }
+      },
+      {
+        "id": "progress",
+        "title_i18n": {
+          "en": "Progress & goals",
+          "es": "Progreso y objetivos",
+          "fr": "Progr?s et objectifs",
+          "nl": "Vooruitgang & doelen"
+        }
+      },
+      {
+        "id": "social",
+        "title_i18n": {
+          "en": "Social & communication",
+          "es": "Social y comunicaci?n",
+          "fr": "Social et communication",
+          "nl": "Sociaal & communicatie"
+        }
+      }
+    ],
+    "quality_defaults": {
+      "source_type": "bundled",
+      "source_ref": "PINBRIDGE offline packs",
+      "last_verified_at": null,
+      "confidence_score": 70
+    },
+    "card_count": 40
+  },
+  "cards": [
+    {
+      "card_id": "nl_b1_vocab_core_40_001",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "progress",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "improve",
+        "es": "mejorar",
+        "fr": "am?liorer",
+        "nl": "verbeteren"
+      },
+      "question_i18n": {
+        "en": "What does \"verbeteren\" mean?",
+        "es": "?Qu? significa \"verbeteren\"?",
+        "fr": "Que signifie \"verbeteren\" ?",
+        "nl": "Wat betekent \"verbeteren\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "improve",
+        "es": "mejorar",
+        "fr": "am?liorer",
+        "nl": "Betekenis: verbeteren"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje verbeteren.",
+        "es": "Ik wil elke dag een beetje verbeteren.",
+        "fr": "Ik wil elke dag een beetje verbeteren.",
+        "nl": "Ik wil elke dag een beetje verbeteren."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "verbeteren",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_002",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "goal",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "achieve",
+        "es": "lograr",
+        "fr": "atteindre",
+        "nl": "bereiken"
+      },
+      "question_i18n": {
+        "en": "What does \"bereiken\" mean?",
+        "es": "?Qu? significa \"bereiken\"?",
+        "fr": "Que signifie \"bereiken\" ?",
+        "nl": "Wat betekent \"bereiken\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "achieve",
+        "es": "lograr",
+        "fr": "atteindre",
+        "nl": "Betekenis: bereiken"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje bereiken.",
+        "es": "Ik wil elke dag een beetje bereiken.",
+        "fr": "Ik wil elke dag een beetje bereiken.",
+        "nl": "Ik wil elke dag een beetje bereiken."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "bereiken",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_003",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "goal"
+      ],
+      "front_i18n": {
+        "en": "goal",
+        "es": "objetivo",
+        "fr": "objectif",
+        "nl": "doel"
+      },
+      "question_i18n": {
+        "en": "What does \"doel\" mean?",
+        "es": "?Qu? significa \"doel\"?",
+        "fr": "Que signifie \"doel\" ?",
+        "nl": "Wat betekent \"doel\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "goal",
+        "es": "objetivo",
+        "fr": "objectif",
+        "nl": "Betekenis: doel"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje doel.",
+        "es": "Ik wil elke dag een beetje doel.",
+        "fr": "Ik wil elke dag een beetje doel.",
+        "nl": "Ik wil elke dag een beetje doel."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "doel",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_004",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "effort",
+        "es": "esfuerzo",
+        "fr": "effort",
+        "nl": "inspanning"
+      },
+      "question_i18n": {
+        "en": "What does \"inspanning\" mean?",
+        "es": "?Qu? significa \"inspanning\"?",
+        "fr": "Que signifie \"inspanning\" ?",
+        "nl": "Wat betekent \"inspanning\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "effort",
+        "es": "esfuerzo",
+        "fr": "effort",
+        "nl": "Betekenis: inspanning"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje inspanning.",
+        "es": "Ik wil elke dag een beetje inspanning.",
+        "fr": "Ik wil elke dag een beetje inspanning.",
+        "nl": "Ik wil elke dag een beetje inspanning."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "inspanning",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_005",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "challenge"
+      ],
+      "front_i18n": {
+        "en": "challenge",
+        "es": "reto",
+        "fr": "d?fi",
+        "nl": "uitdaging"
+      },
+      "question_i18n": {
+        "en": "What does \"uitdaging\" mean?",
+        "es": "?Qu? significa \"uitdaging\"?",
+        "fr": "Que signifie \"uitdaging\" ?",
+        "nl": "Wat betekent \"uitdaging\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "challenge",
+        "es": "reto",
+        "fr": "d?fi",
+        "nl": "Betekenis: uitdaging"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje uitdaging.",
+        "es": "Ik wil elke dag een beetje uitdaging.",
+        "fr": "Ik wil elke dag een beetje uitdaging.",
+        "nl": "Ik wil elke dag een beetje uitdaging."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "uitdaging",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_006",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "time"
+      ],
+      "front_i18n": {
+        "en": "schedule",
+        "es": "horario",
+        "fr": "planning",
+        "nl": "schema"
+      },
+      "question_i18n": {
+        "en": "What does \"schema\" mean?",
+        "es": "?Qu? significa \"schema\"?",
+        "fr": "Que signifie \"schema\" ?",
+        "nl": "Wat betekent \"schema\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "schedule",
+        "es": "horario",
+        "fr": "planning",
+        "nl": "Betekenis: schema"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje schema.",
+        "es": "Ik wil elke dag een beetje schema.",
+        "fr": "Ik wil elke dag een beetje schema.",
+        "nl": "Ik wil elke dag een beetje schema."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "schema",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_007",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "time",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "deadline",
+        "es": "fecha l?mite",
+        "fr": "date limite",
+        "nl": "deadline"
+      },
+      "question_i18n": {
+        "en": "What does \"deadline\" mean?",
+        "es": "?Qu? significa \"deadline\"?",
+        "fr": "Que signifie \"deadline\" ?",
+        "nl": "Wat betekent \"deadline\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "deadline",
+        "es": "fecha l?mite",
+        "fr": "date limite",
+        "nl": "Betekenis: deadline"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje deadline.",
+        "es": "Ik wil elke dag een beetje deadline.",
+        "fr": "Ik wil elke dag een beetje deadline.",
+        "nl": "Ik wil elke dag een beetje deadline."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "deadline",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_008",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "life"
+      ],
+      "front_i18n": {
+        "en": "balance",
+        "es": "equilibrio",
+        "fr": "?quilibre",
+        "nl": "balans"
+      },
+      "question_i18n": {
+        "en": "What does \"balans\" mean?",
+        "es": "?Qu? significa \"balans\"?",
+        "fr": "Que signifie \"balans\" ?",
+        "nl": "Wat betekent \"balans\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "balance",
+        "es": "equilibrio",
+        "fr": "?quilibre",
+        "nl": "Betekenis: balans"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje balans.",
+        "es": "Ik wil elke dag een beetje balans.",
+        "fr": "Ik wil elke dag een beetje balans.",
+        "nl": "Ik wil elke dag een beetje balans."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "balans",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_009",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "choice"
+      ],
+      "front_i18n": {
+        "en": "decision",
+        "es": "decisi?n",
+        "fr": "d?cision",
+        "nl": "beslissing"
+      },
+      "question_i18n": {
+        "en": "What does \"beslissing\" mean?",
+        "es": "?Qu? significa \"beslissing\"?",
+        "fr": "Que signifie \"beslissing\" ?",
+        "nl": "Wat betekent \"beslissing\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "decision",
+        "es": "decisi?n",
+        "fr": "d?cision",
+        "nl": "Betekenis: beslissing"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje beslissing.",
+        "es": "Ik wil elke dag een beetje beslissing.",
+        "fr": "Ik wil elke dag een beetje beslissing.",
+        "nl": "Ik wil elke dag een beetje beslissing."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "beslissing",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_010",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "focus",
+        "es": "enfoque",
+        "fr": "concentration",
+        "nl": "focus"
+      },
+      "question_i18n": {
+        "en": "What does \"focus\" mean?",
+        "es": "?Qu? significa \"focus\"?",
+        "fr": "Que signifie \"focus\" ?",
+        "nl": "Wat betekent \"focus\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "focus",
+        "es": "enfoque",
+        "fr": "concentration",
+        "nl": "Betekenis: focus"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje focus.",
+        "es": "Ik wil elke dag een beetje focus.",
+        "fr": "Ik wil elke dag een beetje focus.",
+        "nl": "Ik wil elke dag een beetje focus."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "focus",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_011",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "choice"
+      ],
+      "front_i18n": {
+        "en": "avoid",
+        "es": "evitar",
+        "fr": "?viter",
+        "nl": "vermijden"
+      },
+      "question_i18n": {
+        "en": "What does \"vermijden\" mean?",
+        "es": "?Qu? significa \"vermijden\"?",
+        "fr": "Que signifie \"vermijden\" ?",
+        "nl": "Wat betekent \"vermijden\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "avoid",
+        "es": "evitar",
+        "fr": "?viter",
+        "nl": "Betekenis: vermijden"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje vermijden.",
+        "es": "Ik wil elke dag een beetje vermijden.",
+        "fr": "Ik wil elke dag een beetje vermijden.",
+        "nl": "Ik wil elke dag een beetje vermijden."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "vermijden",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_012",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "choice"
+      ],
+      "front_i18n": {
+        "en": "prefer",
+        "es": "preferir",
+        "fr": "pr?f?rer",
+        "nl": "verkiezen"
+      },
+      "question_i18n": {
+        "en": "What does \"verkiezen\" mean?",
+        "es": "?Qu? significa \"verkiezen\"?",
+        "fr": "Que signifie \"verkiezen\" ?",
+        "nl": "Wat betekent \"verkiezen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "prefer",
+        "es": "preferir",
+        "fr": "pr?f?rer",
+        "nl": "Betekenis: verkiezen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje verkiezen.",
+        "es": "Ik wil elke dag een beetje verkiezen.",
+        "fr": "Ik wil elke dag een beetje verkiezen.",
+        "nl": "Ik wil elke dag een beetje verkiezen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "verkiezen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_013",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "logic"
+      ],
+      "front_i18n": {
+        "en": "depend",
+        "es": "depender",
+        "fr": "d?pendre",
+        "nl": "afhangen"
+      },
+      "question_i18n": {
+        "en": "What does \"afhangen\" mean?",
+        "es": "?Qu? significa \"afhangen\"?",
+        "fr": "Que signifie \"afhangen\" ?",
+        "nl": "Wat betekent \"afhangen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "depend",
+        "es": "depender",
+        "fr": "d?pendre",
+        "nl": "Betekenis: afhangen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje afhangen.",
+        "es": "Ik wil elke dag een beetje afhangen.",
+        "fr": "Ik wil elke dag een beetje afhangen.",
+        "nl": "Ik wil elke dag een beetje afhangen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "afhangen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_014",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "recommend",
+        "es": "recomendar",
+        "fr": "recommander",
+        "nl": "aanbevelen"
+      },
+      "question_i18n": {
+        "en": "What does \"aanbevelen\" mean?",
+        "es": "?Qu? significa \"aanbevelen\"?",
+        "fr": "Que signifie \"aanbevelen\" ?",
+        "nl": "Wat betekent \"aanbevelen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "recommend",
+        "es": "recomendar",
+        "fr": "recommander",
+        "nl": "Betekenis: aanbevelen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje aanbevelen.",
+        "es": "Ik wil elke dag een beetje aanbevelen.",
+        "fr": "Ik wil elke dag een beetje aanbevelen.",
+        "nl": "Ik wil elke dag een beetje aanbevelen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "aanbevelen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_015",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "suggest",
+        "es": "sugerir",
+        "fr": "sugg?rer",
+        "nl": "voorstellen"
+      },
+      "question_i18n": {
+        "en": "What does \"voorstellen\" mean?",
+        "es": "?Qu? significa \"voorstellen\"?",
+        "fr": "Que signifie \"voorstellen\" ?",
+        "nl": "Wat betekent \"voorstellen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "suggest",
+        "es": "sugerir",
+        "fr": "sugg?rer",
+        "nl": "Betekenis: voorstellen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje voorstellen.",
+        "es": "Ik wil elke dag een beetje voorstellen.",
+        "fr": "Ik wil elke dag een beetje voorstellen.",
+        "nl": "Ik wil elke dag een beetje voorstellen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "voorstellen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_016",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "explain",
+        "es": "explicar",
+        "fr": "expliquer",
+        "nl": "uitleggen"
+      },
+      "question_i18n": {
+        "en": "What does \"uitleggen\" mean?",
+        "es": "?Qu? significa \"uitleggen\"?",
+        "fr": "Que signifie \"uitleggen\" ?",
+        "nl": "Wat betekent \"uitleggen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "explain",
+        "es": "explicar",
+        "fr": "expliquer",
+        "nl": "Betekenis: uitleggen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje uitleggen.",
+        "es": "Ik wil elke dag een beetje uitleggen.",
+        "fr": "Ik wil elke dag een beetje uitleggen.",
+        "nl": "Ik wil elke dag een beetje uitleggen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "uitleggen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_017",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "describe",
+        "es": "describir",
+        "fr": "d?crire",
+        "nl": "beschrijven"
+      },
+      "question_i18n": {
+        "en": "What does \"beschrijven\" mean?",
+        "es": "?Qu? significa \"beschrijven\"?",
+        "fr": "Que signifie \"beschrijven\" ?",
+        "nl": "Wat betekent \"beschrijven\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "describe",
+        "es": "describir",
+        "fr": "d?crire",
+        "nl": "Betekenis: beschrijven"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje beschrijven.",
+        "es": "Ik wil elke dag een beetje beschrijven.",
+        "fr": "Ik wil elke dag een beetje beschrijven.",
+        "nl": "Ik wil elke dag een beetje beschrijven."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "beschrijven",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_018",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "accept",
+        "es": "aceptar",
+        "fr": "accepter",
+        "nl": "accepteren"
+      },
+      "question_i18n": {
+        "en": "What does \"accepteren\" mean?",
+        "es": "?Qu? significa \"accepteren\"?",
+        "fr": "Que signifie \"accepteren\" ?",
+        "nl": "Wat betekent \"accepteren\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "accept",
+        "es": "aceptar",
+        "fr": "accepter",
+        "nl": "Betekenis: accepteren"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje accepteren.",
+        "es": "Ik wil elke dag een beetje accepteren.",
+        "fr": "Ik wil elke dag een beetje accepteren.",
+        "nl": "Ik wil elke dag een beetje accepteren."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "accepteren",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_019",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "communication"
+      ],
+      "front_i18n": {
+        "en": "refuse",
+        "es": "rechazar",
+        "fr": "refuser",
+        "nl": "weigeren"
+      },
+      "question_i18n": {
+        "en": "What does \"weigeren\" mean?",
+        "es": "?Qu? significa \"weigeren\"?",
+        "fr": "Que signifie \"weigeren\" ?",
+        "nl": "Wat betekent \"weigeren\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "refuse",
+        "es": "rechazar",
+        "fr": "refuser",
+        "nl": "Betekenis: weigeren"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje weigeren.",
+        "es": "Ik wil elke dag een beetje weigeren.",
+        "fr": "Ik wil elke dag een beetje weigeren.",
+        "nl": "Ik wil elke dag een beetje weigeren."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "weigeren",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_020",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "imagine",
+        "es": "imaginar",
+        "fr": "imaginer",
+        "nl": "zich voorstellen"
+      },
+      "question_i18n": {
+        "en": "What does \"zich voorstellen\" mean?",
+        "es": "?Qu? significa \"zich voorstellen\"?",
+        "fr": "Que signifie \"zich voorstellen\" ?",
+        "nl": "Wat betekent \"zich voorstellen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "imagine",
+        "es": "imaginar",
+        "fr": "imaginer",
+        "nl": "Betekenis: zich voorstellen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje zich voorstellen.",
+        "es": "Ik wil elke dag een beetje zich voorstellen.",
+        "fr": "Ik wil elke dag een beetje zich voorstellen.",
+        "nl": "Ik wil elke dag een beetje zich voorstellen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "zich voorstellen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_021",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "notice",
+        "es": "notar",
+        "fr": "remarquer",
+        "nl": "opmerken"
+      },
+      "question_i18n": {
+        "en": "What does \"opmerken\" mean?",
+        "es": "?Qu? significa \"opmerken\"?",
+        "fr": "Que signifie \"opmerken\" ?",
+        "nl": "Wat betekent \"opmerken\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "notice",
+        "es": "notar",
+        "fr": "remarquer",
+        "nl": "Betekenis: opmerken"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje opmerken.",
+        "es": "Ik wil elke dag een beetje opmerken.",
+        "fr": "Ik wil elke dag een beetje opmerken.",
+        "nl": "Ik wil elke dag een beetje opmerken."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "opmerken",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_022",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "manage",
+        "es": "gestionar",
+        "fr": "g?rer",
+        "nl": "beheren"
+      },
+      "question_i18n": {
+        "en": "What does \"beheren\" mean?",
+        "es": "?Qu? significa \"beheren\"?",
+        "fr": "Que signifie \"beheren\" ?",
+        "nl": "Wat betekent \"beheren\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "manage",
+        "es": "gestionar",
+        "fr": "g?rer",
+        "nl": "Betekenis: beheren"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje beheren.",
+        "es": "Ik wil elke dag een beetje beheren.",
+        "fr": "Ik wil elke dag een beetje beheren.",
+        "nl": "Ik wil elke dag een beetje beheren."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "beheren",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_023",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "support",
+        "es": "apoyar",
+        "fr": "soutenir",
+        "nl": "ondersteunen"
+      },
+      "question_i18n": {
+        "en": "What does \"ondersteunen\" mean?",
+        "es": "?Qu? significa \"ondersteunen\"?",
+        "fr": "Que signifie \"ondersteunen\" ?",
+        "nl": "Wat betekent \"ondersteunen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "support",
+        "es": "apoyar",
+        "fr": "soutenir",
+        "nl": "Betekenis: ondersteunen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje ondersteunen.",
+        "es": "Ik wil elke dag een beetje ondersteunen.",
+        "fr": "Ik wil elke dag een beetje ondersteunen.",
+        "nl": "Ik wil elke dag een beetje ondersteunen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "ondersteunen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_024",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "responsibility",
+        "es": "responsabilidad",
+        "fr": "responsabilit?",
+        "nl": "verantwoordelijkheid"
+      },
+      "question_i18n": {
+        "en": "What does \"verantwoordelijkheid\" mean?",
+        "es": "?Qu? significa \"verantwoordelijkheid\"?",
+        "fr": "Que signifie \"verantwoordelijkheid\" ?",
+        "nl": "Wat betekent \"verantwoordelijkheid\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "responsibility",
+        "es": "responsabilidad",
+        "fr": "responsabilit?",
+        "nl": "Betekenis: verantwoordelijkheid"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje verantwoordelijkheid.",
+        "es": "Ik wil elke dag een beetje verantwoordelijkheid.",
+        "fr": "Ik wil elke dag een beetje verantwoordelijkheid.",
+        "nl": "Ik wil elke dag een beetje verantwoordelijkheid."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "verantwoordelijkheid",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_025",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "goal"
+      ],
+      "front_i18n": {
+        "en": "opportunity",
+        "es": "oportunidad",
+        "fr": "opportunit?",
+        "nl": "kans"
+      },
+      "question_i18n": {
+        "en": "What does \"kans\" mean?",
+        "es": "?Qu? significa \"kans\"?",
+        "fr": "Que signifie \"kans\" ?",
+        "nl": "Wat betekent \"kans\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "opportunity",
+        "es": "oportunidad",
+        "fr": "opportunit?",
+        "nl": "Betekenis: kans"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje kans.",
+        "es": "Ik wil elke dag een beetje kans.",
+        "fr": "Ik wil elke dag een beetje kans.",
+        "nl": "Ik wil elke dag een beetje kans."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "kans",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_026",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "time"
+      ],
+      "front_i18n": {
+        "en": "immediately",
+        "es": "inmediatamente",
+        "fr": "imm?diatement",
+        "nl": "onmiddellijk"
+      },
+      "question_i18n": {
+        "en": "What does \"onmiddellijk\" mean?",
+        "es": "?Qu? significa \"onmiddellijk\"?",
+        "fr": "Que signifie \"onmiddellijk\" ?",
+        "nl": "Wat betekent \"onmiddellijk\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "immediately",
+        "es": "inmediatamente",
+        "fr": "imm?diatement",
+        "nl": "Betekenis: onmiddellijk"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje onmiddellijk.",
+        "es": "Ik wil elke dag een beetje onmiddellijk.",
+        "fr": "Ik wil elke dag een beetje onmiddellijk.",
+        "nl": "Ik wil elke dag een beetje onmiddellijk."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "onmiddellijk",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_027",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "numbers"
+      ],
+      "front_i18n": {
+        "en": "increase",
+        "es": "aumentar",
+        "fr": "augmenter",
+        "nl": "verhogen"
+      },
+      "question_i18n": {
+        "en": "What does \"verhogen\" mean?",
+        "es": "?Qu? significa \"verhogen\"?",
+        "fr": "Que signifie \"verhogen\" ?",
+        "nl": "Wat betekent \"verhogen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "increase",
+        "es": "aumentar",
+        "fr": "augmenter",
+        "nl": "Betekenis: verhogen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje verhogen.",
+        "es": "Ik wil elke dag een beetje verhogen.",
+        "fr": "Ik wil elke dag een beetje verhogen.",
+        "nl": "Ik wil elke dag een beetje verhogen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "verhogen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_028",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "numbers"
+      ],
+      "front_i18n": {
+        "en": "reduce",
+        "es": "reducir",
+        "fr": "r?duire",
+        "nl": "verminderen"
+      },
+      "question_i18n": {
+        "en": "What does \"verminderen\" mean?",
+        "es": "?Qu? significa \"verminderen\"?",
+        "fr": "Que signifie \"verminderen\" ?",
+        "nl": "Wat betekent \"verminderen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "reduce",
+        "es": "reducir",
+        "fr": "r?duire",
+        "nl": "Betekenis: verminderen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje verminderen.",
+        "es": "Ik wil elke dag een beetje verminderen.",
+        "fr": "Ik wil elke dag een beetje verminderen.",
+        "nl": "Ik wil elke dag een beetje verminderen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "verminderen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_029",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "decision"
+      ],
+      "front_i18n": {
+        "en": "risk",
+        "es": "riesgo",
+        "fr": "risque",
+        "nl": "risico"
+      },
+      "question_i18n": {
+        "en": "What does \"risico\" mean?",
+        "es": "?Qu? significa \"risico\"?",
+        "fr": "Que signifie \"risico\" ?",
+        "nl": "Wat betekent \"risico\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "risk",
+        "es": "riesgo",
+        "fr": "risque",
+        "nl": "Betekenis: risico"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje risico.",
+        "es": "Ik wil elke dag een beetje risico.",
+        "fr": "Ik wil elke dag een beetje risico.",
+        "nl": "Ik wil elke dag een beetje risico."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "risico",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_030",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "decision"
+      ],
+      "front_i18n": {
+        "en": "require",
+        "es": "requerir",
+        "fr": "exiger",
+        "nl": "vereisen"
+      },
+      "question_i18n": {
+        "en": "What does \"vereisen\" mean?",
+        "es": "?Qu? significa \"vereisen\"?",
+        "fr": "Que signifie \"vereisen\" ?",
+        "nl": "Wat betekent \"vereisen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "require",
+        "es": "requerir",
+        "fr": "exiger",
+        "nl": "Betekenis: vereisen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje vereisen.",
+        "es": "Ik wil elke dag een beetje vereisen.",
+        "fr": "Ik wil elke dag een beetje vereisen.",
+        "nl": "Ik wil elke dag een beetje vereisen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "vereisen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_031",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "decision"
+      ],
+      "front_i18n": {
+        "en": "allow",
+        "es": "permitir",
+        "fr": "permettre",
+        "nl": "toestaan"
+      },
+      "question_i18n": {
+        "en": "What does \"toestaan\" mean?",
+        "es": "?Qu? significa \"toestaan\"?",
+        "fr": "Que signifie \"toestaan\" ?",
+        "nl": "Wat betekent \"toestaan\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "allow",
+        "es": "permitir",
+        "fr": "permettre",
+        "nl": "Betekenis: toestaan"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje toestaan.",
+        "es": "Ik wil elke dag een beetje toestaan.",
+        "fr": "Ik wil elke dag een beetje toestaan.",
+        "nl": "Ik wil elke dag een beetje toestaan."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "toestaan",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_032",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "mind"
+      ],
+      "front_i18n": {
+        "en": "expect",
+        "es": "esperar",
+        "fr": "s?attendre ?",
+        "nl": "verwachten"
+      },
+      "question_i18n": {
+        "en": "What does \"verwachten\" mean?",
+        "es": "?Qu? significa \"verwachten\"?",
+        "fr": "Que signifie \"verwachten\" ?",
+        "nl": "Wat betekent \"verwachten\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "expect",
+        "es": "esperar",
+        "fr": "s?attendre ?",
+        "nl": "Betekenis: verwachten"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje verwachten.",
+        "es": "Ik wil elke dag een beetje verwachten.",
+        "fr": "Ik wil elke dag een beetje verwachten.",
+        "nl": "Ik wil elke dag een beetje verwachten."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "verwachten",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_033",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "influence",
+        "es": "influir",
+        "fr": "influencer",
+        "nl": "be?nvloeden"
+      },
+      "question_i18n": {
+        "en": "What does \"be?nvloeden\" mean?",
+        "es": "?Qu? significa \"be?nvloeden\"?",
+        "fr": "Que signifie \"be?nvloeden\" ?",
+        "nl": "Wat betekent \"be?nvloeden\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "influence",
+        "es": "influir",
+        "fr": "influencer",
+        "nl": "Betekenis: be?nvloeden"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje be?nvloeden.",
+        "es": "Ik wil elke dag een beetje be?nvloeden.",
+        "fr": "Ik wil elke dag een beetje be?nvloeden.",
+        "nl": "Ik wil elke dag een beetje be?nvloeden."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "be?nvloeden",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_034",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "relationship",
+        "es": "relaci?n",
+        "fr": "relation",
+        "nl": "relatie"
+      },
+      "question_i18n": {
+        "en": "What does \"relatie\" mean?",
+        "es": "?Qu? significa \"relatie\"?",
+        "fr": "Que signifie \"relatie\" ?",
+        "nl": "Wat betekent \"relatie\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "relationship",
+        "es": "relaci?n",
+        "fr": "relation",
+        "nl": "Betekenis: relatie"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje relatie.",
+        "es": "Ik wil elke dag een beetje relatie.",
+        "fr": "Ik wil elke dag een beetje relatie.",
+        "nl": "Ik wil elke dag een beetje relatie."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "relatie",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_035",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "life"
+      ],
+      "front_i18n": {
+        "en": "environment",
+        "es": "entorno",
+        "fr": "environnement",
+        "nl": "omgeving"
+      },
+      "question_i18n": {
+        "en": "What does \"omgeving\" mean?",
+        "es": "?Qu? significa \"omgeving\"?",
+        "fr": "Que signifie \"omgeving\" ?",
+        "nl": "Wat betekent \"omgeving\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "environment",
+        "es": "entorno",
+        "fr": "environnement",
+        "nl": "Betekenis: omgeving"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje omgeving.",
+        "es": "Ik wil elke dag een beetje omgeving.",
+        "fr": "Ik wil elke dag een beetje omgeving.",
+        "nl": "Ik wil elke dag een beetje omgeving."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "omgeving",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_036",
+      "level": "B1",
+      "category": "work",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "contribute",
+        "es": "contribuir",
+        "fr": "contribuer",
+        "nl": "bijdragen"
+      },
+      "question_i18n": {
+        "en": "What does \"bijdragen\" mean?",
+        "es": "?Qu? significa \"bijdragen\"?",
+        "fr": "Que signifie \"bijdragen\" ?",
+        "nl": "Wat betekent \"bijdragen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "contribute",
+        "es": "contribuir",
+        "fr": "contribuer",
+        "nl": "Betekenis: bijdragen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje bijdragen.",
+        "es": "Ik wil elke dag een beetje bijdragen.",
+        "fr": "Ik wil elke dag een beetje bijdragen.",
+        "nl": "Ik wil elke dag een beetje bijdragen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "bijdragen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_037",
+      "level": "B1",
+      "category": "social",
+      "tags": [
+        "people"
+      ],
+      "front_i18n": {
+        "en": "participate",
+        "es": "participar",
+        "fr": "participer",
+        "nl": "deelnemen"
+      },
+      "question_i18n": {
+        "en": "What does \"deelnemen\" mean?",
+        "es": "?Qu? significa \"deelnemen\"?",
+        "fr": "Que signifie \"deelnemen\" ?",
+        "nl": "Wat betekent \"deelnemen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "participate",
+        "es": "participar",
+        "fr": "participer",
+        "nl": "Betekenis: deelnemen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje deelnemen.",
+        "es": "Ik wil elke dag een beetje deelnemen.",
+        "fr": "Ik wil elke dag een beetje deelnemen.",
+        "nl": "Ik wil elke dag een beetje deelnemen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "deelnemen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_038",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "work"
+      ],
+      "front_i18n": {
+        "en": "prepare",
+        "es": "preparar",
+        "fr": "pr?parer",
+        "nl": "voorbereiden"
+      },
+      "question_i18n": {
+        "en": "What does \"voorbereiden\" mean?",
+        "es": "?Qu? significa \"voorbereiden\"?",
+        "fr": "Que signifie \"voorbereiden\" ?",
+        "nl": "Wat betekent \"voorbereiden\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "prepare",
+        "es": "preparar",
+        "fr": "pr?parer",
+        "nl": "Betekenis: voorbereiden"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje voorbereiden.",
+        "es": "Ik wil elke dag een beetje voorbereiden.",
+        "fr": "Ik wil elke dag een beetje voorbereiden.",
+        "nl": "Ik wil elke dag een beetje voorbereiden."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "voorbereiden",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_039",
+      "level": "B1",
+      "category": "daily",
+      "tags": [
+        "life"
+      ],
+      "front_i18n": {
+        "en": "comfortable",
+        "es": "c?modo",
+        "fr": "? l?aise",
+        "nl": "comfortabel"
+      },
+      "question_i18n": {
+        "en": "What does \"comfortabel\" mean?",
+        "es": "?Qu? significa \"comfortabel\"?",
+        "fr": "Que signifie \"comfortabel\" ?",
+        "nl": "Wat betekent \"comfortabel\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "comfortable",
+        "es": "c?modo",
+        "fr": "? l?aise",
+        "nl": "Betekenis: comfortabel"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje comfortabel.",
+        "es": "Ik wil elke dag een beetje comfortabel.",
+        "fr": "Ik wil elke dag een beetje comfortabel.",
+        "nl": "Ik wil elke dag een beetje comfortabel."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "comfortabel",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    },
+    {
+      "card_id": "nl_b1_vocab_core_40_040",
+      "level": "B1",
+      "category": "progress",
+      "tags": [
+        "progress",
+        "work"
+      ],
+      "front_i18n": {
+        "en": "develop",
+        "es": "desarrollar",
+        "fr": "d?velopper",
+        "nl": "ontwikkelen"
+      },
+      "question_i18n": {
+        "en": "What does \"ontwikkelen\" mean?",
+        "es": "?Qu? significa \"ontwikkelen\"?",
+        "fr": "Que signifie \"ontwikkelen\" ?",
+        "nl": "Wat betekent \"ontwikkelen\"?"
+      },
+      "correct_answer_i18n": {
+        "en": "develop",
+        "es": "desarrollar",
+        "fr": "d?velopper",
+        "nl": "Betekenis: ontwikkelen"
+      },
+      "example_sentence_i18n": {
+        "en": "Ik wil elke dag een beetje ontwikkelen.",
+        "es": "Ik wil elke dag een beetje ontwikkelen.",
+        "fr": "Ik wil elke dag een beetje ontwikkelen.",
+        "nl": "Ik wil elke dag een beetje ontwikkelen."
+      },
+      "usage_type": "vocab",
+      "tts": {
+        "auto_read": true,
+        "language": "nl-NL",
+        "text": "ontwikkelen",
+        "rate": 0.95
+      },
+      "difficulty_1to5": 3
+    }
+  ]
+}
