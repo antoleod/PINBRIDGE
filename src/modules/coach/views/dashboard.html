@@ -1,57 +1,53 @@
-<div class="coach-dashboard glass-panel">
-    <div class="dashboard-hero">
-        <h2 class="skill-title">{{skillName}}</h2>
-        <div class="stats-row">
-            <div class="stat-item">
-                <i data-feather="zap"></i>
-                <span class="stat-val">{{streak}}</span>
-                <span class="stat-label">Day Streak</span>
+<div class="dashboard-header">
+    <h1>{{coach_dashboard_title}}</h1>
+    <p>{{coach_dashboard_subtitle}}</p>
+</div>
+
+<!-- Updates Section -->
+{{#if updates}}
+<div class="updates-panel glass-panel" style="border-left: 4px solid var(--primary); margin-bottom: 1rem;">
+    <h3 style="margin-top: 0;">Available Updates</h3>
+    <div class="updates-list">
+        {{#each updates}}
+        <div class="update-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <div>
+                <strong>{{this.title}}</strong>
+                <div style="opacity: 0.7; font-size: 0.85em;">v{{this.current}} → v{{this.latest}}</div>
             </div>
-            <div class="stat-item {{#if reviewsCount}}urgent{{/if}}">
-                <i data-feather="refresh-cw"></i>
-                <span class="stat-val">{{reviewsCount}}</span>
-                <span class="stat-label">Reviews</span>
-            </div>
+            <button class="btn btn-sm btn-primary" data-action="apply-update" data-pack-id="{{this.pack_id}}">Update</button>
+        </div>
+        {{/each}}
+    </div>
+</div>
+{{/if}}
+
+<!-- Active Skill Section -->
+{{#if skillName}}
+<div class="skill-card glass-panel">
+    <h2>{{skillName}}</h2>
+    <div class="stats-row" style="display: flex; gap: 2rem; margin: 1rem 0;">
+        <div class="stat">
+            <span class="stat-value" style="font-size: 1.5rem; font-weight: bold; display: block;">{{streak}}</span>
+            <span class="stat-label" style="opacity: 0.7;">{{coach_metric_streak}}</span>
+        </div>
+        <div class="stat">
+            <span class="stat-value" style="font-size: 1.5rem; font-weight: bold; display: block;">{{reviewsCount}}</span>
+            <span class="stat-label" style="opacity: 0.7;">Reviews</span>
         </div>
     </div>
-
-    <div class="daily-actions">
-        <h3>{{coach_today_title}}</h3>
-        <button class="btn btn-primary btn-lg full-width" data-action="start-session">
-            <i data-feather="play"></i> Start Daily Session
-        </button>
+    <div class="actions-row" style="display: flex; gap: 0.5rem;">
+        <button class="btn btn-primary btn-lg" data-action="start-session">{{coach_action_start_session}}</button>
+        <button class="btn btn-secondary" data-action="open-roadmap">{{coach_action_view_roadmap}}</button>
     </div>
+</div>
+{{else}}
+<div class="empty-state glass-panel" style="text-align: center; padding: 2rem;">
+    <p style="margin-bottom: 1rem;">{{coach_no_plan_hint}}</p>
+    <button class="btn btn-primary" data-action="add-new-skill">{{coach_action_create_plan}}</button>
+</div>
+{{/if}}
 
-    <div class="tools-grid">
-        <button class="btn btn-secondary tool-btn" data-action="open-roadmap">
-            <i data-feather="calendar"></i> {{coach_action_view_roadmap}}
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="open-checklist">
-            <i data-feather="check-square"></i> {{coach_action_checklist}}
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="open-interview">
-            <i data-feather="message-circle"></i> {{coach_action_interview}}
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="open-quizzes">
-            <i data-feather="help-circle"></i> {{coach_action_quizzes}}
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="open-packs">
-            <i data-feather="package"></i> {{coach_action_packs}}
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="open-export">
-            <i data-feather="share-2"></i> {{coach_action_export}}
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="start-exam-center">
-            <i data-feather="award"></i> Exam Center
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="open-error-cards">
-            <i data-feather="alert-octagon"></i> Error Cards
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="view-my-skills">
-            <i data-feather="layers"></i> My Skills
-        </button>
-        <button class="btn btn-secondary tool-btn" data-action="open-settings">
-            <i data-feather="settings"></i> {{coach_action_settings}}
-        </button>
-    </div>
+<div class="quick-links" style="margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
+    <button class="btn btn-ghost" data-action="open-packs">{{myPacks}}</button>
+    <button class="btn btn-ghost" data-action="open-settings">{{coach_action_settings}}</button>
 </div>

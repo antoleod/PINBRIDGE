@@ -1414,6 +1414,14 @@ body.coach-only #vault-screen .admin-panel {
     display: none !important;
 }
 
+/* Coach focus (desktop): keep sidebar, hide notes/editor panels. */
+body.coach-focus #vault-screen .list-panel,
+body.coach-focus #vault-screen .editor-panel,
+body.coach-focus #vault-screen .dashboard-panel,
+body.coach-focus #vault-screen .admin-panel {
+    display: none !important;
+}
+
 /* Sidebar */
 .sidebar {
     width: var(--sidebar-width);

@@ -2,6 +2,7 @@
 import { i18n } from './i18n.js';
 import { coachStore } from './coachStore.js';
 import { difficultyEngine } from './difficultyEngine.js';
+import { virtualCoach } from './virtualCoach.js';
 
 export const quizEngine = {
 
@@ -70,10 +71,19 @@ export const quizEngine = {
         if (!selected) return null;
 
         // Assess difficulty for this card
-        const { level, representation } = await difficultyEngine.assessDifficulty(uid, selected.card_id, {});
+        const diffState = await difficultyEngine.detectState(uid, selected.card_id);
+        const { target_level: level, representation } = difficultyEngine.computeDifficulty(diffState);
 
         // 3. Distractors (Context-aware, adapted by difficulty)
-        const distractors = difficultyEngine.generateDistractors(selected, allCards, level);
+        let distractors = [];
+        if (typeof difficultyEngine.generateDistractors === 'function') {
+            distractors = difficultyEngine.generateDistractors(selected, allCards, level);
+        } else {
+            // Fallback: Random from same category if possible
+            const sameCat = allCards.filter(c => c.card_id !== selected.card_id && c.category === selected.category);
+            const pool = sameCat.length >= 2 ? sameCat : allCards.filter(c => c.card_id !== selected.card_id);
+            distractors = this._shuffle(pool).slice(0, 2);
+        }
 
         // 4. Build Options
         const getOptionText = (c) => i18n.getContent(c.correct_answer_i18n);
@@ -89,7 +99,7 @@ export const quizEngine = {
         const correctIndex = shuffledOptions.findIndex(o => o.isCorrect);
 
         // 5. Generate Scenario, Explanation, Transfer, Reflection
-        const scenario = this.generateScenario(selected, level);
+        const scenario = await this.generateScenario(selected, level, representation);
         const explanation = this.generateExplanation(selected, distractors);
         const transferTask = this.generateTransferTask(selected);
         const reflectionPrompt = this.generateReflectionPrompt();
@@ -116,12 +126,14 @@ export const quizEngine = {
         };
     },
 
-    generateScenario(card, level) {
-        // Generate ambiguous real-life scenario
-        const base = i18n.getContent(card.question_i18n || card.correct_answer_i18n);
-        if (level === 'advanced') {
-            return `In a professional email, you need to express: "${base}". Which option fits best in this context?`;
+    async generateScenario(card, level, representation) {
+        // Use Virtual Coach for advanced levels
+        if (level === 'advanced' || (typeof level === 'number' && level >= 3)) {
+            const param = (representation && representation !== 'text') ? representation : (typeof level === 'number' ? level : 4);
+            return await virtualCoach.generateVariant(card, param);
         }
+
+        const base = i18n.getContent(card.question_i18n || card.correct_answer_i18n);
         return `Translate or explain: "${base}"`;
     },
 

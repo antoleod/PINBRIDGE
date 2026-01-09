@@ -5265,6 +5265,8 @@ class UIService {
         const editorPanel = document.querySelector('.editor-panel');
         const dashboardPanel = document.querySelector('.dashboard-panel');
         const adminPanel = document.querySelector('.admin-panel');
+        const listPanel = document.querySelector('.list-panel');
+        const coachPanel = document.querySelector('.coach-panel');
 
         if (this.currentView === 'admin') {
             if (!this.ensureAdminAccess()) {
@@ -5287,6 +5289,20 @@ class UIService {
             adminPanel?.classList.add('hidden');
             this.renderDashboard();
             // Sync Mobile Footer State
+            document.querySelectorAll('.mobile-nav-item').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.view === this.currentView);
+            });
+            return;
+        }
+
+        if (this.currentView === 'coach') {
+            // Coach should behave like Dashboard: hide notes editor/list (Coach renders inside its own panel).
+            editorPanel?.classList.add('hidden');
+            listPanel?.classList.add('hidden');
+            dashboardPanel?.classList.add('hidden');
+            adminPanel?.classList.add('hidden');
+            coachPanel?.classList.remove('hidden');
+
             document.querySelectorAll('.mobile-nav-item').forEach(btn => {
                 btn.classList.toggle('active', btn.dataset.view === this.currentView);
             });

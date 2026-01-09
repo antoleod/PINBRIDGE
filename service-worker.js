@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinbridge-v7';
+const CACHE_NAME = 'pinbridge-v10';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

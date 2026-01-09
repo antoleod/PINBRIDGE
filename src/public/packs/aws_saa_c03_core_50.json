@@ -1,0 +1,55 @@
+{
+    "schema_version": "v2",
+    "pack": {
+        "pack_id": "aws_saa_c03_core_50",
+        "version": "1.0.0",
+        "title_i18n": { "en": "AWS SAA-C03 Core" },
+        "description_i18n": { "en": "Essential concepts for the Solutions Architect Associate exam." },
+        "level": "intermediate",
+        "languages": ["en"],
+        "categories": [
+            { "id": "compute", "title_i18n": { "en": "Compute" } },
+            { "id": "storage", "title_i18n": { "en": "Storage" } },
+            { "id": "database", "title_i18n": { "en": "Database" } },
+            { "id": "networking", "title_i18n": { "en": "Networking" } }
+        ]
+    },
+    "cards": [
+        {
+            "card_id": "aws_s3_classes",
+            "category": "storage",
+            "question_i18n": { "en": "Which S3 storage class is best for data accessed once a year but requiring milliseconds access?" },
+            "correct_answer_i18n": { "en": "S3 Glacier Instant Retrieval" },
+            "options_i18n": [
+                { "en": "S3 Standard" },
+                { "en": "S3 Glacier Deep Archive" },
+                { "en": "S3 Intelligent-Tiering" }
+            ],
+            "explanation_i18n": { "en": "Glacier Instant Retrieval offers milliseconds access for rarely accessed data, cheaper than Standard." }
+        },
+        {
+            "card_id": "aws_ec2_pricing",
+            "category": "compute",
+            "question_i18n": { "en": "Which EC2 pricing model is best for a steady-state workload running 24/7 for 3 years?" },
+            "correct_answer_i18n": { "en": "Reserved Instances (RI)" },
+            "options_i18n": [
+                { "en": "On-Demand" },
+                { "en": "Spot Instances" },
+                { "en": "Dedicated Hosts" }
+            ],
+            "explanation_i18n": { "en": "RIs provide significant discounts (up to 72%) for committed usage compared to On-Demand." }
+        },
+        {
+            "card_id": "aws_rds_multi_az",
+            "category": "database",
+            "question_i18n": { "en": "What is the primary purpose of RDS Multi-AZ deployments?" },
+            "correct_answer_i18n": { "en": "High Availability" },
+            "options_i18n": [
+                { "en": "Read Scalability" },
+                { "en": "Cost Reduction" },
+                { "en": "Data Archival" }
+            ],
+            "explanation_i18n": { "en": "Multi-AZ creates a synchronous standby replica for automatic failover, ensuring high availability." }
+        }
+    ]
+}

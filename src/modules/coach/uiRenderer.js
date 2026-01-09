@@ -136,10 +136,13 @@ class UiRenderer {
 
     bindEventListeners(view, data) {
         this.container.onclick = (e) => {
-            const action = e.target.closest('[data-action]');
-            if (!action) return;
+            try {
+                const rawTarget = e?.target;
+                const target = rawTarget instanceof Element ? rawTarget : rawTarget?.parentElement;
+                const action = target?.closest?.('[data-action]');
+                if (!action) return;
 
-            const actionName = action.dataset.action;
+                const actionName = action.dataset.action;
 
                 switch (actionName) {
                     case 'back-to-dashboard':
@@ -201,6 +204,11 @@ class UiRenderer {
                 case 'start-module-exam': {
                     const moduleId = action.dataset.moduleId;
                     bus.emit('coach:start-exam', { moduleId });
+                    break;
+                }
+                case 'apply-update': {
+                    const packId = action.dataset.packId;
+                    if (packId) bus.emit('coach:apply-update', { packId });
                     break;
                 }
                 case 'start-quiz': {
@@ -304,9 +312,12 @@ class UiRenderer {
                     if (text) bus.emit('coach:tts-play', { text, lang });
                     break;
                 }
-                case 'next-session':
-                    bus.emit('coach:navigate', 'dashboard');
-                    break;
+                    case 'next-session':
+                        bus.emit('coach:navigate', 'dashboard');
+                        break;
+                }
+            } catch (err) {
+                console.error('Coach action handler error:', err);
             }
         };
 

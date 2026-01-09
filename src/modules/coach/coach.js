@@ -4,6 +4,8 @@ import { coachStore } from './coachStore.js';
 import { coachEngine } from './coachEngine.js'; // Legacy engine
 import { quizEngine } from './quizEngine.js'; // New modular engine
 import { packImportWizard } from './packImportWizard.js';
+import { packRegistry } from './packRegistry.js';
+import { packLoader } from './packLoader.js';
 import { tts } from './tts.js';
 import { uiRenderer } from './uiRenderer.js';
 import { i18n } from './i18n.js';
@@ -52,6 +54,22 @@ class CoachService {
             packImportWizard.start();
         });
 
+        bus.on('coach:apply-update', async ({ packId }) => {
+            try {
+                const uid = this.currentUser?.uid;
+                if (!uid) return;
+                
+                const data = await packLoader.loadBundledPack(packId);
+                await packRegistry.installPack(uid, data.pack, data.cards, { deprecateMissing: true });
+                
+                bus.emit('ui:toast', { message: `Updated ${data.pack.title_i18n?.en || packId} to v${data.pack.version}`, type: 'success' });
+                this.renderCurrentView();
+            } catch (e) {
+                console.error(e);
+                bus.emit('ui:toast', { message: `Update failed: ${e.message}`, type: 'error' });
+            }
+        });
+
         bus.on('coach:update-pack-content', async ({ packId, version }) => {
             // Reserved for Phase 3/Sync. For Phase 1 we only manage user-owned pack content.
             try {
@@ -90,8 +108,10 @@ class CoachService {
                     version
                 };
 
-                await coachStore.saveUserPack(uid, packId, version, normalizedPack, packData.cards, { deprecateMissing });
-                await coachStore.installUserPack(uid, packId, version, normalizedPack, { pack_name: packName || null });
+                await packRegistry.installPack(uid, normalizedPack, packData.cards, { 
+                    pack_name: packName || null,
+                    deprecateMissing 
+                });
 
                 bus.emit('ui:toast', { message: 'Pack imported', type: 'success' });
                 this._hasAnyPack = true;
@@ -299,7 +319,8 @@ class CoachService {
             return;
         }
 
-        document.querySelectorAll('.list-panel, .editor-panel, .dashboard-panel').forEach(el => el.classList.add('hidden'));
+        // Keep the main layout visible (sidebar/editor) and show Coach panel in-place.
+        // This avoids "Coach-only mode" hiding the sidebar, per UX request.
         document.querySelector('.coach-panel').classList.remove('hidden');
 
         const exitBtn = document.getElementById('btn-coach-exit');
@@ -337,7 +358,7 @@ class CoachService {
             return;
         }
         try {
-            const packs = await coachStore.getUserPacks(uid);
+            const packs = await packRegistry.getInstalledPacks(uid);
             this._hasAnyPack = packs.length > 0;
         } catch {
             this._hasAnyPack = false;
@@ -381,6 +402,8 @@ class CoachService {
                 const reviews = await coachStore.getDueReviews(this.currentUser.uid);
                 viewData.reviewsCount = reviews.length;
             }
+            const updates = await packRegistry.checkUpdates(this.currentUser.uid);
+            viewData.updates = updates;
         }
 
         if (this.currentView === 'session') {
@@ -509,7 +532,7 @@ class CoachService {
         }
 
         if (this.currentView === 'packs') {
-            const packs = await coachStore.getUserPacks(this.currentUser.uid);
+            const packs = await packRegistry.getInstalledPacks(this.currentUser.uid);
             viewData.packs = packs.map(p => ({
                 ...p,
                 title: p.pack_name || i18n.getContent(p.title_i18n) || p.pack_id,

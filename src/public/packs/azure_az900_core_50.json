@@ -1,0 +1,54 @@
+{
+    "schema_version": "v2",
+    "pack": {
+        "pack_id": "azure_az900_core_50",
+        "version": "1.0.0",
+        "title_i18n": { "en": "Azure AZ-900 Core" },
+        "description_i18n": { "en": "Fundamental concepts for the Azure Fundamentals exam." },
+        "level": "beginner",
+        "languages": ["en"],
+        "categories": [
+            { "id": "concepts", "title_i18n": { "en": "Cloud Concepts" } },
+            { "id": "architecture", "title_i18n": { "en": "Architecture" } },
+            { "id": "management", "title_i18n": { "en": "Management" } }
+        ]
+    },
+    "cards": [
+        {
+            "card_id": "az_regions",
+            "category": "architecture",
+            "question_i18n": { "en": "What is an Azure Region?" },
+            "correct_answer_i18n": { "en": "A set of datacenters connected by a low-latency network." },
+            "options_i18n": [
+                { "en": "A single datacenter in a specific city." },
+                { "en": "A logical grouping of resources for billing." },
+                { "en": "A backup site for disaster recovery." }
+            ],
+            "explanation_i18n": { "en": "Regions consist of multiple datacenters (zones) connected via a dedicated low-latency network." }
+        },
+        {
+            "card_id": "az_cap_op_ex",
+            "category": "concepts",
+            "question_i18n": { "en": "Which expense model does Azure primarily use?" },
+            "correct_answer_i18n": { "en": "OpEx (Operational Expenditure)" },
+            "options_i18n": [
+                { "en": "CapEx (Capital Expenditure)" },
+                { "en": "Fixed Annual Cost" },
+                { "en": "Upfront Licensing" }
+            ],
+            "explanation_i18n": { "en": "Cloud computing shifts costs from upfront infrastructure (CapEx) to pay-as-you-go (OpEx)." }
+        },
+        {
+            "card_id": "az_resource_groups",
+            "category": "management",
+            "question_i18n": { "en": "What is the scope of an Azure Resource Group?" },
+            "correct_answer_i18n": { "en": "A container for related resources for an Azure solution." },
+            "options_i18n": [
+                { "en": "A global boundary for all subscriptions." },
+                { "en": "A security group for user permissions." },
+                { "en": "A physical server rack." }
+            ],
+            "explanation_i18n": { "en": "Resource Groups hold related resources for an application, allowing unified lifecycle management." }
+        }
+    ]
+}

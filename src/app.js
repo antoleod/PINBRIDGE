@@ -684,7 +684,10 @@ async function init() {
 
             const isMobile = document.body.classList.contains('is-mobile');
             const editorPanel = document.querySelector('.editor-panel');
-            document.body.classList.toggle('coach-only', view === 'coach');
+            // Coach-only mode is useful on mobile (full-screen focus).
+            // On desktop: keep sidebar visible, but hide notes/editor to avoid split view.
+            document.body.classList.toggle('coach-only', view === 'coach' && isMobile);
+            document.body.classList.toggle('coach-focus', view === 'coach' && !isMobile);
 
             // 1. Hide all main panels
             Object.values(mainPanels).forEach(panel => panel?.classList.add('hidden'));

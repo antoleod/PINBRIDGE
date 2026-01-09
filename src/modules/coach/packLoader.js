@@ -17,6 +17,11 @@ const BUNDLED_PACKS = [
         pathsToTry: ['src/public/packs/nl_b1_vocab_core_40.json']
     },
     {
+        id: 'azure_az900_core_50',
+        title: 'Azure AZ-900 Core',
+        pathsToTry: ['src/public/packs/azure_az900_core_50.json']
+    },
+    {
         id: 'fr_b1_mixed_premium_pack_100',
         title: 'French B1 · Mixed · 100 (bundled)',
         pathsToTry: [
