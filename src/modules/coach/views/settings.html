@@ -1,0 +1,44 @@
+<div class="coach-settings glass-panel">
+    <h2>{{coach_settings_title}}</h2>
+
+    <div class="setting-item">
+        <div>
+            <label for="coach-ui-language">{{coach_settings_ui_language}}</label>
+            <p class="hint">{{coach_settings_ui_language_hint}}</p>
+        </div>
+        <select id="coach-ui-language" class="settings-select">
+            <option value="en" {{#if (eq settings.ui_language "en")}}selected{{/if}}>English</option>
+            <option value="es" {{#if (eq settings.ui_language "es")}}selected{{/if}}>Español</option>
+            <option value="fr" {{#if (eq settings.ui_language "fr")}}selected{{/if}}>Français</option>
+        </select>
+    </div>
+
+    <div class="setting-item">
+        <div>
+            <label for="coach-allow-multilang">{{coach_settings_allow_toggle}}</label>
+            <p class="hint">{{coach_settings_allow_toggle_hint}}</p>
+        </div>
+        <label class="coach-toggle">
+            <input type="checkbox" id="coach-allow-multilang" {{#if settings.allow_multilang_toggle}}checked{{/if}}>
+            <span>{{coach_toggle_on}}</span>
+        </label>
+    </div>
+
+    {{#if settings.allow_multilang_toggle}}
+    <div class="setting-item">
+        <div>
+            <label for="coach-content-language">{{coach_settings_content_language}}</label>
+            <p class="hint">{{coach_settings_content_language_hint}}</p>
+        </div>
+        <select id="coach-content-language" class="settings-select">
+            <option value="en" {{#if (eq settings.content_language "en")}}selected{{/if}}>English</option>
+            <option value="es" {{#if (eq settings.content_language "es")}}selected{{/if}}>Español</option>
+            <option value="fr" {{#if (eq settings.content_language "fr")}}selected{{/if}}>Français</option>
+        </select>
+    </div>
+    {{/if}}
+
+    <div class="setting-actions">
+        <button class="btn btn-secondary" data-action="back-to-dashboard">{{coach_action_back}}</button>
+    </div>
+</div>

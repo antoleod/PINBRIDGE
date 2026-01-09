@@ -9,6 +9,7 @@ import { uiService } from './ui/ui.js';
 import { bus } from './core/bus.js';
 import { i18n } from './core/i18n.js';
 import { vaultService } from './vault.js';
+import { coachService } from './modules/coach/coach.js';
 
 // --- INIT ---
 async function init() {
@@ -671,6 +672,7 @@ async function init() {
             trash: document.querySelector('.list-panel'),
             archive: document.querySelector('.list-panel'),
             dashboard: document.querySelector('.dashboard-panel'),
+            coach: document.querySelector('.coach-panel'),
             admin: document.querySelector('.admin-panel'),
         };
 
@@ -681,14 +683,22 @@ async function init() {
             }
 
             const isMobile = document.body.classList.contains('is-mobile');
+            const editorPanel = document.querySelector('.editor-panel');
+            document.body.classList.toggle('coach-only', view === 'coach');
 
             // 1. Hide all main panels
             Object.values(mainPanels).forEach(panel => panel?.classList.add('hidden'));
-            if (isMobile) document.querySelector('.editor-panel')?.classList.add('hidden');
+            if (isMobile) editorPanel?.classList.add('hidden');
 
             // 2. Show the target panel
             const targetPanel = mainPanels[view];
             targetPanel?.classList.remove('hidden');
+
+            // 2b. Desktop layout: hide editor for non-note views (Coach/Dashboard/Admin)
+            if (!isMobile && editorPanel) {
+                const shouldHideEditor = view === 'coach' || view === 'dashboard' || view === 'admin';
+                editorPanel.classList.toggle('hidden', shouldHideEditor);
+            }
 
             // 3. Update active state on all nav buttons
             document.querySelectorAll('[data-view]').forEach(btn => {

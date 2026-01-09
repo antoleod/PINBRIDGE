@@ -1,0 +1,29 @@
+<div class="coach-roadmap glass-panel">
+    <h2>{{skillName}} — {{coach_roadmap_title}}</h2>
+    <div class="roadmap-modules">
+        {{#each modules}}
+        <div class="roadmap-module">
+            <h3>{{this.title}}</h3>
+            <p class="hint">{{this.hint}}</p>
+        </div>
+        {{/each}}
+    </div>
+    <div class="roadmap-sessions">
+        <h3>{{coach_roadmap_sessions_title}}</h3>
+        <div class="session-list">
+            {{#each sessionsPreview}}
+            <div class="session-item">
+                <span class="session-day">Day {{this.day}}</span>
+                <span class="session-title">{{this.title}}</span>
+                <span class="session-concept">{{this.concept_id}}</span>
+            </div>
+            {{/each}}
+        </div>
+        {{#if hasMoreSessions}}
+        <button class="btn btn-secondary" data-action="toggle-roadmap-sessions">
+            <i data-feather="chevron-down"></i> {{coach_action_show_all_30}}
+        </button>
+        {{/if}}
+    </div>
+    <button class="btn btn-secondary" data-action="back-to-dashboard">{{coach_action_back}}</button>
+</div>

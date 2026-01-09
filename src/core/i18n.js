@@ -51,6 +51,7 @@ const base = {
     mobileNotes: 'Notes',
     mobileFavorites: 'Favorites',
     mobileTrash: 'Trash',
+    navCoach: 'Coach',
     listTitle: 'My Notes',
     compactLabel: 'Compact: {state}',
     compactOn: 'On',

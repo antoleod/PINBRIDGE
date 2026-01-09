@@ -1,0 +1,108 @@
+<div class="feedback-card {{#if isCorrect}}correct{{else}}incorrect{{/if}} glass-panel">
+    <div class="feedback-header">
+        <i data-feather="{{#if isCorrect}}check-circle{{else}}x-circle{{/if}}"></i>
+        <h2>{{#if isCorrect}}{{coach_feedback_correct}}{{else}}{{coach_feedback_incorrect}}{{/if}}</h2>
+    </div>
+
+    <div class="feedback-body">
+        <p class="eyebrow">{{coach_label_explain}}</p>
+        <p>{{explain_i18n}}</p>
+
+        {{#if trap_i18n}}
+        <div class="coach-trap">
+            <p class="eyebrow">{{coach_label_trap}}</p>
+            <p>{{trap_i18n}}</p>
+        </div>
+        {{/if}}
+
+        {{#if calibration_note_i18n}}
+        <div class="coach-calibration">
+            <p class="eyebrow">{{coach_label_calibration}}</p>
+            <p>{{calibration_note_i18n}}</p>
+        </div>
+        {{/if}}
+
+        {{#if showActionPractice}}
+        <div class="coach-practice">
+            <p class="eyebrow">{{coach_label_action_practice}}</p>
+            <p>{{action_practice_i18n}}</p>
+        </div>
+
+        <div class="coach-mini">
+            <p class="eyebrow">{{coach_label_mini_challenge}}</p>
+            <p>{{mini_challenge_i18n}}</p>
+        </div>
+        {{/if}}
+
+        {{#if showResources}}
+        <div class="coach-resources">
+            <div class="coach-resources-top">
+                <p class="eyebrow">{{coach_label_resources}}</p>
+                <label class="coach-toggle">
+                    <input type="checkbox" id="coach-toggle-no-resources">
+                    <span>{{coach_toggle_no_resources}}</span>
+                </label>
+            </div>
+            <div id="coach-resources-body">
+                {{#if resource_yt}}
+                <a class="coach-resource-item" href="{{resource_yt.url}}" target="_blank" rel="noopener">
+                    <span class="pill">YT</span>
+                    <span>
+                        <span class="coach-resource-title">{{resource_yt.title}}</span>
+                        <small class="coach-resource-why">{{resource_yt.why}}</small>
+                    </span>
+                </a>
+                {{/if}}
+                {{#if resource_web}}
+                <a class="coach-resource-item" href="{{resource_web.url}}" target="_blank" rel="noopener">
+                    <span class="pill">WEB</span>
+                    <span>
+                        <span class="coach-resource-title">{{resource_web.title}}</span>
+                        <small class="coach-resource-why">{{resource_web.why}}</small>
+                    </span>
+                </a>
+                {{/if}}
+                {{#if resource_micro}}
+                <div class="coach-resource-item static">
+                    <span class="pill">MICRO</span>
+                    <span>
+                        <span class="coach-resource-title">{{resource_micro.title}}</span>
+                        <small class="coach-resource-why">{{resource_micro.why}}</small>
+                    </span>
+                </div>
+                {{/if}}
+                {{#if resource_habit}}
+                <div class="coach-resource-item static">
+                    <span class="pill">HABIT</span>
+                    <span>
+                        <span class="coach-resource-title">{{resource_habit.title}}</span>
+                        <small class="coach-resource-why">{{resource_habit.why}}</small>
+                    </span>
+                </div>
+                {{/if}}
+                <small class="hint">{{coach_hint_sources_versioned}}</small>
+            </div>
+        </div>
+        {{/if}}
+
+        {{#if requireTeachBack}}
+        <div class="coach-teachback">
+            <p class="eyebrow">{{coach_label_teachback}}</p>
+            <p class="hint">{{coach_hint_teachback}}</p>
+            <textarea id="coach-teachback-text" class="input-field" rows="2" placeholder="{{coach_placeholder_teachback}}" required></textarea>
+        </div>
+        {{/if}}
+    </div>
+
+    <div class="feedback-actions">
+        {{#if showRetry}}
+        <button class="btn btn-primary" data-action="retry-assisted">
+            <i data-feather="refresh-cw"></i> {{coach_action_retry_assisted}}
+        </button>
+        {{/if}}
+        <button class="btn btn-primary" data-action="next-session" id="btn-feedback-continue" {{#if requireTeachBack}}disabled{{/if}}>
+            {{coach_action_continue}}
+        </button>
+        <button class="btn btn-secondary" data-action="back-to-dashboard">{{coach_action_back}}</button>
+    </div>
+</div>

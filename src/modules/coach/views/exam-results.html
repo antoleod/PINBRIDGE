@@ -1,0 +1,31 @@
+<div class="exam-results-card glass-panel">
+    <div class="feedback-header {{#if pass}}correct{{else}}incorrect{{/if}}">
+        <i data-feather="{{#if pass}}award{{else}}alert-triangle{{/if}}"></i>
+        <h2>{{#if pass}}{{coach_exam_pass}}{{else}}{{coach_exam_fail}}{{/if}}</h2>
+    </div>
+    <div class="feedback-body">
+        <p class="eyebrow">{{coach_label_results}}</p>
+        <p>{{coach_exam_score}}: {{score}}%</p>
+
+        {{#if weak_domains.length}}
+        <p class="eyebrow">{{coach_exam_weak_domains}}</p>
+        <ul>
+            {{#each weak_domains}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+        {{/if}}
+
+        {{#if remediation_days.length}}
+        <p class="eyebrow">{{coach_exam_remediation_title}}</p>
+        <ul>
+            {{#each remediation_days}}
+            <li>{{this}}</li>
+            {{/each}}
+        </ul>
+        {{/if}}
+    </div>
+    <div class="feedback-actions">
+        <button class="btn btn-primary" data-action="back-to-dashboard">{{coach_action_back}}</button>
+    </div>
+</div>

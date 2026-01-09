@@ -1396,6 +1396,24 @@ button.btn:active {
     align-items: stretch;
 }
 
+/* Coach-only mode: hide notes UI and make Coach full-width. */
+body.coach-only #vault-screen {
+    padding: 0;
+    gap: 0;
+}
+
+body.coach-only #vault-screen .sidebar,
+body.coach-only #mobile-topbar {
+    display: none !important;
+}
+
+body.coach-only #vault-screen .list-panel,
+body.coach-only #vault-screen .editor-panel,
+body.coach-only #vault-screen .dashboard-panel,
+body.coach-only #vault-screen .admin-panel {
+    display: none !important;
+}
+
 /* Sidebar */
 .sidebar {
     width: var(--sidebar-width);

@@ -1,0 +1,66 @@
+<div class="coach-dashboard">
+    <div class="glass-panel coach-hero">
+        <div class="coach-hero-top">
+            <div>
+                <p class="eyebrow">{{coach_dashboard_title}}</p>
+                <h2 class="coach-skill-title">{{activeSkillTitle}}</h2>
+                <p class="hint">{{coach_dashboard_subtitle}}</p>
+            </div>
+            <div class="coach-hero-actions">
+                <button class="btn btn-secondary" data-action="change-skill">
+                    <i data-feather="edit-2"></i> {{coach_action_change_topic}}
+                </button>
+                <button class="btn btn-secondary" data-action="open-settings">
+                    <i data-feather="settings"></i> {{coach_action_settings}}
+                </button>
+            </div>
+        </div>
+
+        <div class="coach-metrics">
+            <div class="coach-metric">
+                <span class="metric-label">{{coach_metric_streak}}</span>
+                <strong class="metric-value">{{streak_days}}</strong>
+            </div>
+            <div class="coach-metric">
+                <span class="metric-label">{{coach_metric_today}}</span>
+                <strong class="metric-value">{{today_label}}</strong>
+            </div>
+            <div class="coach-metric">
+                <span class="metric-label">{{coach_metric_load}}</span>
+                <strong class="metric-value">{{cognitive_load_label}}</strong>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-panel coach-today-card">
+        <p class="eyebrow">{{coach_today_title}}</p>
+        {{#if hasTodaySession}}
+        <h3 class="coach-today-title">{{todaySessionTitle}}</h3>
+        <p class="hint">{{todaySessionHint}}</p>
+        <div class="coach-actions">
+            <button class="btn btn-primary" data-action="start-session">
+                <i data-feather="play-circle"></i> {{coach_action_start_session}}
+            </button>
+            <button class="btn btn-secondary" data-action="view-roadmap">
+                <i data-feather="map"></i> {{coach_action_view_roadmap}}
+            </button>
+            <button class="btn btn-secondary" data-action="open-modules">
+                <i data-feather="layers"></i> {{coach_action_modules}}
+            </button>
+            <button class="btn btn-secondary" data-action="start-exam">
+                <i data-feather="edit-3"></i> {{coach_action_start_exam}}
+            </button>
+            <button class="btn btn-secondary" data-action="start-drill">
+                <i data-feather="zap"></i> {{coach_action_timed_drill}}
+            </button>
+        </div>
+        {{else}}
+        <p class="hint">{{coach_no_plan_hint}}</p>
+        <div class="coach-actions">
+            <button class="btn btn-primary" data-action="change-skill">
+                <i data-feather="plus-circle"></i> {{coach_action_create_plan}}
+            </button>
+        </div>
+        {{/if}}
+    </div>
+</div>

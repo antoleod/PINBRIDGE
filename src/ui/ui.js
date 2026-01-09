@@ -1007,6 +1007,10 @@ class UIService {
             }
         });
 
+        bus.on('coach:toast', ({ message, type }) => {
+            this.showToast(message, type);
+        });
+
         bus.on('sync:retry', ({ type, retry, delay }) => {
             this.logActivity(`Sync retry ${retry} (${type}) in ${Math.round(delay / 1000)}s`);
         });

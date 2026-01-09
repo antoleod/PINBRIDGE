@@ -21,6 +21,7 @@
         href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="./src/styles.css">
+    <link rel="stylesheet" href="./src/modules/coach/coach.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons@4.29.1/dist/feather.min.js"
         crossorigin="anonymous"></script>
     <script type="module">
@@ -419,6 +420,9 @@
                 <button class="nav-item" data-view="templates" title="Templates" data-i18n-title="navTemplates"
                     aria-label="Templates">
                     <i data-feather="copy" class="icon"></i>
+                </button>
+                <button class="nav-item" data-view="coach" title="Coach" data-i18n-title="navCoach" aria-label="Coach">
+                    <i data-feather="trending-up" class="icon"></i>
                 </button>
                 <button class="nav-item" id="btn-tools" title="Tools" aria-label="Tools">
                     <i data-feather="key" class="icon"></i>
@@ -836,6 +840,24 @@
             </div>
         </section>
 
+        <!-- COACH PANEL -->
+        <section class="coach-panel hidden">
+            <div class="coach-header">
+                <div class="coach-header-top">
+                    <div>
+                        <h1>Coach</h1>
+                        <p class="subtitle">Your personalized learning assistant.</p>
+                    </div>
+                    <button id="btn-coach-exit" class="btn btn-secondary coach-exit-btn" type="button">
+                        <i data-feather="x"></i> Exit
+                    </button>
+                </div>
+            </div>
+            <div id="coach-content" class="coach-content-area">
+                <!-- Dynamic content (Dashboard, Session, Exam, etc.) will be rendered here -->
+            </div>
+        </section>
+
         <!-- ADMIN PANEL -->
         <section class="admin-panel hidden">
             <div class="admin-header">
@@ -965,6 +987,10 @@
             <button class="nav-item" data-view="dashboard" aria-label="Dashboard">
                 <i data-feather="grid"></i>
                 <span class="label">Dash</span>
+            </button>
+            <button class="nav-item" data-view="coach" aria-label="Coach">
+                <i data-feather="trending-up"></i>
+                <span class="label">Coach</span>
             </button>
             <button class="nav-item primary" id="mobile-footer-new-note" aria-label="New Note">
                 <i data-feather="plus"></i>
@@ -1636,6 +1662,7 @@
 
 
     <script type="module" src="./src/app.js"></script>
+    <script type="module" src="./src/modules/coach/coach.js"></script>
     <script>
         // Service Worker Registration & PWA Install Logic
         if ('serviceWorker' in navigator) {
