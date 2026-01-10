@@ -1,35 +1,17 @@
 /* src/modules/coach/packLoader.js */
 
 const BUNDLED_PACKS = [
-    {
-        id: 'en_b1_vocab_core_40',
-        title: 'English B1 — Core Vocabulary (40)',
-        pathsToTry: ['src/public/packs/en_b1_vocab_core_40.json']
-    },
-    {
-        id: 'fr_b1_vocab_core_40',
-        title: 'French B1 — Core Vocabulary (40)',
-        pathsToTry: ['src/public/packs/fr_b1_vocab_core_40.json']
-    },
-    {
-        id: 'nl_b1_vocab_core_40',
-        title: 'Dutch B1 — Core Vocabulary (40)',
-        pathsToTry: ['src/public/packs/nl_b1_vocab_core_40.json']
-    },
-    {
-        id: 'azure_az900_core_50',
-        title: 'Azure AZ-900 Core',
-        pathsToTry: ['src/public/packs/azure_az900_core_50.json']
-    },
+    { id: 'en_b1_vocab_core_40', title: 'English B1 Core Vocabulary (40)', pathsToTry: ['src/public/packs/en_b1_vocab_core_40.json'] },
+    { id: 'fr_b1_vocab_core_40', title: 'French B1 Core Vocabulary (40)', pathsToTry: ['src/public/packs/fr_b1_vocab_core_40.json'] },
+    { id: 'nl_b1_vocab_core_40', title: 'Dutch B1 Core Vocabulary (40)', pathsToTry: ['src/public/packs/nl_b1_vocab_core_40.json'] },
+    { id: 'azure_az900_core_50', title: 'Azure AZ-900 Core', pathsToTry: ['src/public/packs/azure_az900_core_50.json'] },
+    { id: 'aws_saa_c03_core_50', title: 'AWS SAA-C03 Core', pathsToTry: ['src/public/packs/aws_saa_c03_core_50.json'] },
     {
         id: 'fr_b1_mixed_premium_pack_100',
-        title: 'French B1 · Mixed · 100 (bundled)',
+        title: 'French B1 Mixed 100 (bundled)',
         pathsToTry: [
-            // Must support this path (repo file):
             'tests/fr_b1_mixed_premium_pack_100.json',
-            // Robust served asset path:
             'src/public/packs/fr_b1_mixed_premium_pack_100.json',
-            // Legacy location:
             'src/modules/coach/fr_b1_mixed_premium_pack_100.json'
         ]
     }
@@ -58,9 +40,7 @@ export const packLoader = {
 
     async loadFromUrl(path) {
         const response = await fetch(path, { cache: 'no-store' });
-        if (!response.ok) {
-            throw new Error(`Failed to fetch pack at ${path}: ${response.status} ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Failed to fetch pack at ${path}: ${response.status} ${response.statusText}`);
         const data = await response.json();
         this.validatePack(data);
         return data;
@@ -87,10 +67,8 @@ export const packLoader = {
     validatePack(data) {
         if (!data || typeof data !== 'object') throw new Error('INVALID_PACK');
         if (!data.schema_version) throw new Error('Missing schema_version');
-        if (!data.pack || !data.pack.pack_id || !data.pack.version) {
-            throw new Error('Missing pack metadata (pack_id, version)');
-        }
-        if (!data.cards || !Array.isArray(data.cards)) throw new Error('Missing cards array');
+        if (!data.pack || !data.pack.pack_id || !data.pack.version) throw new Error('Missing pack metadata (pack_id, version)');
+        if (!Array.isArray(data.cards)) throw new Error('Missing cards array');
         if (data.cards.length === 0) throw new Error('Pack is empty');
 
         const seen = new Set();
@@ -102,8 +80,10 @@ export const packLoader = {
         }
 
         const sample = data.cards[0];
-        if (!sample.front_i18n || !sample.question_i18n) {
-            throw new Error('Invalid card structure (missing front_i18n or question_i18n)');
+        const hasFlashcardFields = !!sample.front_i18n;
+        const hasQuizFields = !!sample.question_i18n && !!sample.correct_answer_i18n;
+        if (!hasFlashcardFields && !hasQuizFields) {
+            throw new Error('Invalid card structure (need front_i18n or question_i18n + correct_answer_i18n)');
         }
     }
 };

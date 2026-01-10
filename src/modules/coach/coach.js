@@ -404,11 +404,15 @@ class CoachService {
                 ...p,
                 installed: userPackIds.has(p.id),
                 completed: false, // TODO: compute from progress
-                progress: 0 // TODO: compute
+                progress: 0, // TODO: compute
+                ui_hint_tags_markup: (p.ui_hint_tags || []).slice(0, 3).map(tag => `<span class="tag">${tag}</span>`).join('')
             }));
 
             // Active packs (installed, not completed)
             viewData.activePacks = viewData.packs.filter(p => p.installed && !p.completed);
+            const primary = viewData.activePacks[0] || viewData.packs[0] || null;
+            viewData.primaryPackId = primary?.id || '';
+            viewData.primaryPackInstalled = !!primary?.installed;
 
             // Reviews due
             const reviews = await coachStore.getDueReviews(uid);

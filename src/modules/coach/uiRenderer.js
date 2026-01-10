@@ -201,6 +201,28 @@ class UiRenderer {
                     if (packId) bus.emit('coach:start-pack', { packId });
                     break;
                 }
+                case 'smart-pack': {
+                    const packId = action.dataset.packId;
+                    const installed = String(action.dataset.installed || '').toLowerCase() === 'true';
+                    if (!packId) break;
+                    if (installed) {
+                        bus.emit('coach:start-quiz', { packId });
+                    } else {
+                        bus.emit('coach:start-pack', { packId });
+                    }
+                    break;
+                }
+                case 'open-pack-card': {
+                    const packId = action.dataset.packId;
+                    const installed = String(action.dataset.installed || '').toLowerCase() === 'true';
+                    if (!packId) break;
+                    if (installed) {
+                        bus.emit('coach:start-quiz', { packId });
+                    } else {
+                        bus.emit('coach:start-pack', { packId });
+                    }
+                    break;
+                }
                 case 'continue-pack':
                 case 'review-pack': {
                     const packId = action.dataset.packId;
