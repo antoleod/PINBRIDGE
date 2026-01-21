@@ -467,8 +467,12 @@
                         <datalist id="folder-suggestions"></datalist>
                     </div>
                     <div class="editor-actions-minimal">
+                        <input type="file" id="note-attachment" class="visually-hidden" multiple>
                         <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode" aria-label="Toggle Focus Mode">
                             <i data-feather="maximize"></i>
+                        </button>
+                        <button class="btn-tool-minimal" id="btn-attach" title="Attach file" aria-label="Attach file">
+                            <i data-feather="paperclip"></i>
                         </button>
                         <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
                             <i data-feather="map-pin"></i>
@@ -494,77 +498,126 @@
                     <p class="subtitle">Your productivity at a glance</p>
                 </div>
 
+                <div class="dashboard-actions">
+                    <button id="btn-dashboard-new-note" class="btn btn-primary">
+                        <i data-feather="plus"></i>
+                        <span>New Note</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dashboard-view="favorites">
+                        Favorites
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dashboard-view="templates">
+                        Templates
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dashboard-view="trash">
+                        Trash
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-dashboard-view="archive">
+                        Archive
+                    </button>
+                </div>
+
                 <div class="dashboard-grid">
                     <!-- Stats Cards -->
                     <div class="dashboard-card glass-panel">
-                        <div class="card-icon">??</div>
+                        <div class="card-icon">
+                            <i data-feather="file-text"></i>
+                        </div>
                         <div class="card-content">
                             <h3 id="stat-total-notes">0</h3>
                             <p>Total Notes</p>
                         </div>
                     </div>
-
                     <div class="dashboard-card glass-panel">
-                        <div class="card-icon">?</div>
+                        <div class="card-icon">
+                            <i data-feather="star"></i>
+                        </div>
                         <div class="card-content">
                             <h3 id="stat-favorites">0</h3>
                             <p>Favorites</p>
                         </div>
                     </div>
-
                     <div class="dashboard-card glass-panel">
-                        <div class="card-icon">??</div>
+                        <div class="card-icon">
+                            <i data-feather="folder"></i>
+                        </div>
                         <div class="card-content">
                             <h3 id="stat-folders">0</h3>
                             <p>Folders</p>
                         </div>
                     </div>
-
                     <div class="dashboard-card glass-panel">
-                        <div class="card-icon">???</div>
+                        <div class="card-icon">
+                            <i data-feather="tag"></i>
+                        </div>
                         <div class="card-content">
                             <h3 id="stat-tags">0</h3>
                             <p>Tags</p>
                         </div>
                     </div>
+                    <div class="dashboard-card glass-panel accent">
+                        <div class="card-icon accent">
+                            <i data-feather="trending-up"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 id="stat-weekly-notes">0</h3>
+                            <p>Notes This Week</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card glass-panel accent">
+                        <div class="card-icon accent">
+                            <i data-feather="bar-chart-2"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 id="stat-avg-words">0</h3>
+                            <p>Avg. Words / Note</p>
+                        </div>
+                    </div>
+                    <div class="dashboard-card glass-panel accent">
+                        <div class="card-icon accent">
+                            <i data-feather="archive"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 id="stat-archived">0</h3>
+                            <p>Archived</p>
+                        </div>
+                    </div>
+                </div>
 
-                    <!-- Recent Notes -->
+                <div class="dashboard-row">
                     <div class="dashboard-section glass-panel">
                         <h2>Recent Notes</h2>
                         <div id="dashboard-recent-notes" class="dashboard-list">
                             <!-- Injected dynamically -->
                         </div>
                     </div>
-
-                    <!-- Top Tags -->
                     <div class="dashboard-section glass-panel">
                         <h2>Popular Tags</h2>
                         <div id="dashboard-top-tags" class="tag-cloud">
                             <!-- Injected dynamically -->
                         </div>
                     </div>
+                </div>
 
-                    <!-- Quick Actions -->
-                    <div class="dashboard-section glass-panel">
-                        <h2>Quick Actions</h2>
-                        <div class="quick-actions-grid">
-                            <button class="quick-action-btn" data-action="new-note">
-                                <span>?</span>
-                                <span>New Note</span>
-                            </button>
-                            <button class="quick-action-btn" data-action="new-template">
-                                <span>??</span>
-                                <span>New Template</span>
-                            </button>
-                            <button class="quick-action-btn" data-action="view-favorites">
-                                <span>?</span>
-                                <span>Favorites</span>
-                            </button>
-                            <button class="quick-action-btn" data-action="view-trash">
-                                <span>???</span>
-                                <span>Trash</span>
-                            </button>
-                        </div>
+                <div class="dashboard-section glass-panel quick-actions-panel">
+                    <h2>Quick Actions</h2>
+                    <div class="quick-actions-grid">
+                        <button class="quick-action-btn" data-action="new-note">
+                            <i data-feather="plus"></i>
+                            <span>New Note</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="new-template">
+                            <i data-feather="layers"></i>
+                            <span>New Template</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-favorites">
+                            <i data-feather="star"></i>
+                            <span>Favorites</span>
+                        </button>
+                        <button class="quick-action-btn" data-action="view-trash">
+                            <i data-feather="trash-2"></i>
+                            <span>Trash</span>
+                        </button>
                     </div>
                 </div>
         </section>

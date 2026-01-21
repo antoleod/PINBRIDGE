@@ -23,7 +23,8 @@ class UIService {
         this.quickDropZone = null;
         this.activeNoteId = null;
         this.currentView = 'all';
-        this.autoSaveEnabled = localStorage.getItem('pinbridge.auto_save') === 'true';
+        const storedAutoSave = localStorage.getItem('pinbridge.auto_save');
+        this.autoSaveEnabled = storedAutoSave === null ? true : storedAutoSave === 'true';
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
         this.footerAutoHide = localStorage.getItem('pinbridge.footer_autohide') === 'true';
         this.saveTimeout = null;
@@ -499,6 +500,14 @@ class UIService {
             this.createCommandPalette();
         });
 
+        bus.on('notes:updated', (notes) => {
+            if (this.currentView === 'dashboard') {
+                this.renderDashboard();
+            } else {
+                this.renderCurrentView(notes);
+            }
+        });
+
         bus.on('auth:locked', (reason) => {
             this.screens.loading?.classList.add('hidden');
             this.handleLockedSession(reason);
@@ -517,6 +526,7 @@ class UIService {
             }
         });
 
+        this.bindDashboardActions();
         this.setupBottomSheetGestures();
     }
 
@@ -1205,6 +1215,26 @@ class UIService {
         this.inputs.noteTags?.addEventListener('input', () => {
             this.scheduleAutoSave();
             this.updateSmartSuggestions();
+        });
+        document.getElementById('btn-attach')?.addEventListener('click', () => {
+            document.getElementById('note-attachment')?.click();
+        });
+        document.getElementById('note-attachment')?.addEventListener('change', async (e) => {
+            const files = Array.from(e.target.files || []);
+            if (!files.length) return;
+            const first = files[0];
+            try {
+                const text = await first.text();
+                const name = first.name;
+                const appendText = `\n\n---\nAttachment (${name}):\n${text}\n`;
+                this.insertTextAtCursor(appendText);
+                this.scheduleAutoSave();
+                this.showToast('Attachment inserted as text', 'success');
+            } catch (err) {
+                this.showToast('Could not read attachment', 'error');
+            } finally {
+                e.target.value = '';
+            }
         });
 
         document.getElementById('btn-delete')?.addEventListener('click', () => this.handleDelete());
@@ -2586,19 +2616,30 @@ class UIService {
     renderDashboard() {
         const notes = notesService.notes.filter(n => !n.trash && !n.isTemplate);
 
-        // Stats
+        const folders = new Set(notes.filter(n => n.folder).map(n => n.folder));
+        const tagNames = notes.flatMap(n => (n.tags || []).map(tag => typeof tag === 'string' ? tag : tag.name)).filter(Boolean);
+        const uniqueTags = new Set(tagNames);
+
+        const textOnlyNotes = notes.filter(n => !n.archived);
+        const weeklyThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
+        const weeklyNotes = textOnlyNotes.filter(n => (n.created || 0) >= weeklyThreshold).length;
+        const archivedCount = notesService.notes.filter(n => n.archived && !n.trash).length;
+
+        const totalWords = textOnlyNotes.reduce((sum, note) => {
+            const words = (note.body || '').trim().split(/\s+/).filter(Boolean);
+            return sum + words.length;
+        }, 0);
+        const avgWords = textOnlyNotes.length ? Math.round(totalWords / textOnlyNotes.length) : 0;
+
         document.getElementById('stat-total-notes').innerText = notes.length;
         document.getElementById('stat-favorites').innerText = notes.filter(n => n.pinned).length;
-
-        const folders = new Set(notes.filter(n => n.folder).map(n => n.folder));
         document.getElementById('stat-folders').innerText = folders.size;
-
-        const allTags = notes.flatMap(n => n.tags || []);
-        const uniqueTags = new Set(allTags);
         document.getElementById('stat-tags').innerText = uniqueTags.size;
+        document.getElementById('stat-weekly-notes').innerText = weeklyNotes;
+        document.getElementById('stat-avg-words').innerText = avgWords;
+        document.getElementById('stat-archived').innerText = archivedCount;
 
-        // Recent Notes (last 5)
-        const recentNotes = [...notes].sort((a, b) => b.updated - a.updated).slice(0, 5);
+        const recentNotes = [...notes].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 5);
         const recentContainer = document.getElementById('dashboard-recent-notes');
         recentContainer.innerHTML = '';
 
@@ -2611,7 +2652,7 @@ class UIService {
                 el.innerHTML = `
                     <div class="note-info">
                         <strong>${Utils.escapeHtml(note.title || 'Untitled')}</strong>
-                        <span class="note-date">${new Date(note.updated).toLocaleDateString()}</span>
+                        <span class="note-date">${new Date(note.updated || note.created || Date.now()).toLocaleDateString()}</span>
                     </div>
                 `;
                 el.onclick = () => {
@@ -2623,10 +2664,9 @@ class UIService {
             });
         }
 
-        // Top Tags (by frequency)
         const tagFreq = {};
-        allTags.forEach(tag => {
-            tagFreq[tag] = (tagFreq[tag] || 0) + 1;
+        tagNames.forEach(name => {
+            tagFreq[name] = (tagFreq[name] || 0) + 1;
         });
 
         const topTags = Object.entries(tagFreq)
@@ -2644,7 +2684,6 @@ class UIService {
                 el.className = 'tag-badge';
                 el.innerText = `#${tag} (${count})`;
                 el.onclick = () => {
-                    // Search for this tag
                     this.currentView = 'all';
                     document.querySelector('[data-view="all"]')?.click();
                     setTimeout(() => {
@@ -2655,6 +2694,29 @@ class UIService {
                 tagsContainer.appendChild(el);
             });
         }
+
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    }
+
+    bindDashboardActions() {
+        const createBtn = document.getElementById('btn-dashboard-new-note');
+        createBtn?.addEventListener('click', () => {
+            this.currentView = 'all';
+            document.querySelector('[data-view="all"]')?.click();
+            this.handleNewNote();
+        });
+
+        document.querySelectorAll('[data-dashboard-view]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.dashboardView;
+                if (!view) return;
+                this.currentView = view;
+                document.querySelector(`[data-view="${view}"]`)?.click();
+                this.renderCurrentView();
+            });
+        });
     }
 
     async showTemplateModal() {
