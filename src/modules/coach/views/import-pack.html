@@ -1,0 +1,67 @@
+<div class="import-pack-container fade-in">
+    <h2><i data-feather="upload-cloud"></i> Import a pack JSON to start</h2>
+    <p class="hint">Upload JSON, paste JSON, or load a bundled pack. You must install at least one pack before using COACH.</p>
+
+    <div class="glass-panel" style="margin: 1rem 0; padding: 1rem;">
+        <h3 style="margin-top: 0;">Bundled packs</h3>
+        <div class="input-group" style="display: flex; gap: 0.5rem; align-items: center;">
+            <select id="bundled-pack-select" class="settings-select" style="flex: 1;"></select>
+            <button class="btn btn-secondary" id="btn-load-bundled" type="button">
+                <i data-feather="download"></i> Load
+            </button>
+        </div>
+        <p class="hint">Includes <code>tests/fr_b1_mixed_premium_pack_100.json</code> (and a fallback served copy).</p>
+    </div>
+
+    <div class="input-group">
+        <label for="pack-file-input" class="btn btn-secondary">
+            <i data-feather="file"></i> Choose File
+        </label>
+        <input type="file" id="pack-file-input" accept=".json" class="hidden">
+        <span id="file-name-display" class="hint"></span>
+    </div>
+
+    <div class="input-group">
+        <textarea id="pack-json-paste" placeholder="Or paste JSON content here..." rows="10"
+            class="code-font"></textarea>
+    </div>
+
+    <div id="import-preview" class="preview-box hidden glass-panel">
+        <h3>Preview</h3>
+        <div class="form-group">
+            <label>Pack name (editable)</label>
+            <input type="text" id="import-pack-name" class="input-field" placeholder="e.g. Intune, AWS, French">
+        </div>
+        <div class="form-group">
+            <label>Pack ID</label>
+            <input type="text" id="import-pack-id" class="input-field" placeholder="pack_id">
+        </div>
+        <div class="form-group">
+            <label>Version</label>
+            <input type="text" id="import-pack-version" class="input-field" placeholder="1.0.0">
+        </div>
+        <div class="preview-details">
+            <p><strong>ID:</strong> <span id="preview-id"></span></p>
+            <p><strong>Title:</strong> <span id="preview-title"></span></p>
+            <p><strong>Version:</strong> <span id="preview-version"></span></p>
+            <p><strong>Cards:</strong> <span id="preview-count"></span></p>
+            <p><strong>Languages:</strong> <span id="preview-languages"></span></p>
+            <p><strong>Level:</strong> <span id="preview-level"></span></p>
+            <p><strong>Categories:</strong> <span id="preview-categories"></span></p>
+        </div>
+
+        <div class="form-group" style="margin-top: 1rem;">
+            <label>Import mode</label>
+            <div class="checkbox-row" style="gap: 1rem; flex-wrap: wrap;">
+                <label><input type="radio" name="import-mode" value="new" checked> Create / install (upsert)</label>
+                <label><input type="radio" name="import-mode" value="overwrite"> Overwrite same version (merge + deprecate missing)</label>
+            </div>
+            <p class="hint">Never deletes cards; progress stays stable because <code>card_id</code> is preserved.</p>
+        </div>
+    </div>
+
+    <div class="actions-row">
+        <button class="btn btn-secondary" data-action="back-to-packs">Back</button>
+        <button id="btn-confirm-import" class="btn btn-primary" disabled>Import Pack</button>
+    </div>
+</div>

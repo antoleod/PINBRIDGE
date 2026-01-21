@@ -1,0 +1,26 @@
+<div class="coach-module glass-panel">
+    <div class="coach-module-header">
+        <div>
+            <h2>{{coach_modules_title}}</h2>
+            <p class="hint">{{coach_modules_hint}}</p>
+        </div>
+        <button class="btn btn-secondary" data-action="back-to-dashboard">{{coach_action_back}}</button>
+    </div>
+
+    <div class="coach-module-list">
+        {{#each modules}}
+        <div class="coach-module-item">
+            <div class="coach-module-item-top">
+                <h3>{{this.title}}</h3>
+                <span class="pill">{{this.progressLabel}}</span>
+            </div>
+            <p class="hint">{{this.summary}}</p>
+            <div class="coach-module-actions">
+                <button class="btn btn-secondary" data-action="start-module-exam" data-module-id="{{this.id}}">
+                    <i data-feather="edit-3"></i> {{coach_action_start_exam}}
+                </button>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>

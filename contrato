@@ -1,0 +1,747 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://pinbridge.local/schemas/coach-skill-package.v1.json",
+    "title": "PINBRIDGE Coach Skill Package v1",
+    "type": "object",
+    "required": [
+        "schema_version",
+        "generated_at",
+        "skill",
+        "modules",
+        "sessions",
+        "quizzes",
+        "exams",
+        "rules"
+    ],
+    "properties": {
+        "schema_version": {
+            "type": "string",
+            "enum": [
+                "v1"
+            ]
+        },
+        "generated_at": {
+            "type": "string",
+            "format": "date"
+        },
+        "skill": {
+            "type": "object",
+            "required": [
+                "id",
+                "title_i18n",
+                "skill_type",
+                "goal_outcome_i18n",
+                "roadmap_days",
+                "content_version"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "title_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "skill_type": {
+                    "type": "string",
+                    "enum": [
+                        "certification",
+                        "technical",
+                        "language",
+                        "habit",
+                        "cognitive"
+                    ]
+                },
+                "goal_outcome_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "time_per_day_min": {
+                    "type": "integer",
+                    "minimum": 5,
+                    "maximum": 240
+                },
+                "roadmap_days": {
+                    "type": "integer",
+                    "minimum": 7,
+                    "maximum": 120
+                },
+                "content_version": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "status": {
+                    "type": "string",
+                    "enum": [
+                        "active",
+                        "paused",
+                        "done"
+                    ],
+                    "default": "active"
+                }
+            },
+            "additionalProperties": true
+        },
+        "modules": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "required": [
+                    "id",
+                    "title_i18n",
+                    "domain_tags",
+                    "unlock_rule"
+                ],
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "title_i18n": {
+                        "$ref": "#/$defs/i18nText"
+                    },
+                    "domain_tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    },
+                    "unlock_rule": {
+                        "type": "object",
+                        "required": [
+                            "min_sessions_done",
+                            "max_repeated_error_pattern"
+                        ],
+                        "properties": {
+                            "min_sessions_done": {
+                                "type": "integer",
+                                "minimum": 0
+                            },
+                            "max_repeated_error_pattern": {
+                                "type": "integer",
+                                "minimum": 1
+                            }
+                        }
+                    }
+                },
+                "additionalProperties": true
+            }
+        },
+        "sessions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "$ref": "#/$defs/session"
+            }
+        },
+        "quizzes": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/quiz"
+            }
+        },
+        "exams": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "$ref": "#/$defs/exam"
+            }
+        },
+        "rules": {
+            "type": "object",
+            "required": [
+                "error_memory",
+                "confidence_calibration",
+                "cognitive_load_control",
+                "quality",
+                "study_strategies",
+                "i18n_runtime"
+            ],
+            "properties": {
+                "error_memory": {
+                    "type": "object",
+                    "required": [
+                        "repeat_block_threshold",
+                        "spaced_repetition_days"
+                    ],
+                    "properties": {
+                        "repeat_block_threshold": {
+                            "type": "integer",
+                            "minimum": 2,
+                            "maximum": 10
+                        },
+                        "spaced_repetition_days": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 60
+                            }
+                        }
+                    }
+                },
+                "confidence_calibration": {
+                    "type": "object",
+                    "required": [
+                        "overconfidence_rule",
+                        "underconfidence_rule"
+                    ],
+                    "properties": {
+                        "overconfidence_rule": {
+                            "type": "string"
+                        },
+                        "underconfidence_rule": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "cognitive_load_control": {
+                    "type": "object",
+                    "required": [
+                        "trigger",
+                        "action"
+                    ],
+                    "properties": {
+                        "trigger": {
+                            "type": "object",
+                            "properties": {
+                                "consecutive_wrong": {
+                                    "type": "integer",
+                                    "minimum": 2,
+                                    "maximum": 10
+                                }
+                            },
+                            "additionalProperties": true
+                        },
+                        "action": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "quality": {
+                    "type": "object",
+                    "required": [
+                        "require_quality_metadata"
+                    ],
+                    "properties": {
+                        "require_quality_metadata": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "study_strategies": {
+                    "type": "object",
+                    "required": [
+                        "two_pass_mastery",
+                        "interleaving",
+                        "teach_back",
+                        "alternate_scenario_retry",
+                        "spaced_repetition"
+                    ],
+                    "properties": {
+                        "two_pass_mastery": {
+                            "type": "boolean"
+                        },
+                        "interleaving": {
+                            "type": "boolean"
+                        },
+                        "teach_back": {
+                            "type": "boolean"
+                        },
+                        "alternate_scenario_retry": {
+                            "type": "boolean"
+                        },
+                        "spaced_repetition": {
+                            "type": "boolean"
+                        }
+                    }
+                },
+                "i18n_runtime": {
+                    "type": "object",
+                    "required": [
+                        "supported_languages",
+                        "fallback_order"
+                    ],
+                    "properties": {
+                        "supported_languages": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "fr",
+                                    "es"
+                                ]
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                        },
+                        "fallback_order": {
+                            "type": "array",
+                            "items": {
+                                "type": "string",
+                                "enum": [
+                                    "en",
+                                    "fr",
+                                    "es"
+                                ]
+                            },
+                            "minItems": 3,
+                            "maxItems": 3
+                        }
+                    }
+                }
+            },
+            "additionalProperties": true
+        }
+    },
+    "$defs": {
+        "i18nText": {
+            "type": "object",
+            "required": [
+                "en",
+                "fr",
+                "es"
+            ],
+            "properties": {
+                "en": {
+                    "type": "string"
+                },
+                "fr": {
+                    "type": "string"
+                },
+                "es": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": false
+        },
+        "qualityMeta": {
+            "type": "object",
+            "required": [
+                "source_type",
+                "source_ref",
+                "confidence_score"
+            ],
+            "properties": {
+                "source_type": {
+                    "type": "string",
+                    "enum": [
+                        "official",
+                        "curated",
+                        "generated"
+                    ]
+                },
+                "source_ref": {
+                    "type": "string"
+                },
+                "last_verified_at": {
+                    "type": [
+                        "string",
+                        "null"
+                    ],
+                    "format": "date"
+                },
+                "confidence_score": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 100
+                }
+            },
+            "additionalProperties": true
+        },
+        "contextResources": {
+            "type": "object",
+            "required": [
+                "show_only_if",
+                "skill_focus_i18n",
+                "micro_reto_i18n",
+                "habit_i18n"
+            ],
+            "properties": {
+                "show_only_if": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "wrong_answer",
+                            "confidence_low",
+                            "error_repeated"
+                        ]
+                    }
+                },
+                "skill_focus_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "youtube": {
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "required": [
+                        "title_i18n",
+                        "quality"
+                    ],
+                    "properties": {
+                        "title_i18n": {
+                            "$ref": "#/$defs/i18nText"
+                        },
+                        "quality": {
+                            "$ref": "#/$defs/qualityMeta"
+                        }
+                    },
+                    "additionalProperties": true
+                },
+                "web": {
+                    "type": [
+                        "object",
+                        "null"
+                    ],
+                    "required": [
+                        "title_i18n",
+                        "quality"
+                    ],
+                    "properties": {
+                        "title_i18n": {
+                            "$ref": "#/$defs/i18nText"
+                        },
+                        "quality": {
+                            "$ref": "#/$defs/qualityMeta"
+                        }
+                    },
+                    "additionalProperties": true
+                },
+                "micro_reto_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "habit_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                }
+            },
+            "additionalProperties": true
+        },
+        "session": {
+            "type": "object",
+            "required": [
+                "id",
+                "day_index",
+                "module_id",
+                "concept_id",
+                "variant_id",
+                "title_i18n",
+                "scenario_i18n",
+                "decision_prompt_i18n",
+                "choices_i18n",
+                "correct_choice_index",
+                "expected_reasoning_i18n",
+                "common_trap_i18n",
+                "action_practice_i18n",
+                "mini_challenge_i18n",
+                "difficulty_1to5",
+                "user_fields_required"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "day_index": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 120
+                },
+                "module_id": {
+                    "type": "string"
+                },
+                "concept_id": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "variant_id": {
+                    "type": "string",
+                    "minLength": 1
+                },
+                "title_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "scenario_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "decision_prompt_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "choices_i18n": {
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/$defs/i18nText"
+                    }
+                },
+                "correct_choice_index": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "expected_reasoning_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "common_trap_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "action_practice_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "mini_challenge_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "difficulty_1to5": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                },
+                "user_fields_required": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "enum": [
+                            "why_i_thought_this",
+                            "confidence_1to5",
+                            "teach_back"
+                        ]
+                    }
+                },
+                "context_resources": {
+                    "$ref": "#/$defs/contextResources"
+                }
+            },
+            "additionalProperties": true
+        },
+        "quiz": {
+            "type": "object",
+            "required": [
+                "id",
+                "module_id",
+                "title_i18n",
+                "format",
+                "questions"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "module_id": {
+                    "type": "string"
+                },
+                "title_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "format": {
+                    "type": "string",
+                    "enum": [
+                        "scenario_mcq"
+                    ]
+                },
+                "questions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/question"
+                    }
+                }
+            },
+            "additionalProperties": true
+        },
+        "question": {
+            "type": "object",
+            "required": [
+                "id",
+                "concept_id",
+                "variant_id",
+                "difficulty_1to5",
+                "prompt_i18n",
+                "options_i18n",
+                "answer_index",
+                "explain_i18n",
+                "trap_i18n",
+                "error_tags",
+                "quality"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "concept_id": {
+                    "type": "string"
+                },
+                "variant_id": {
+                    "type": "string"
+                },
+                "difficulty_1to5": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 5
+                },
+                "prompt_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "options_i18n": {
+                    "type": "array",
+                    "minItems": 2,
+                    "items": {
+                        "$ref": "#/$defs/i18nText"
+                    }
+                },
+                "answer_index": {
+                    "type": "integer",
+                    "minimum": 0
+                },
+                "explain_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "trap_i18n": {
+                    "$ref": "#/$defs/i18nText"
+                },
+                "error_tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "minItems": 1
+                },
+                "quality": {
+                    "$ref": "#/$defs/qualityMeta"
+                }
+            },
+            "additionalProperties": true
+        },
+        "exam": {
+            "type": "object",
+            "required": [
+                "id",
+                "module_id",
+                "exam_type",
+                "config",
+                "question_selection_rules",
+                "post_exam"
+            ],
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "module_id": {
+                    "type": "string"
+                },
+                "exam_type": {
+                    "type": "string",
+                    "enum": [
+                        "scenario_mcq"
+                    ]
+                },
+                "config": {
+                    "type": "object",
+                    "required": [
+                        "n_questions",
+                        "time_limit_sec",
+                        "pass_score"
+                    ],
+                    "properties": {
+                        "n_questions": {
+                            "type": "integer",
+                            "minimum": 5,
+                            "maximum": 200
+                        },
+                        "time_limit_sec": {
+                            "type": "integer",
+                            "minimum": 60,
+                            "maximum": 20000
+                        },
+                        "pass_score": {
+                            "type": "number",
+                            "minimum": 0.5,
+                            "maximum": 0.95
+                        }
+                    }
+                },
+                "question_selection_rules": {
+                    "type": "object",
+                    "required": [
+                        "avoid_recent_repeats",
+                        "prefer_error_tags",
+                        "mix_difficulty"
+                    ],
+                    "properties": {
+                        "avoid_recent_repeats": {
+                            "type": "boolean"
+                        },
+                        "prefer_error_tags": {
+                            "type": "boolean"
+                        },
+                        "mix_difficulty": {
+                            "type": "object",
+                            "required": [
+                                "1to2",
+                                "3to4",
+                                "5"
+                            ],
+                            "properties": {
+                                "1to2": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                },
+                                "3to4": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                },
+                                "5": {
+                                    "type": "number",
+                                    "minimum": 0,
+                                    "maximum": 1
+                                }
+                            }
+                        }
+                    },
+                    "additionalProperties": true
+                },
+                "post_exam": {
+                    "type": "object",
+                    "required": [
+                        "remediation_plan_days",
+                        "transfer_check_required",
+                        "real_world_feedback_form"
+                    ],
+                    "properties": {
+                        "remediation_plan_days": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 14
+                        },
+                        "transfer_check_required": {
+                            "type": "boolean"
+                        },
+                        "real_world_feedback_form": {
+                            "type": "object",
+                            "required": [
+                                "fields"
+                            ],
+                            "properties": {
+                                "fields": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "string",
+                                        "enum": [
+                                            "where_applied",
+                                            "did_it_help",
+                                            "what_was_useful",
+                                            "what_was_confusing"
+                                        ]
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "additionalProperties": true
+                }
+            },
+            "additionalProperties": true
+        }
+    }
+}

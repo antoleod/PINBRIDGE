@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pinbridge-v5';
+const CACHE_NAME = 'pinbridge-v12';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -16,10 +16,46 @@ const ASSETS_TO_CACHE = [
     './src/modules/notes/notes.js',
     './src/modules/search/search.js',
     './src/modules/settings/settings.js',
+    './src/modules/coach/coach.css',
+    './src/modules/coach/coach.js',
+    './src/modules/coach/coachEngine.js',
+    './src/modules/coach/coachStore.js',
+    './src/modules/coach/examEngine.js',
+    './src/modules/coach/i18n.js',
+    './src/modules/coach/packImportWizard.js',
+    './src/modules/coach/packLoader.js',
+    './src/modules/coach/packSync.js',
+    './src/modules/coach/quizEngine.js',
+    './src/modules/coach/tts.js',
+    './src/modules/coach/uiRenderer.js',
+    './src/modules/coach/views/add-skill.html',
+    './src/modules/coach/views/checklist.html',
+    './src/modules/coach/views/dashboard.html',
+    './src/modules/coach/views/error-cards.html',
+    './src/modules/coach/views/exam-center.html',
+    './src/modules/coach/views/exam-results.html',
+    './src/modules/coach/views/exam.html',
+    './src/modules/coach/views/export.html',
+    './src/modules/coach/views/feedback.html',
+    './src/modules/coach/views/import-pack.html',
+    './src/modules/coach/views/interview.html',
+    './src/modules/coach/views/loginRequired.html',
+    './src/modules/coach/views/module.html',
+    './src/modules/coach/views/packs.html',
+    './src/modules/coach/views/quiz.html',
+    './src/modules/coach/views/quizzes.html',
+    './src/modules/coach/views/roadmap-day.html',
+    './src/modules/coach/views/roadmap.html',
+    './src/modules/coach/views/session.html',
+    './src/modules/coach/views/settings.html',
+    './src/modules/coach/views/skills.html',
+    './src/public/packs/en_b1_vocab_core_40.json',
+    './src/public/packs/fr_b1_vocab_core_40.json',
+    './src/public/packs/nl_b1_vocab_core_40.json',
+    './src/public/packs/fr_b1_mixed_premium_pack_100.json',
     './src/ui/ui.js',
-    './crypto.js',
-    './db.js',
-    './helpers.js'
+    './docs/FIRESTORE_RULES_SETUP.md',
+    './firestore.rules'
 ];
 
 const ICONS_CACHE = [
@@ -32,8 +68,21 @@ const ICONS_CACHE = [
 self.addEventListener('install', (event) => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll([...ASSETS_TO_CACHE, ...ICONS_CACHE]);
+        caches.open(CACHE_NAME).then(async (cache) => {
+            const assets = [...ASSETS_TO_CACHE, ...ICONS_CACHE];
+            try {
+                await cache.addAll(assets);
+            } catch (e) {
+                // Don't brick the SW install if a single asset 404s (hosting/path differences).
+                console.warn('[SW] cache.addAll failed, falling back to per-asset caching', e);
+                for (const asset of assets) {
+                    try {
+                        await cache.add(asset);
+                    } catch (err) {
+                        console.warn('[SW] Failed to cache:', asset, err);
+                    }
+                }
+            }
         })
     );
 });

@@ -105,8 +105,9 @@ settingsService.restoreBackup = async function (payload) {
     await storageService.resetAll();
     await storageService.saveCryptoMeta(payload.meta);
     await storageService.saveEncryptedVault(payload.vault);
-    await syncService.pushMeta(authService.getUid(), payload.meta);
-    await syncService.pushVault(authService.getUid(), payload.vault);
+    const vaultId = vaultService.uid || authService.getUid();
+    await syncService.pushMeta(vaultId, payload.meta);
+    await syncService.pushVault(vaultId, payload.vault);
     vaultService.lock();
 };
 

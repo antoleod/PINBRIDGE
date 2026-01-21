@@ -1,37 +1,18 @@
-import { ensureAnonymousSession, onAuth, upgradeToEmail } from './firebase.js';
+import { ensureAnonymousSession, onAuth, upgradeToEmail, signOutUser } from './firebase.js';
 import { vaultService } from './vault.js';
 import { bus } from './core/bus.js';
 import { uiService } from './ui/ui.js';
+import { storageService } from './storage/db.js';
+import { isAdminUsername } from './core/rbac.js';
+import { validatePin, validateUsername } from './core/validation.js';
+import { syncService } from './sync.js';
 
-// Placeholder for vaultService methods that would be needed
-// In a real implementation, these would be in vault.js and handle crypto.
-// For this response, I'm just defining the interface AuthService would use.
-// This mock should be removed once actual vaultService methods are implemented.
-const mockVaultService = {
-    ...vaultService, // Keep existing methods
-    getVaultRecoveryKey: async () => {
-        console.log('vaultService: Retrieving vault recovery key...');
-        // This would securely retrieve the vault's recovery key from its internal storage.
-        return 'super-secret-vault-recovery-key-from-vault-storage'; // Placeholder
-    },
-    encryptRecoveryKeyWithCredentials: async (recoveryKey, username, partialPin) => {
-        console.log('vaultService: Encrypting recovery key with username and partial PIN...');
-        // Example: derive key from username+partialPin using PBKDF2, then AES-GCM encrypt recoveryKey.
-        return `encrypted:${recoveryKey}:${username}:${partialPin}`; // Simplified placeholder
-    },
-    decryptRecoveryKeyWithCredentials: async (encryptedFileContent, username, partialPin) => {
-        console.log('vaultService: Decrypting recovery key from file with username and partial PIN...');
-        // Example: derive key from username+partialPin, then AES-GCM decrypt fileContent.
-        const parts = encryptedFileContent.split(':');
-        if (parts[0] === 'encrypted' && parts[2] === username && parts[3] === partialPin) {
-            return parts[1]; // Return the original recovery key
-        }
-        throw new Error('Invalid recovery file or credentials.');
-    }
-};
-// In a real application, you would directly modify vault.js, not mock it here.
-// For the purpose of demonstrating auth.js changes, we'll use the mock.
-// const vaultService = mockVaultService; // Uncomment this line if you want to test with the mock
+/**
+ * SECURITY ARCHITECT NOTE:
+ * AuthService manages authentication and high-level recovery flows.
+ * CRITICAL: Auth Settings (pre-login) must NEVER access decrypted vault data or require a PIN.
+ * Pre-login actions are limited to recovery initialization and device sync handshakes.
+ */
 
 class AuthService {
   constructor() {
@@ -45,64 +26,34 @@ class AuthService {
     this.checkInterval = null;
     this.activityEvents = ['mousemove', 'keydown', 'click', 'touchstart', 'visibilitychange'];
     this.activityHandler = () => this._handleActivity();
-    this.offlineMode = false;
-    this.offlineUidKey = 'pinbridge.offline_uid';
   }
 
   async init() {
-    const isLocalDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-
-    if (isLocalDev) {
-      console.warn('Forcing offline-only mode for local development.');
-      this.offlineMode = true;
-      vaultService.setSyncEnabled(false);
-      const offlineUid = this._getOfflineUid();
-      this.uid = offlineUid;
-      this._resolveReady(offlineUid);
+    await ensureAnonymousSession();
+    onAuth(async (user) => {
+      if (!user) return;
+      vaultService.setSyncEnabled(true);
+      this.uid = user.uid;
+      window.__PINBRIDGE_UID = user.uid;
+      console.log('[AUTH] Firebase authed', { uid: user.uid, isAnonymous: user.isAnonymous, providerData: user.providerData });
+      this._resolveReady(user.uid);
       this._bindActivityWatchers();
-      bus.emit('sync:disabled', 'local-dev');
-      return this.ready;
-    }
-
-    try {
-      await ensureAnonymousSession();
-      onAuth(async (user) => {
-        if (!user) return;
-        this.offlineMode = false;
-        vaultService.setSyncEnabled(true);
-        this.uid = user.uid;
-        window.__PINBRIDGE_UID = user.uid;
-        this._resolveReady(user.uid);
-        this._bindActivityWatchers();
-      });
-      return this.ready;
-    } catch (err) {
-      console.warn('Falling back to offline-only mode. Firebase auth unavailable.', err);
-      this.offlineMode = true;
-      vaultService.setSyncEnabled(false);
-      const offlineUid = this._getOfflineUid();
-      this.uid = offlineUid;
-      this._resolveReady(offlineUid);
-      this._bindActivityWatchers();
-      bus.emit('sync:disabled', 'auth-unavailable');
-      return this.ready;
-    }
+    });
+    return this.ready;
   }
 
   getUid() {
     return this.uid;
   }
 
-  _getOfflineUid() {
-    const cached = localStorage.getItem(this.offlineUidKey);
-    if (cached) return cached;
-    const uid = `offline-${crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(this.offlineUidKey, uid);
-    return uid;
-  }
-
   async restoreSession() {
     await this.ready;
+    const sessionVaultId = sessionStorage.getItem('pb_session_vault_id');
+    if (!sessionVaultId) {
+      bus.emit('auth:locked', 'no-session');
+      return false;
+    }
+    vaultService.uid = sessionVaultId;
     const restored = await vaultService.tryRestoreSession();
     if (restored) {
       this._bindActivityWatchers();
@@ -114,12 +65,13 @@ class AuthService {
     return false;
   }
 
-  async createVault(username, pin) {
+  async createVault(username, pin, role = 'user', vaultId = null) {
     await this.ready;
     const recoveryKey = await vaultService.createNewVault({
-      uid: this.uid,
+      uid: vaultId || this.uid,
       username,
-      pin
+      pin,
+      role
     });
     await vaultService.saveSession();
     this._bindActivityWatchers();
@@ -128,14 +80,40 @@ class AuthService {
     return recoveryKey;
   }
 
-  async register(username, pin) {
-    return this.createVault(username, pin);
+  async register(username, pin, adminInviteCode = '') {
+    await this.ready;
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) {
+      throw new Error(usernameCheck.code);
+    }
+    const pinCheck = validatePin(pin);
+    if (!pinCheck.ok) {
+      throw new Error(pinCheck.code);
+    }
+    const existingVaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (existingVaultId) throw new Error('USER_EXISTS');
+    let role = 'user';
+    if (isAdminUsername(username)) {
+      const invite = await storageService.getMeta('admin_invite');
+      const isValid = invite && invite.code === adminInviteCode && invite.expiresAt > Date.now();
+      if (!isValid) {
+        throw new Error('ADMIN_INVITE_REQUIRED');
+      }
+      role = 'admin';
+    }
+    const vaultId = (crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
+    await syncService.createUsernameMapping(usernameCheck.value, vaultId);
+    return this.createVault(usernameCheck.value, pinCheck.value, role, vaultId);
   }
 
-  async unlockWithPin(pin) {
+  async unlockWithPin(username, pin) {
     await this.ready;
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) throw new Error(usernameCheck.code);
+    const vaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithPin({
-      uid: this.uid,
+      uid: vaultId,
       pin
     });
     await vaultService.saveSession();
@@ -144,10 +122,14 @@ class AuthService {
     bus.emit('auth:unlock');
   }
 
-  async unlockWithRecovery(recoveryKey) {
+  async unlockWithRecovery(username, recoveryKey) {
     await this.ready;
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) throw new Error(usernameCheck.code);
+    const vaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (!vaultId) throw new Error('NO_VAULT');
     await vaultService.unlockWithRecovery({
-      uid: this.uid,
+      uid: vaultId,
       recoveryKey
     });
     await vaultService.saveSession();
@@ -176,13 +158,8 @@ class AuthService {
     }
 
     try {
-      const vaultRecoveryKey = await vaultService.getVaultRecoveryKey();
-      const encryptedFileContent = await vaultService.encryptRecoveryKeyWithCredentials(
-        vaultRecoveryKey,
-        username,
-        partialPin
-      );
-      this._downloadFile(encryptedFileContent, 'pinbridge-recovery.pinbridge.key', 'application/octet-stream');
+      const fileContent = await vaultService.exportRecoveryFile({ username, partialPin });
+      this._downloadFile(fileContent, 'pinbridge-recovery.pinbridge.json', 'application/json');
       uiService.showToast('Recovery file generated and downloaded successfully!', 'success');
     } catch (error) {
       console.error('Error generating recovery file:', error);
@@ -200,12 +177,34 @@ class AuthService {
    */
   async unlockWithRecoveryFile(fileContent, username, partialPin) {
     await this.ready;
-    const decryptedRecoveryKey = await vaultService.decryptRecoveryKeyWithCredentials(
+    const usernameCheck = validateUsername(username);
+    if (!usernameCheck.ok) throw new Error(usernameCheck.code);
+    const vaultId = await syncService.resolveVaultIdByUsername(usernameCheck.value);
+    if (!vaultId) throw new Error('NO_VAULT');
+    await vaultService.unlockWithRecoveryFile({
+      uid: vaultId,
       fileContent,
-      username,
+      username: usernameCheck.value,
       partialPin
-    );
-    await this.unlockWithRecovery(decryptedRecoveryKey); // Reuse existing unlockWithRecovery
+    });
+    await vaultService.saveSession();
+    this._bindActivityWatchers();
+    this._handleActivity();
+    bus.emit('auth:unlock');
+  }
+
+  async unlockWithDataKey(dataKey) {
+    await this.ready;
+    const sessionVaultId = sessionStorage.getItem('pb_session_vault_id');
+    if (sessionVaultId) vaultService.uid = sessionVaultId;
+    await vaultService.unlockWithDataKey({
+      uid: vaultService.uid,
+      dataKey
+    });
+    await vaultService.saveSession();
+    this._bindActivityWatchers();
+    this._handleActivity();
+    bus.emit('auth:unlock');
   }
 
   forceLogout(reason = 'manual') {
@@ -213,6 +212,16 @@ class AuthService {
     vaultService.lock();
     this._clearActivityWatchers();
     bus.emit('auth:locked', reason);
+  }
+
+  async signOut(reason = 'signout') {
+    try {
+      await signOutUser();
+    } catch (e) {
+      console.warn('[AUTH] Firebase sign out failed', e);
+    } finally {
+      this.forceLogout(reason);
+    }
   }
 
   _handleActivity() {
@@ -224,7 +233,7 @@ class AuthService {
     this._clearActivityWatchers();
     this.activityEvents.forEach(ev => document.addEventListener(ev, this.activityHandler, { passive: true }));
     this.lastActivity = Date.now();
-    
+
     this.checkInterval = setInterval(() => {
       const now = Date.now();
       const elapsed = now - this.lastActivity;

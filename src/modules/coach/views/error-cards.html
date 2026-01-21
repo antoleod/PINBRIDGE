@@ -1,0 +1,27 @@
+<div class="coach-error-cards glass-panel">
+    <h2>Error Memory</h2>
+    <p class="subtitle">Spaced repetition queue.</p>
+
+    <div class="error-list">
+        {{#if errors.length}}
+        {{#each errors}}
+        <div class="error-card">
+            <div class="error-header">
+                <span class="concept-id">{{this.concept_id}}</span>
+                <span class="badge danger">Wrong x{{this.wrong_count}}</span>
+            </div>
+            <div class="error-meta">
+                <span>Next Review: {{this.nextRepetitionDate}}</span>
+            </div>
+        </div>
+        {{/each}}
+        {{else}}
+        <div class="empty-state">
+            <i data-feather="check-circle"></i>
+            <p>No active errors. Great job!</p>
+        </div>
+        {{/if}}
+    </div>
+
+    <button class="btn btn-text" data-action="back-to-dashboard">Back to Dashboard</button>
+</div>

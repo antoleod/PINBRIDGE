@@ -1,0 +1,56 @@
+<div class="import-pack-container fade-in">
+    <h2><i data-feather="zap"></i> Generate Pack</h2>
+    <p class="hint">Fast and friendly: generate with AI from a topic, or build from your own list.</p>
+
+    <div class="glass-panel" style="margin: 1rem 0; padding: 1rem;">
+        <div class="form-group">
+            <label>Pack name</label>
+            <input type="text" id="gen-pack-name" class="input-field" placeholder="e.g. French verbs" value="Generated Pack">
+        </div>
+        <div class="form-group">
+            <label>Pack ID</label>
+            <input type="text" id="gen-pack-id" class="input-field" placeholder="e.g. generated_pack_001" value="generated_pack">
+        </div>
+        <div class="form-group">
+            <label>Version</label>
+            <input type="text" id="gen-pack-version" class="input-field" placeholder="1.0.0" value="1.0.0">
+        </div>
+        <div class="form-group">
+            <label>Topic (optional)</label>
+            <input type="text" id="gen-pack-topic" class="input-field" placeholder="e.g. Networking fundamentals">
+        </div>
+        <div class="form-group">
+            <label>AI card count (5–100)</label>
+            <input type="number" id="gen-pack-count" class="input-field" min="5" max="100" value="20">
+        </div>
+        <div class="form-group">
+            <label>Source language</label>
+            <input type="text" id="gen-pack-source-lang" class="input-field" placeholder="en" value="en">
+        </div>
+        <div class="form-group">
+            <label>Target language</label>
+            <input type="text" id="gen-pack-target-lang" class="input-field" placeholder="en" value="en">
+        </div>
+
+        <details id="openai-settings" class="glass-panel" style="margin-top: 1rem; padding: .75rem;">
+            <summary style="cursor:pointer; user-select:none;">AI settings (admin)</summary>
+            <p class="hint" style="margin: .5rem 0 0 0;">
+                AI runs via Firebase Functions. If the server secret isn’t configured, AI generation will fail.
+            </p>
+        </details>
+
+        <div class="divider" style="height:1px; background:rgba(255,255,255,.08); margin: 1rem 0;"></div>
+        <div class="form-group">
+            <label>Or paste a list (one term per line)</label>
+            <textarea id="gen-pack-terms" class="code-font" rows="6" placeholder="term 1&#10;term 2&#10;term 3"></textarea>
+        </div>
+        <div id="gen-pack-status" class="hint" style="margin-top:.5rem;"></div>
+    </div>
+
+    <div class="actions-row">
+        <button class="btn btn-secondary" data-action="coach-back">Back</button>
+        <button id="btn-gen-pack-ai" class="btn btn-primary" type="button">Create with AI</button>
+        <button id="btn-gen-pack-download" class="btn btn-secondary">Download JSON</button>
+        <button id="btn-gen-pack-install" class="btn btn-primary">Install Pack</button>
+    </div>
+</div>

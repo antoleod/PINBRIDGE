@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    function isOwner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    function isCoachLang(value) {
+      return value is string && (value == "en" || value == "es" || value == "fr");
+    }
+
+    // --- User Directory (Public Usernames) ---
+    match /userDirectory/{usernameKey} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && !exists(/databases/$(database)/documents/userDirectory/$(usernameKey));
+      allow update, delete: if false;
+    }
+
+    // --- User-specific Data ---
+    match /users/{uid} {
+      // All documents in a user's path can only be accessed by that user.
+      allow read, write: if isOwner(uid);
+
+      // --- Coach Module Specific Rules ---
+      match /coach_settings/main {
+        allow write: if isOwner(uid)
+                      && isCoachLang(request.resource.data.ui_language)
+                      && isCoachLang(request.resource.data.content_language)
+                      && request.resource.data.allow_multilang_toggle is bool;
+      }
+      
+      match /coach_skills/{skillId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_modules/{moduleId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_sessions/{sessionId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_quizzes/{quizId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_exams/{examId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_attempts/{attemptId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_error_memory/{errorId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_feedback_real/{feedbackId} {
+        allow read, write: if isOwner(uid);
+      }
+      match /coach_maintenance/{maintenanceId} {
+        allow read, write: if isOwner(uid);
+      }
+      
+      // Legacy vault data (if any)
+      match /{document=**} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+  }
+}

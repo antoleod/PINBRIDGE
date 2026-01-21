@@ -1,0 +1,57 @@
+<div class="coach-session-container">
+    <div class="session-header">
+        <div>
+            <h3>{{sessionTitle}}</h3>
+            <p class="hint">{{sessionMetaLine}} • {{sessionDurationLabel}} • {{sessionDifficultyLabel}}</p>
+        </div>
+        <div class="session-progress">
+            <span class="pill {{passPillTone}}">{{passLabel}}</span>
+        </div>
+    </div>
+
+    <div class="session-card glass-panel">
+        <div class="scenario">
+            <p class="eyebrow">{{coach_label_scenario}}</p>
+            <p>{{session.scenario_i18n}}</p>
+        </div>
+
+        {{#if showHint}}
+        <div class="coach-hint">
+            <p class="eyebrow">{{coach_label_hint}}</p>
+            <p>{{session.hint_i18n}}</p>
+        </div>
+        {{/if}}
+
+        <div class="decision-prompt">
+            <p class="eyebrow">{{coach_label_decision}}</p>
+            <p>{{session.decision_prompt_i18n}}</p>
+        </div>
+
+        <div class="decision-options">
+            {{#each session.options_i18n}}
+            <button class="btn option-btn" data-index="{{@index}}">
+                {{this}}
+            </button>
+            {{/each}}
+        </div>
+    </div>
+
+    <div class="feedback-form-card glass-panel">
+        <div class="form-group">
+            <label for="confidence-slider">{{coach_label_confidence}}</label>
+            <input type="range" id="confidence-slider" min="1" max="5" value="3" class="confidence-slider">
+            <div class="confidence-labels">
+                <span>{{coach_confidence_1}}</span>
+                <span>{{coach_confidence_3}}</span>
+                <span>{{coach_confidence_5}}</span>
+            </div>
+        </div>
+        <div class="form-group">
+            <label for="thought-process">{{coach_label_why}}</label>
+            <textarea id="thought-process" class="input-field" rows="3" placeholder="{{coach_placeholder_why}}" required></textarea>
+            <small class="hint">{{coach_hint_required}}</small>
+        </div>
+        <button class="btn btn-primary btn-block" id="btn-submit-answer" disabled>{{coach_action_submit}}</button>
+        <button class="btn btn-secondary btn-block" data-action="back-to-dashboard">{{coach_action_back}}</button>
+    </div>
+</div>

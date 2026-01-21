@@ -1,0 +1,37 @@
+<div class="coach-skills glass-panel">
+    <div class="header-row">
+        <h2>My Skills</h2>
+        <button class="btn btn-primary btn-sm" data-action="add-new-skill">
+            <i data-feather="plus"></i> Add Skill
+        </button>
+    </div>
+
+    <div class="skills-list">
+        {{#if skills.length}}
+        {{#each skills}}
+        <div class="skill-card {{this.status}}">
+            <div class="skill-info">
+                <h3>{{this.title}}</h3>
+                <span class="badge">{{this.skill_type}}</span>
+            </div>
+            <div class="skill-actions">
+                {{#if (eq this.status "active")}}
+                <span class="status-indicator active">Active</span>
+                {{else}}
+                <button class="btn btn-sm btn-secondary" data-action="set-active-skill"
+                    data-id="{{this.id}}">Resume</button>
+                {{/if}}
+            </div>
+        </div>
+        {{/each}}
+        {{else}}
+        <div class="empty-state">
+            <p>No skills yet. Start your journey!</p>
+            <br>
+            <button class="btn btn-primary" data-action="add-new-skill">Create First Skill</button>
+        </div>
+        {{/if}}
+    </div>
+
+    <button class="btn btn-text" data-action="back-to-dashboard">Back</button>
+</div>

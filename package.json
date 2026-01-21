@@ -1,0 +1,8 @@
+{
+  "name": "pinbridge",
+  "version": "1.0.0",
+  "description": "Secure notes vault",
+  "scripts": {
+    "serve": "npx serve ."
+  }
+}

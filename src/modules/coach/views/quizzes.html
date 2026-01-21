@@ -1,0 +1,37 @@
+<div class="coach-quizzes fade-in">
+    <div class="packs-header">
+        <h2><i data-feather="help-circle"></i> {{coach_action_quizzes}}</h2>
+        <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-action="back-to-dashboard">
+                <i data-feather="arrow-left"></i> {{coach_action_back}}
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <h3 class="skill-title">{{skillName}}</h3>
+        <p class="hint">Short quizzes (3–5 questions). Immediate feedback after every choice.</p>
+    </div>
+
+    <div class="quiz-questions">
+        {{#each quizQuestions}}
+        <div class="glass-panel quiz-q" data-quiz-id="{{this.quiz_id}}" data-q-index="{{this.q_index}}">
+            <div class="quiz-q-top">
+                <span class="badge">{{this.quiz_title}}</span>
+                <span class="pill">Q{{this.q_number}}</span>
+            </div>
+            <p class="quiz-q-prompt">{{this.prompt_i18n}}</p>
+            <div class="quiz-q-options">
+                {{#each this.options}}
+                <button class="btn option-btn" data-action="answer-quiz" data-quiz-id="{{this.quiz_id}}" data-q-index="{{this.q_index}}" data-opt-index="{{this.opt_index}}">
+                    {{this.text_i18n}}
+                </button>
+                {{/each}}
+            </div>
+            <div class="quiz-q-feedback hidden" id="quiz-feedback-{{this.quiz_id}}-{{this.q_index}}">
+                <p class="hint" id="quiz-feedback-text-{{this.quiz_id}}-{{this.q_index}}"></p>
+            </div>
+        </div>
+        {{/each}}
+    </div>
+</div>

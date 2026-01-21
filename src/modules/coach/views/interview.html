@@ -1,0 +1,35 @@
+<div class="coach-interview fade-in">
+    <div class="packs-header">
+        <h2><i data-feather="message-circle"></i> {{coach_action_interview}}</h2>
+        <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-action="back-to-dashboard">
+                <i data-feather="arrow-left"></i> {{coach_action_back}}
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <h3 class="skill-title">{{skillName}}</h3>
+        <p class="hint">Tap a question to reveal the answer, reasoning, and the common trap.</p>
+    </div>
+
+    <div class="interview-list">
+        {{#each interview}}
+        <details class="glass-panel interview-item">
+            <summary>
+                <span class="badge">Q</span>
+                <span class="interview-q">{{this.question_i18n}}</span>
+            </summary>
+            <div class="interview-a">
+                <p class="eyebrow">Answer</p>
+                <p>{{this.answer_i18n}}</p>
+                <p class="eyebrow">{{coach_label_explain}}</p>
+                <p class="hint">{{this.justification_i18n}}</p>
+                <p class="eyebrow">{{coach_label_trap}}</p>
+                <p class="hint">{{this.trap_i18n}}</p>
+            </div>
+        </details>
+        {{/each}}
+    </div>
+</div>
+

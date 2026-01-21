@@ -6,6 +6,8 @@ class SyncManager {
     constructor() {
         this.isProcessing = false;
         this.isOnline = navigator.onLine;
+        this.maxRetries = 3;
+        this.baseRetryDelayMs = 2000;
 
         window.addEventListener('online', () => {
             this.isOnline = true;
@@ -29,6 +31,7 @@ class SyncManager {
             console.warn('SyncManager: Missing UID, cannot enqueue');
             return;
         }
+        if (!storageService.db) return;
         await storageService.addToSyncQueue({ type, payload, uid, retry: 0 });
         bus.emit('sync:status', 'local_saved'); // Immediate feedback
         this.processQueue();
@@ -76,6 +79,7 @@ class SyncManager {
 
     async processQueue() {
         if (this.isProcessing || !this.isOnline) return;
+        if (!storageService.db) return;
         this.isProcessing = true;
 
         try {
@@ -99,14 +103,31 @@ class SyncManager {
                         await syncService.pushMeta(task.uid, task.payload);
                     } else if (task.type === 'RECOVERY_REQUEST') {
                         await syncService.createRecoveryRequest(task.uid);
+                    } else if (task.type === 'PUSH_ATTACHMENT') {
+                        const hash = task?.payload?.hash;
+                        if (!hash) throw new Error('ATTACHMENT_HASH_REQUIRED');
+                        const mod = await import('../attachments/attachments.js');
+                        await mod.attachmentService.ensureRemoteAvailable(task.uid, hash);
                     }
 
                     await storageService.removeFromSyncQueue(task.id);
                 } catch (e) {
                     console.error('Sync task failed', e);
-                    // Leave in queue, stop processing this batch
-                    // In a real robust system, we would handle backoff here
+                    const retry = (task.retry || 0) + 1;
+                    await storageService.addToSyncQueue({
+                        id: task.id,
+                        type: task.type,
+                        payload: task.payload,
+                        uid: task.uid,
+                        retry,
+                        created: task.created || Date.now()
+                    });
                     bus.emit('sync:status', 'error');
+                    if (retry <= this.maxRetries && this.isOnline) {
+                        const delay = Math.min(30000, this.baseRetryDelayMs * retry);
+                        bus.emit('sync:retry', { type: task.type, retry, delay });
+                        setTimeout(() => this.processQueue(), delay);
+                    }
                     this.isProcessing = false;
                     return;
                 }

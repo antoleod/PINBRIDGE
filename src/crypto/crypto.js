@@ -105,6 +105,20 @@ class CryptoService {
         return Utils.bufferToBase64(payload);
     }
 
+    async encryptBytes(bytes, key) {
+        const iv = crypto.getRandomValues(new Uint8Array(CONFIG.GCM_IV_BYTES));
+        const plaintext = bytes instanceof Uint8Array ? bytes : (bytes instanceof ArrayBuffer ? new Uint8Array(bytes) : new Uint8Array(0));
+        const cipherBuffer = await crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            plaintext
+        );
+        const payload = new Uint8Array(iv.byteLength + cipherBuffer.byteLength);
+        payload.set(iv, 0);
+        payload.set(new Uint8Array(cipherBuffer), iv.byteLength);
+        return Utils.bufferToBase64(payload);
+    }
+
     async decryptObject(payloadBase64, key) {
         const payload = Utils.base64ToBuffer(payloadBase64);
         const iv = payload.slice(0, CONFIG.GCM_IV_BYTES);
@@ -118,11 +132,47 @@ class CryptoService {
         return JSON.parse(json);
     }
 
+    async decryptBytes(payloadBase64, key) {
+        const payload = Utils.base64ToBuffer(payloadBase64);
+        const iv = payload.slice(0, CONFIG.GCM_IV_BYTES);
+        const ciphertext = payload.slice(CONFIG.GCM_IV_BYTES);
+        const plainBuffer = await crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv },
+            key,
+            ciphertext
+        );
+        return new Uint8Array(plainBuffer);
+    }
+
     wipeBytes(arr) {
         if (!arr) return;
         for (let i = 0; i < arr.length; i += 1) {
             arr[i] = 0;
         }
+    }
+
+    async generateQRCode(text, options = {}) {
+        const value = typeof text === 'string' ? text : JSON.stringify(text);
+        const size = Number.isFinite(options.size) ? options.size : 220;
+        if (!value) throw new Error('QR_DATA_REQUIRED');
+
+        if (!this._qrLib) {
+            this._qrLib = import('https://cdn.jsdelivr.net/npm/qrcode@1.5.3/+esm');
+        }
+        const qr = await this._qrLib;
+        const toDataURL = qr?.toDataURL || qr?.default?.toDataURL;
+        if (typeof toDataURL !== 'function') {
+            throw new Error('QR_LIB_UNAVAILABLE');
+        }
+
+        return toDataURL(value, {
+            width: size,
+            margin: 1,
+            color: {
+                dark: '#000000',
+                light: '#ffffff'
+            }
+        });
     }
 }
 

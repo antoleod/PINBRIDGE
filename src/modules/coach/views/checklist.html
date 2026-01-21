@@ -1,0 +1,24 @@
+<div class="coach-checklist fade-in">
+    <div class="packs-header">
+        <h2><i data-feather="check-square"></i> {{coach_action_checklist}}</h2>
+        <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-action="back-to-dashboard">
+                <i data-feather="arrow-left"></i> {{coach_action_back}}
+            </button>
+        </div>
+    </div>
+
+    <div class="glass-panel">
+        <h3 class="skill-title">{{skillName}}</h3>
+        <p class="hint">Mark what you can demonstrate. If you can’t prove it, it’s not done.</p>
+    </div>
+
+    <div class="checklist-items">
+        {{#each checklist}}
+        <label class="glass-panel checklist-item">
+            <input type="checkbox" data-action="toggle-checklist-item" data-item-id="{{this.id}}" {{this.checked_attr}}>
+            <span class="checklist-text">{{this.text_i18n}}</span>
+        </label>
+        {{/each}}
+    </div>
+</div>

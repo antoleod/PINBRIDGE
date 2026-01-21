@@ -1,0 +1,57 @@
+{
+  "schema_version": "v2-pack",
+  "generated_at": "2026-01-09T00:00:00Z",
+  "pack": {
+    "pack_id": "aws_saa_associate_fundamentals",
+    "version": "1.0.0",
+    "level": "Associate",
+    "mode": "CERT",
+    "languages": ["en"],
+    "title_i18n": {
+      "en": "AWS Solutions Architect Associate - Fundamentals"
+    },
+    "description_i18n": {
+      "en": "30-day route covering AWS core services, architectures, and exam-aligned scenarios."
+    },
+    "categories": [
+      {
+        "id": "compute",
+        "title_i18n": {
+          "en": "Compute Services"
+        }
+      },
+      {
+        "id": "storage",
+        "title_i18n": {
+          "en": "Storage & Databases"
+        }
+      },
+      {
+        "id": "networking",
+        "title_i18n": {
+          "en": "Networking & Security"
+        }
+      }
+    ]
+  },
+  "cards": [
+    {
+      "card_id": "ec2_basics",
+      "category": "compute",
+      "question_i18n": {
+        "en": "What EC2 instance type should you choose for a high-performance computing workload?"
+      },
+      "correct_answer_i18n": {
+        "en": "Compute Optimized (C5)"
+      },
+      "scenario": "In a scenario where your application requires high CPU performance for scientific simulations, which instance type is best?",
+      "distractors": [
+        {"text": "General Purpose (M5)", "reason": "Too balanced, not optimized for compute"},
+        {"text": "Memory Optimized (R5)", "reason": "Focused on memory, not CPU"}
+      ],
+      "explanation": "C5 instances provide high CPU performance. M5 is general, R5 for memory-intensive tasks.",
+      "transfer_task": "Apply this: For a video rendering farm, which type?",
+      "reflection": "How does workload type influence instance choice?"
+    }
+  ]
+}

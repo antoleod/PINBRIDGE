@@ -35,10 +35,10 @@ class NotesService {
             this.notes = [];
             return this.notes;
         }
-        
+
         const vaultNotes = vaultService.getNotes();
         console.log('Vault notes from getNotes():', vaultNotes?.length || 0);
-        
+
         this.notes = (vaultNotes || []).map(n => ({ ...n }));
         this.sortNotes();
         bus.emit('notes:loaded', this.notes);
@@ -81,6 +81,11 @@ class NotesService {
         });
     }
 
+    _isGeneratedPasswordNote(note) {
+        if (!note?.tags) return false;
+        return note.tags.some(tag => (typeof tag === 'string' ? tag : tag.name) === 'generated-password');
+    }
+
     /**
      * Create a new note.
      */
@@ -109,12 +114,21 @@ class NotesService {
             pinned: false,
             created: Date.now(),
             updated: Date.now(),
-            isTemplate: options.isTemplate || false
+            isTemplate: options.isTemplate || false,
+            attachments: options.attachments || []
         };
 
-        const { persist = true } = options;
+        const { persist = true, allowEmpty = false } = options;
         const contentPresent = (note.title || '').trim() || (note.body || '').trim();
+        if (persist && !allowEmpty && !contentPresent) {
+            console.warn('Skipping empty note creation');
+            return null;
+        }
         if (persist && contentPresent) {
+            const persisted = await this.persistNote(note);
+            if (persisted) Object.assign(note, persisted);
+        }
+        if (persist && allowEmpty && !contentPresent) {
             const persisted = await this.persistNote(note);
             if (persisted) Object.assign(note, persisted);
         }
@@ -130,6 +144,12 @@ class NotesService {
     async updateNote(id, title, body, folder = "", tags = []) {
         const note = this.notes.find(n => n.id === id);
         if (!note) return;
+        const trimmedTitle = (title || '').trim();
+        const trimmedBody = (body || '').trim();
+        if (!trimmedTitle && !trimmedBody) {
+            console.warn(`Skipping empty update for ${id}`);
+            return;
+        }
 
         // Auto-extract tags from new body
         const extractedTags = this.extractTags(body || '');
@@ -146,7 +166,7 @@ class NotesService {
         });
 
         // Versioning: Save OLD state before updating if it has content
-        if (note.body || note.title) {
+        if ((note.body || note.title) && !this._isGeneratedPasswordNote(note)) {
             await this.saveVersion(note);
         }
 
@@ -284,15 +304,20 @@ class NotesService {
     async persistNote(note, { bumpUpdated = true } = {}) {
         const trimmedTitle = (note.title || '').trim();
         const trimmedBody = (note.body || '').trim();
-        if (!trimmedTitle && !trimmedBody) {
+        // By default we skip persisting completely empty notes to avoid sync noise and placeholder notes.
+        // Some flows (e.g. explicit "New Note" creation) may opt-in via `allowEmptyPersist`.
+        if (!note?.allowEmptyPersist && !trimmedTitle && !trimmedBody) {
             console.warn(`Skipping empty note persistence for ${note.id}`);
             return;
         }
-        if (trimmedTitle.toLowerCase() === 'untitled note' && !trimmedBody) {
+        const untitledPatterns = ['untitled note', 'nota sin título', 'note sans titre', 'unbenannte notiz'];
+        if (untitledPatterns.includes(trimmedTitle.toLowerCase()) && !trimmedBody) {
             console.warn(`Skipping placeholder note persistence for ${note.id}`);
             return;
         }
-        const updatedNote = { ...note };
+        // Smart-note transforms are logic-only and must happen before persistence so they sync across devices.
+        // This keeps UI stable while improving behavior predictably.
+        const updatedNote = this._applySmartNoteTransforms({ ...note });
         if (bumpUpdated) {
             updatedNote.updated = Date.now();
         }
@@ -302,6 +327,54 @@ class NotesService {
             this.notes[localIndex] = updatedNote;
         }
         return updatedNote;
+    }
+
+    _applySmartNoteTransforms(note) {
+        if (!note) return note;
+
+        // 1) !important → pin (logic only; no UI change).
+        const body = `${note.body || ''}`;
+        if (/\B!important\b/i.test(body)) {
+            note.pinned = true;
+        }
+
+        // 2) Normalize checklist shorthand: "[] " or "[ ] " at line start -> "- [ ] ".
+        note.body = body
+            .split('\n')
+            .map((line) => line.replace(/^\s*(\[\s?\])\s+/, '- [ ] '))
+            .join('\n');
+
+        // 3) Move completed checklist items to the bottom of their contiguous block.
+        note.body = this._reorderChecklistBlocks(note.body);
+
+        return note;
+    }
+
+    _reorderChecklistBlocks(text) {
+        if (!text) return text;
+        const lines = text.split('\n');
+        const isChecklist = (line) => /^\s*-\s*\[(x| )\]\s+/i.test(line);
+
+        const out = [];
+        for (let i = 0; i < lines.length; i += 1) {
+            if (!isChecklist(lines[i])) {
+                out.push(lines[i]);
+                continue;
+            }
+
+            // Capture contiguous checklist block.
+            const block = [];
+            while (i < lines.length && isChecklist(lines[i])) {
+                block.push(lines[i]);
+                i += 1;
+            }
+            i -= 1;
+
+            const unchecked = block.filter((l) => /^\s*-\s*\[\s\]/i.test(l));
+            const checked = block.filter((l) => /^\s*-\s*\[x\]/i.test(l));
+            out.push(...unchecked, ...checked);
+        }
+        return out.join('\n');
     }
 
     /**

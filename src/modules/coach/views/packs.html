@@ -1,0 +1,49 @@
+<div class="packs-container fade-in">
+    <div class="packs-header">
+        <h2><i data-feather="package"></i> {{myPacks}}</h2>
+        <div class="actions">
+            <button class="btn btn-secondary btn-sm" data-action="open-import-pack">
+                <i data-feather="upload"></i> {{importPack}}
+            </button>
+            <button class="btn btn-secondary btn-sm" data-action="back-to-dashboard">
+                <i data-feather="arrow-left"></i> {{back}}
+            </button>
+        </div>
+    </div>
+
+    <div class="pack-list">
+        {{#if packs.length}}
+        {{#each packs}}
+        <div class="pack-card glass-panel">
+            <div class="pack-info">
+                <h3>{{this.title}} <span class="badge">{{this.level}}</span></h3>
+                <p class="description">{{this.description}}</p>
+                <div class="meta">
+                    <span>Ver: {{this.installed_version}}</span>
+                    <span>Cards: {{this.card_count}}</span>
+                    {{#if this.update_available}}
+                    <span class="badge warning">Update Available: {{this.latest_version}}</span>
+                    {{/if}}
+                </div>
+            </div>
+            <div class="pack-actions">
+                <button class="btn btn-primary btn-sm" data-action="start-quiz" data-pack-id="{{this.pack_id}}">
+                    <i data-feather="play"></i> Practice
+                </button>
+                {{#if this.update_available}}
+                <button class="btn btn-accent btn-sm" data-action="update-pack" data-pack-id="{{this.pack_id}}">
+                    <i data-feather="download"></i> Update
+                </button>
+                {{/if}}
+            </div>
+        </div>
+        {{/each}}
+        {{else}}
+        <div class="empty-state">
+            <i data-feather="package"></i>
+            <p>No packs installed. Import one to get started!</p>
+            <button class="btn btn-primary" data-action="open-import-pack">Import Pack</button>
+        </div>
+        {{/if}}
+    </div>
+</div>
