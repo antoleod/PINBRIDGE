@@ -546,31 +546,7 @@
 
         <!-- EDITOR PANEL -->
         <section class="editor-panel">
-<<<<<<< HEAD
-                <div class="editor-toolbar-minimal">
-                    <div class="editor-meta-minimal">
-                        <input type="text" id="note-folder" placeholder="Folder" list="folder-suggestions"
-                            class="meta-input-minimal" data-i18n-placeholder="folderPlaceholder">
-                        <input type="text" id="note-tags" placeholder="#tags" class="meta-input-minimal"
-                            data-i18n-placeholder="tagsPlaceholder">
-                        <datalist id="folder-suggestions"></datalist>
-                    </div>
-                    <div class="editor-actions-minimal">
-                        <input type="file" id="note-attachment" class="visually-hidden" multiple>
-                        <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode" aria-label="Toggle Focus Mode">
-                            <i data-feather="maximize"></i>
-                        </button>
-                        <button class="btn-tool-minimal" id="btn-attach" title="Attach file" aria-label="Attach file">
-                            <i data-feather="paperclip"></i>
-                        </button>
-                        <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
-                            <i data-feather="map-pin"></i>
-                        </button>
-                        <button class="btn-tool-minimal" id="btn-delete" title="Delete" data-i18n-title="delete">
-                            <i data-feather="trash-2"></i>
-                        </button>
-                    </div>
-=======
+
             <div class="editor-toolbar-minimal">
                 <div class="editor-meta-minimal">
                     <input type="text" id="note-folder" placeholder="Folder" list="folder-suggestions"
@@ -579,7 +555,42 @@
                         data-i18n-placeholder="tagsPlaceholder">
                     <div id="note-meta-info" class="note-meta-info" aria-label="Note info"></div>
                     <datalist id="folder-suggestions"></datalist>
->>>>>>> 82c3f231c3b1d47b2640961548e5c254add860c9
+                </div>
+                <div class="editor-actions-minimal">
+                    <input type="file" id="note-attachment" class="visually-hidden" multiple>
+                    <button class="btn-tool-minimal" id="btn-focus-mode" title="Focus Mode" aria-label="Toggle Focus Mode">
+                        <i data-feather="maximize"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-attach" title="Attach file" aria-label="Attach file">
+                        <i data-feather="paperclip"></i>
+                    </button>
+                    <button class="btn-tool-minimal editor-undo-redo" id="btn-undo" title="Undo" aria-label="Undo"
+                        disabled>
+                        <i data-feather="corner-left-up"></i>
+                    </button>
+                    <button class="btn-tool-minimal editor-undo-redo" id="btn-redo" title="Redo" aria-label="Redo"
+                        disabled>
+                        <i data-feather="corner-right-up"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-history" title="History (Ctrl+H)" aria-label="History">
+                        <i data-feather="clock"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-insert-template" title="Templates" aria-label="Templates">
+                        <i data-feather="grid"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-toggle-readonly" title="Toggle Read-Only"
+                        aria-label="Toggle Read-Only">
+                        <i data-feather="lock"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-pin-note" title="Pin" data-i18n-title="pinNote">
+                        <i data-feather="map-pin"></i>
+                    </button>
+                    <button class="btn-tool-minimal" id="btn-delete" title="Delete" data-i18n-title="delete">
+                        <i data-feather="trash-2"></i>
+                    </button>
+                </div>
+            </div>
+c3b1d47b2640961548e5c254add860c9
                 </div>
                 <div class="editor-actions-minimal">
                     <button class="btn-tool-minimal editor-undo-redo" id="btn-undo" title="Undo" aria-label="Undo"
@@ -658,12 +669,33 @@
                 <p class="subtitle">Your productivity at a glance</p>
             </div>
 
-<<<<<<< HEAD
+
+                <div class="dashboard-hero glass-panel">
+                    <div>
+                        <p class="eyebrow">Today</p>
+                        <h3 id="dashboard-today-title">Stay on top of your notes</h3>
+                        <p class="hint">Switch views instantly or jump into focus mode.</p>
+                        <div class="dashboard-filter-chips">
+                            <button class="chip-btn" data-dashboard-view="all">All</button>
+                            <button class="chip-btn" data-dashboard-view="favorites">Favorites</button>
+                            <button class="chip-btn" data-dashboard-view="templates">Templates</button>
+                            <button class="chip-btn" data-dashboard-view="archive">Archive</button>
+                            <button class="chip-btn" data-dashboard-view="trash">Trash</button>
+                        </div>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary" id="btn-dashboard-focus">
+                            <i data-feather="maximize"></i>
+                            Focus Mode
+                        </button>
+                        <button class="btn btn-secondary" id="btn-dashboard-new-note">
+                            <i data-feather="plus"></i>
+                            New Note
+                        </button>
+                    </div>
+                </div>
+
                 <div class="dashboard-actions">
-                    <button id="btn-dashboard-new-note" class="btn btn-primary">
-                        <i data-feather="plus"></i>
-                        <span>New Note</span>
-                    </button>
                     <button type="button" class="btn btn-secondary" data-dashboard-view="favorites">
                         Favorites
                     </button>
@@ -679,7 +711,6 @@
                 </div>
 
                 <div class="dashboard-grid">
-                    <!-- Stats Cards -->
                     <div class="dashboard-card glass-panel">
                         <div class="card-icon">
                             <i data-feather="file-text"></i>
@@ -743,19 +774,26 @@
                             <p>Archived</p>
                         </div>
                     </div>
+                    <div class="dashboard-card glass-panel accent">
+                        <div class="card-icon accent">
+                            <i data-feather="activity"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3 id="stat-streak">0d</h3>
+                            <p>Edit Streak</p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="dashboard-row">
                     <div class="dashboard-section glass-panel">
                         <h2>Recent Notes</h2>
                         <div id="dashboard-recent-notes" class="dashboard-list">
-                            <!-- Injected dynamically -->
                         </div>
                     </div>
                     <div class="dashboard-section glass-panel">
                         <h2>Popular Tags</h2>
                         <div id="dashboard-top-tags" class="tag-cloud">
-                            <!-- Injected dynamically -->
                         </div>
                     </div>
                 </div>
@@ -779,26 +817,9 @@
                             <i data-feather="trash-2"></i>
                             <span>Trash</span>
                         </button>
-=======
-            <div class="dashboard-grid">
-                <!-- Stats Cards -->
-                <div class="dashboard-section glass-panel security-health-card">
-                    <div class="security-health-header">
-                        <div class="health-ring-container">
-                            <svg viewBox="0 0 36 36" class="health-ring-chart">
-                                <path class="health-ring-bg"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                <path class="health-ring-value" stroke-dasharray="85, 100"
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                            </svg>
-                            <i data-feather="shield" class="health-icon"></i>
-                        </div>
-                        <div class="health-content">
-                            <h3>Security Health: Good</h3>
-                            <p class="hint">2 recommendations available to improve your vault score.</p>
-                        </div>
-                        <button class="btn btn-secondary btn-sm" id="btn-security-review">Review</button>
->>>>>>> 82c3f231c3b1d47b2640961548e5c254add860c9
+                    </div>
+                </div>
+2c3f231c3b1d47b2640961548e5c254add860c9
                     </div>
                 </div>
 

@@ -30,16 +30,11 @@ class UIService {
         this._lastWindowWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
         this.activeNoteId = null;
         this.currentView = 'all';
-<<<<<<< HEAD
-        const storedAutoSave = localStorage.getItem('pinbridge.auto_save');
-        this.autoSaveEnabled = storedAutoSave === null ? true : storedAutoSave === 'true';
-=======
         const autoSaveSetting = localStorage.getItem('pinbridge.auto_save');
         this.autoSaveEnabled = autoSaveSetting !== 'false';
         if (autoSaveSetting === null) {
             localStorage.setItem('pinbridge.auto_save', 'true');
         }
->>>>>>> 82c3f231c3b1d47b2640961548e5c254add860c9
         this.compactViewEnabled = localStorage.getItem('pinbridge.compact_notes') === 'true';
         // Footer must stay fixed + always visible across views.
         this.footerAutoHide = false;
@@ -1010,11 +1005,6 @@ class UIService {
         bus.on('auth:locked', (reason) => {
             this.screens.loading?.classList.add('hidden');
             this.handleLockedSession(reason);
-        });
-
-        bus.on('notes:updated', (notes) => {
-            if (this.currentView === 'dashboard') return;
-            this.renderCurrentView(notes);
         });
 
         // Session Timeout UI
@@ -4855,12 +4845,15 @@ class UIService {
         const notes = notesService.notes.filter(n => !n.trash && !n.isTemplate);
 
         const folders = new Set(notes.filter(n => n.folder).map(n => n.folder));
-        const tagNames = notes.flatMap(n => (n.tags || []).map(tag => typeof tag === 'string' ? tag : tag.name)).filter(Boolean);
-        const uniqueTags = new Set(tagNames);
+        const allTags = notes
+            .flatMap(n => (n.tags || []).map(tag => (typeof tag === 'string' ? tag : tag?.name)))
+            .map(tag => String(tag || '').trim())
+            .filter(Boolean);
+        const uniqueTags = new Set(allTags);
 
         const textOnlyNotes = notes.filter(n => !n.archived);
         const weeklyThreshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
-        const weeklyNotes = textOnlyNotes.filter(n => (n.created || 0) >= weeklyThreshold).length;
+        const weeklyNotes = textOnlyNotes.filter(n => (n.updated || n.created || 0) >= weeklyThreshold).length;
         const archivedCount = notesService.notes.filter(n => n.archived && !n.trash).length;
 
         const totalWords = textOnlyNotes.reduce((sum, note) => {
@@ -4869,19 +4862,42 @@ class UIService {
         }, 0);
         const avgWords = textOnlyNotes.length ? Math.round(totalWords / textOnlyNotes.length) : 0;
 
-        document.getElementById('stat-total-notes').innerText = notes.length;
-        document.getElementById('stat-favorites').innerText = notes.filter(n => n.pinned).length;
-        document.getElementById('stat-folders').innerText = folders.size;
-<<<<<<< HEAD
-=======
+        const dayKey = (timestamp) => {
+            if (!timestamp) return null;
+            const date = new Date(timestamp);
+            if (Number.isNaN(date.getTime())) return null;
+            return date.toISOString().slice(0, 10);
+        };
 
-        const allTags = notes.flatMap(n => (n.tags || []).map(t => (typeof t === 'string' ? t : t?.name)).filter(Boolean));
-        const uniqueTags = new Set(allTags.map(t => String(t).trim()).filter(Boolean));
->>>>>>> 82c3f231c3b1d47b2640961548e5c254add860c9
-        document.getElementById('stat-tags').innerText = uniqueTags.size;
-        document.getElementById('stat-weekly-notes').innerText = weeklyNotes;
-        document.getElementById('stat-avg-words').innerText = avgWords;
-        document.getElementById('stat-archived').innerText = archivedCount;
+        const activityDays = new Set(notes.map(n => dayKey(n.updated || n.created)).filter(Boolean));
+        let streak = 0;
+        if (activityDays.size) {
+            const cursor = new Date();
+            cursor.setHours(0, 0, 0, 0);
+            while (true) {
+                const key = cursor.toISOString().slice(0, 10);
+                if (activityDays.has(key)) {
+                    streak += 1;
+                    cursor.setDate(cursor.getDate() - 1);
+                } else {
+                    break;
+                }
+            }
+        }
+
+        const setText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = value;
+        };
+
+        setText('stat-total-notes', notes.length);
+        setText('stat-favorites', notes.filter(n => n.pinned).length);
+        setText('stat-folders', folders.size);
+        setText('stat-tags', uniqueTags.size);
+        setText('stat-weekly-notes', weeklyNotes);
+        setText('stat-avg-words', avgWords);
+        setText('stat-archived', archivedCount);
+        setText('stat-streak', `${streak}d`);
 
         const recentNotes = [...notes].sort((a, b) => (b.updated || 0) - (a.updated || 0)).slice(0, 5);
         const recentContainer = document.getElementById('dashboard-recent-notes');
@@ -4909,15 +4925,10 @@ class UIService {
         }
 
         const tagFreq = {};
-<<<<<<< HEAD
-        tagNames.forEach(name => {
-            tagFreq[name] = (tagFreq[name] || 0) + 1;
-=======
         allTags.forEach(tag => {
             const key = String(tag || '').trim();
             if (!key) return;
             tagFreq[key] = (tagFreq[key] || 0) + 1;
->>>>>>> 82c3f231c3b1d47b2640961548e5c254add860c9
         });
 
         const topTags = Object.entries(tagFreq)
@@ -4959,13 +4970,23 @@ class UIService {
             this.handleNewNote();
         });
 
-        document.querySelectorAll('[data-dashboard-view]').forEach(btn => {
+        const focusBtn = document.getElementById('btn-dashboard-focus');
+        focusBtn?.addEventListener('click', () => {
+            this.currentView = 'all';
+            document.querySelector('[data-view="all"]')?.click();
+            this.toggleFocusMode();
+            setTimeout(() => document.getElementById('note-content')?.focus(), 120);
+        });
+
+        const dashboardFilters = document.querySelectorAll('[data-dashboard-view]');
+        dashboardFilters.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const view = e.currentTarget.dataset.dashboardView;
                 if (!view) return;
                 this.currentView = view;
                 document.querySelector(`[data-view="${view}"]`)?.click();
                 this.renderCurrentView();
+                dashboardFilters.forEach(el => el.classList.toggle('active', el === e.currentTarget));
             });
         });
     }
