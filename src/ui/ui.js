@@ -680,7 +680,7 @@ class UIService {
         if (this.mobile.topbar && !document.getElementById('mobile-back-btn')) {
             const btn = document.createElement('button');
             btn.id = 'mobile-back-btn';
-            btn.className = 'btn-icon hidden';
+            btn.className = 'btn-icon ghost mobile-back-btn';
             btn.innerHTML = '<i data-feather="arrow-left"></i>';
             btn.setAttribute('aria-label', 'Back to list');
             btn.onclick = (e) => {
@@ -697,6 +697,37 @@ class UIService {
         }
 
         document.getElementById('mobile-footer')?.classList.remove('footer-hidden');
+
+        // Mobile Tools shortcut
+        const toolsBtn = document.getElementById('mobile-footer-tools');
+        if (toolsBtn && !toolsBtn.dataset.boundTools) {
+            toolsBtn.dataset.boundTools = 'true';
+            toolsBtn.addEventListener('click', () => this.openToolsTab());
+        }
+
+        // Screenshot / Print
+        const screenshotBtn = document.getElementById('btn-screenshot');
+        if (screenshotBtn && !screenshotBtn.dataset.boundPrint) {
+            screenshotBtn.dataset.boundPrint = 'true';
+            screenshotBtn.addEventListener('click', () => window.print());
+        }
+
+        // Edge swipe (back gesture) inside editor
+        const editorPanel = document.querySelector('.editor-panel');
+        if (editorPanel && !editorPanel.dataset.boundEdgeBack) {
+            editorPanel.dataset.boundEdgeBack = 'true';
+            let touchStartX = 0;
+            editorPanel.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0]?.screenX || 0;
+            }, { passive: true });
+            editorPanel.addEventListener('touchend', (e) => {
+                const touchEndX = e.changedTouches[0]?.screenX || 0;
+                if (touchEndX - touchStartX > 80 && touchStartX < 60) {
+                    this.hapticFeedback();
+                    this.exitMobileEditor();
+                }
+            }, { passive: true });
+        }
 
         // Handle resize events to reset layout
         window.addEventListener('resize', () => {
@@ -715,7 +746,6 @@ class UIService {
             if (currentWidth >= 900) {
                 if (this.panels.sidebar) this.panels.sidebar.classList.remove('hidden');
                 if (this.panels.editor) this.panels.editor.classList.remove('hidden');
-                document.getElementById('mobile-back-btn')?.classList.add('hidden');
                 this.mobile.btnMenu?.classList.remove('hidden');
                 document.body.classList.remove('mobile-list-active', 'mobile-editor-active');
                 this.setupSettingsAccordion();
@@ -893,7 +923,6 @@ class UIService {
         if (this.panels.sidebar) this.panels.sidebar.classList.add('hidden');
         if (this.panels.editor) this.panels.editor.classList.remove('hidden');
 
-        document.getElementById('mobile-back-btn')?.classList.remove('hidden');
         this.mobile.btnMenu?.classList.add('hidden');
         document.body.classList.add('mobile-editor-active');
         document.body.classList.remove('mobile-list-active');
@@ -904,7 +933,6 @@ class UIService {
         if (this.panels.sidebar) this.panels.sidebar.classList.remove('hidden');
         if (this.panels.editor) this.panels.editor.classList.add('hidden');
 
-        document.getElementById('mobile-back-btn')?.classList.add('hidden');
         this.mobile.btnMenu?.classList.remove('hidden');
         document.body.classList.add('mobile-list-active');
         document.body.classList.remove('mobile-editor-active');

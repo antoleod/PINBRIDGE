@@ -30,6 +30,16 @@
     --brand-primary: #3b82f6;
     /* Blue 500 */
     --brand-glow: rgba(59, 130, 246, 0.4);
+    --brand-secondary: #a855f7;
+    --brand-secondary-glow: rgba(168, 85, 247, 0.35);
+    --accent-cyan: #22d3ee;
+    --accent-cyan-glow: rgba(34, 211, 238, 0.25);
+
+    /* FX */
+    --glass-blur: 14px;
+    --glass-sat: 160%;
+    --shadow-elev-1: 0 8px 24px rgba(0, 0, 0, 0.3);
+    --shadow-elev-2: 0 18px 44px rgba(0, 0, 0, 0.38);
 
     /* Typography - Improved hierarchy */
     --font-sans: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
@@ -113,6 +123,8 @@
 
     --brand-primary: #88c0d0;
     --brand-glow: rgba(136, 192, 208, 0.45);
+    --brand-secondary: #b48ead;
+    --brand-secondary-glow: rgba(180, 142, 173, 0.38);
     --app-bg-gradient-opacity: 0.95;
 }
 
@@ -132,6 +144,8 @@
 
     --brand-primary: #fb7185;
     --brand-glow: rgba(251, 113, 133, 0.40);
+    --brand-secondary: #a78bfa;
+    --brand-secondary-glow: rgba(167, 139, 250, 0.38);
     --app-bg-gradient-opacity: 1;
 }
 
@@ -196,6 +210,8 @@ body::after {
         radial-gradient(circle at 82% 22%, rgba(168, 85, 247, 0.18), transparent 50%),
         radial-gradient(circle at 42% 88%, rgba(0, 255, 156, 0.12), transparent 55%),
         radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.03), transparent 60%),
+        repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 120px),
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.03) 1px, transparent 1px, transparent 120px),
         linear-gradient(180deg, #0b0b10, #09090b);
     animation: bg-drift 18s ease-in-out infinite;
     transform: translateZ(0);
@@ -294,10 +310,12 @@ body {
 
 /* --- GLASSMORPHISM --- */
 .glass-panel {
-    background: var(--bg-glass);
-    backdrop-filter: blur(12px) saturate(140%);
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+        var(--bg-glass);
+    backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
     border: 1px solid var(--border-subtle);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-elev-1), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 @keyframes fadeIn {
@@ -1310,14 +1328,15 @@ button.btn:active {
 }
 
 .btn-primary {
-    background: var(--brand-primary);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
     color: white;
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25), 0 0 22px var(--brand-glow), 0 0 18px var(--brand-secondary-glow);
 }
 
 .btn-primary:hover {
-    background: #2563eb;
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-elev-2), 0 0 26px var(--brand-glow), 0 0 22px var(--brand-secondary-glow);
 }
 
 .btn-secondary {
@@ -1344,20 +1363,23 @@ button.btn:active {
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease;
 }
 
 .btn-icon:hover {
     background: var(--bg-glass);
     color: var(--text-primary);
 }
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
+
+.btn-icon.ghost {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0, 255, 156, 0.25), 0 0 24px rgba(59, 130, 246, 0.3), 0 10px 20px rgba(0, 0, 0, 0.2);
+.btn-icon.ghost:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22);
 }
 
 .btn-primary.accent {
@@ -1721,9 +1743,9 @@ body.coach-focus #vault-screen .admin-panel {
 }
 
 .nav-item.active {
-    background: var(--brand-primary);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
     color: white;
-    box-shadow: 0 4px 12px var(--brand-glow);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22), 0 0 18px var(--brand-glow), 0 0 14px var(--brand-secondary-glow);
 }
 
 .mobile-topbar {
@@ -1776,15 +1798,10 @@ body.coach-focus #vault-screen .admin-panel {
 }
 
 .nav-pill.active {
-    background: var(--brand-primary);
-    color: #fff;
-    border-color: var(--brand-primary);
-}
-
-.nav-pill.active {
-    background: var(--brand-primary);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
     color: #fff;
     border-color: transparent;
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.22), 0 0 18px var(--brand-glow), 0 0 14px var(--brand-secondary-glow);
 }
 
 .topbar-utilities {
@@ -1818,9 +1835,11 @@ body.coach-focus #vault-screen .admin-panel {
 }
 
 #mobile-footer.glass-panel {
-    background: rgba(15, 15, 18, 0.95);
-    backdrop-filter: none;
-    box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.35);
+    background: rgba(12, 12, 16, 0.72);
+    border: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(var(--glass-blur)) saturate(180%);
+    box-shadow: 0 -18px 44px rgba(0, 0, 0, 0.45);
 }
 
 .mobile-footer .label {
@@ -1841,31 +1860,40 @@ body.coach-focus #vault-screen .admin-panel {
     background: transparent;
     color: var(--text-secondary);
     border-radius: 12px;
-    padding: 0.35rem 0.25rem;
+    padding: 0.45rem 0.25rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.2rem;
     font-size: var(--font-size-xs);
-    gap: 0;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .mobile-nav-item svg {
-    width: 18px;
-    height: 18px;
     width: 24px;
     height: 24px;
     margin-bottom: 2px;
 }
 
 .mobile-nav-item.active {
-    background: rgba(59, 130, 246, 0.2);
+    background: rgba(255, 255, 255, 0.06);
     color: var(--text-primary);
-    border-color: rgba(59, 130, 246, 0.4);
-    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.2);
+    border-color: rgba(255, 255, 255, 0.14);
+    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28), 0 0 16px var(--brand-glow);
+}
+
+.mobile-nav-item.primary {
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.18);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.32), 0 0 18px var(--brand-glow), 0 0 16px var(--brand-secondary-glow);
+}
+
+.mobile-nav-item.primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
 }
 
 /* History Modal */
@@ -2802,13 +2830,21 @@ body.coach-focus #vault-screen .admin-panel {
     height: 32px;
     border-radius: 8px;
     border: none;
-    background: var(--brand-primary);
+    background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
     color: white;
     font-size: 1.2rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22), 0 0 14px var(--brand-glow);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.btn-icon-primary:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+    box-shadow: var(--shadow-elev-2), 0 0 18px var(--brand-glow), 0 0 14px var(--brand-secondary-glow);
 }
 
 /* Quick Drop */
@@ -3485,8 +3521,6 @@ body.compact-notes .note-item p {
     background: var(--bg-glass);
     color: var(--text-primary);
     border-color: var(--border-active);
-}
-    border-color: rgba(255, 255, 255, 0.12);
 }
 
 .btn-tool-minimal svg {
@@ -5966,6 +6000,15 @@ input[type="file"]::file-selector-button {
     .dashboard-section {
         grid-column: span 1;
         padding: 1rem;
+    }
+
+    /* Bottom nav: keep tap targets clean on very small widths */
+    .mobile-footer .label {
+        display: none;
+    }
+
+    .mobile-nav-item svg {
+        margin-bottom: 0;
     }
 }
 
